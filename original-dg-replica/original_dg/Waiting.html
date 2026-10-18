@@ -1,0 +1,15 @@
+{{ extends "global/Page.html" }}
+{{ block title }}{{ T.waiting_title }}{{ endblock }}
+{{ block content }}
+<div class="waiting">
+  <div class="spinner-border" role="status"></div>
+  <p>{{ T.waiting_body }}</p>
+  <p class="text-muted small" id="found" hidden>{{ T.waiting_found }}</p>
+</div>
+{{ endblock }}
+{{ block scripts }}
+<script>
+  // 原研究: 「オンラインの参加者が足りない場合、システムは最大 10 秒待つ」。timeout_seconds で自動的に次へ進む。
+  setTimeout(function () { document.getElementById('found').hidden = false; }, Math.max(0, {{ seconds }} * 1000 - 1500));
+</script>
+{{ endblock }}

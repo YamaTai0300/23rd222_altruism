@@ -1,0 +1,26 @@
+{{ extends "global/Page.html" }}
+{{ block title }}{{ T.eval_title }}{{ endblock }}
+{{ block content }}
+<p class="text-muted">{{ T.eval_intro }}</p>
+{{ for it in items }}
+<div class="card item-card mb-3{{ if it.missing }} missing{{ endif }}">
+  <div class="card-body">
+    <p class="item-text">{{ it.text }}</p>
+    <div class="likert">
+    {{ for opt in it.options }}
+      <div class="form-check">
+        <input class="form-check-input" type="radio" name="{{ it.name }}" id="{{ it.name }}_{{ opt.v }}" value="{{ opt.v }}"{{ if opt.checked }} checked{{ endif }}>
+        <label class="form-check-label" for="{{ it.name }}_{{ opt.v }}">{{ opt.v }}. {{ opt.label }}</label>
+      </div>
+    {{ endfor }}
+    </div>
+    {{ formfield_errors it.name }}
+  </div>
+</div>
+{{ endfor }}
+<div class="mb-3">
+  <label class="col-form-label" for="id_eval_open">{{ T.eval_open }}</label>
+  <textarea class="form-control" name="eval_open" id="id_eval_open" rows="3" maxlength="2000">{{ open_text }}</textarea>
+</div>
+{{ next_button }}
+{{ endblock }}

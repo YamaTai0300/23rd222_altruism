@@ -1,0 +1,15 @@
+/* 原研究の再現: 装飾は最小限（SoSci Survey の素朴な見た目に近づける） */
+.otree-body { max-width: 720px; }
+.notice { background: #fff8e1; border: 1px solid #f0d879; border-radius: 6px; padding: .5rem 1rem; margin-bottom: 1rem; }
+.dg-options { padding-left: 1.6rem; margin-bottom: 1rem; }
+.dg-options li { margin-bottom: .4rem; }
+.amount-input { max-width: 14rem; margin: .5rem 0 .25rem; }
+.amount-input input { font-size: 1.3rem; text-align: right; }
+.confirm-body { font-size: 1.1rem; font-weight: 600; }
+.waiting { text-align: center; padding: 2rem 0; }
+.waiting .spinner-border { width: 3rem; height: 3rem; margin-bottom: 1rem; }
+.otree-timer { display: none; }
+.item-card { border-radius: 8px; }
+.item-card.missing { border: 2px solid #c00; }
+.item-text { font-weight: 600; margin-bottom: .5rem; }
+.form-control-errors { color: #c00; margin-top: .25rem; }

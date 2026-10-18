@@ -1,0 +1,6 @@
+{{ extends "global/Page.html" }}
+{{ block title }}{{ T.debrief_title }}{{ endblock }}
+{{ block content }}
+{{ for p in T.debrief_body }}<p>{{ p }}</p>{{ endfor }}
+{{ next_button }}
+{{ endblock }}

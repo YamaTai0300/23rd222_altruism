@@ -1,0 +1,7 @@
+{{ extends "global/Page.html" }}
+{{ block title }}{{ T.result_title }}{{ endblock }}
+{{ block content }}
+{{ for p in body }}<p class="fw-bold">{{ p }}</p>{{ endfor }}
+<p class="text-muted">{{ payout_note }}</p>
+{{ next_button }}
+{{ endblock }}

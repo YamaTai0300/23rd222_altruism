@@ -1,0 +1,8 @@
+{{ extends "global/Page.html" }}
+{{ block title }}{{ T.disclosure_title }}{{ endblock }}
+{{ block content }}
+<div class="notice">
+{{ for p in T.disclosure_body }}<p>{{ p }}</p>{{ endfor }}
+</div>
+{{ next_button }}
+{{ endblock }}

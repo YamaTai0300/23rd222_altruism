@@ -1,0 +1,11 @@
+{{ extends "global/Page.html" }}
+{{ block title }}{{ T.general_title }}{{ endblock }}
+{{ block content }}
+{{ for p in T.general_body }}<p>{{ p }}</p>{{ endfor }}
+<div class="mb-3">
+  <label class="col-form-label" for="id_username">{{ T.username_label }}</label>
+  <input type="text" class="form-control" name="username" id="id_username" maxlength="20" style="max-width: 20rem;">
+  {{ formfield_errors 'username' }}
+</div>
+{{ next_button }}
+{{ endblock }}

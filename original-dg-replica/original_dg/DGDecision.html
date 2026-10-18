@@ -1,0 +1,17 @@
+{{ extends "global/Page.html" }}
+{{ block title }}{{ T.dg_round }}{{ endblock }}
+{{ block content }}
+{{ if again }}<p class="alert alert-warning">{{ T.again_lead }}</p>{{ endif }}
+{{ for p in T.dg_body }}<p>{{ p }}</p>{{ endfor }}
+<ol class="dg-options">
+{{ for o in T.dg_options }}<li>{{ o }}</li>{{ endfor }}
+</ol>
+<p class="fw-bold">{{ T.dg_question }}</p>
+<div class="input-group amount-input">
+  <input type="number" class="form-control form-control-lg" name="dg_give" id="id_dg_give"
+         min="0" max="{{ endowment }}" step="0.01" inputmode="decimal" required{{ if has_value }} value="{{ value }}"{{ endif }}>
+  <span class="input-group-text">{{ T.dg_unit }}</span>
+</div>
+{{ formfield_errors 'dg_give' }}
+{{ next_button }}
+{{ endblock }}
