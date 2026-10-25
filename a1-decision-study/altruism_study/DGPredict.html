@@ -1,0 +1,14 @@
+{{ extends "global/Page.html" }}
+{{ block title }}{{ T.predict_title }}{{ endblock }}
+{{ block content }}
+<p>{{ T.predict_question }}</p>
+<p class="text-muted small">{{ T.predict_note }} {{ T.decision_hint }}</p>
+<div class="input-group amount-input">
+  <input type="number" class="form-control form-control-lg" name="{{ field }}" id="id_{{ field }}"
+         min="0" max="{{ endowment }}" step="{{ step }}" inputmode="numeric" required
+         {{ if has_value }}value="{{ value }}"{{ endif }}>
+  <span class="input-group-text">{{ unit }}</span>
+</div>
+{{ formfield_errors 'dg_predict' }}
+{{ next_button }}
+{{ endblock }}

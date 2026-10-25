@@ -1,0 +1,13 @@
+analysis,part,term,estimate_type,estimate,ci_low,ci_high,p,n,vif
+主分析: CFA 因子得点（1 単位 = 1 SD）,1: gave anything (logistic),hg_fs,OR per 1 SD,1.452,0.9131,2.3091,0.1151,112,1.3397
+主分析: CFA 因子得点（1 単位 = 1 SD）,1: gave anything (logistic),pp_fs,OR per 1 SD,1.379,0.8795,2.1624,0.1614,112,1.2777
+主分析: CFA 因子得点（1 単位 = 1 SD）,1: gave anything (logistic),mc_fs,OR per 1 SD,0.9798,0.6528,1.4706,0.9215,112,1.0739
+主分析: CFA 因子得点（1 単位 = 1 SD）,2: amount among givers (log-linear),hg_fs,% change per 1 SD,16.5218,-0.4248,36.3526,0.0563,66,NA
+主分析: CFA 因子得点（1 単位 = 1 SD）,2: amount among givers (log-linear),pp_fs,% change per 1 SD,-1.63,-13.6446,12.0562,0.8017,66,NA
+主分析: CFA 因子得点（1 単位 = 1 SD）,2: amount among givers (log-linear),mc_fs,% change per 1 SD,-1.4149,-13.5044,12.3643,0.8283,66,NA
+感度分析 (e): 下位尺度平均の z 得点,1: gave anything (logistic),hg_z,OR per 1 SD,1.5047,0.9815,2.307,0.0609,112,1.1089
+感度分析 (e): 下位尺度平均の z 得点,1: gave anything (logistic),pp_z,OR per 1 SD,1.4194,0.937,2.1503,0.0984,112,1.0866
+感度分析 (e): 下位尺度平均の z 得点,1: gave anything (logistic),mc_z,OR per 1 SD,0.9535,0.6398,1.4209,0.8149,112,1.0372
+感度分析 (e): 下位尺度平均の z 得点,2: amount among givers (log-linear),hg_z,% change per 1 SD,15.4932,0.125,33.2201,0.0481,66,NA
+感度分析 (e): 下位尺度平均の z 得点,2: amount among givers (log-linear),pp_z,% change per 1 SD,1.1266,-10.2617,13.9601,0.8519,66,NA
+感度分析 (e): 下位尺度平均の z 得点,2: amount among givers (log-linear),mc_z,% change per 1 SD,-0.5649,-12.2799,12.7147,0.9283,66,NA

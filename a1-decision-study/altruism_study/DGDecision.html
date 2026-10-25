@@ -1,0 +1,41 @@
+{{ extends "global/Page.html" }}
+{{ block title }}{{ T.decision_title }}{{ endblock }}
+{{ block content }}
+{{ if again }}
+<p class="alert alert-warning">{{ T.decision_again_lead }}</p>
+{{ endif }}
+<p>{{ T.decision_lead }}</p>
+<p class="fw-bold">{{ T.decision_question }}</p>
+<p class="text-muted small">{{ T.decision_hint }}</p>
+<div class="input-group amount-input">
+  <input type="number" class="form-control form-control-lg" name="{{ field }}" id="id_{{ field }}"
+         min="0" max="{{ endowment }}" step="{{ step }}" inputmode="numeric" required
+         {{ if has_value }}value="{{ value }}"{{ endif }}>
+  <span class="input-group-text">{{ unit }}</span>
+</div>
+{{ formfield_errors 'dg_give' }}
+<div class="split-box" id="split" hidden>
+  {{ T.decision_keep }}: <strong id="keep"></strong><br>
+  {{ T.decision_other }}: <strong id="give"></strong>
+</div>
+{{ next_button }}
+{{ endblock }}
+
+{{ block scripts }}
+<script>
+  (function () {
+    var endowment = js_vars.endowment, unit = js_vars.unit;
+    var input = document.getElementById('id_dg_give');
+    function update() {
+      var box = document.getElementById('split');
+      var g = parseInt(input.value, 10);
+      if (isNaN(g) || g < 0 || g > endowment) { box.hidden = true; return; }
+      document.getElementById('keep').textContent = (endowment - g).toLocaleString() + ' ' + unit;
+      document.getElementById('give').textContent = g.toLocaleString() + ' ' + unit;
+      box.hidden = false;
+    }
+    input.addEventListener('input', update);
+    update();
+  })();
+</script>
+{{ endblock }}

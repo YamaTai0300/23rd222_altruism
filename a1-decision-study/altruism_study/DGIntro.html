@@ -1,0 +1,17 @@
+{{ extends "global/Page.html" }}
+{{ block title }}{{ T.dg_intro_title }}{{ endblock }}
+{{ block content }}
+<p class="round-name">{{ T.dg_round_name }}</p>
+{{ for b in intro_blocks }}
+<p>{{ b.text }}</p>
+{{ if b.options }}
+<ol class="dg-options">
+  {{ for o in b.options }}
+  <li>{{ o }}</li>
+  {{ endfor }}
+</ol>
+{{ endif }}
+{{ endfor }}
+<p class="fw-bold">{{ T.dg_intro_example }}</p>
+{{ next_button }}
+{{ endblock }}

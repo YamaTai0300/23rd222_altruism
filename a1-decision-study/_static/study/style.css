@@ -1,0 +1,22 @@
+/* A-1 追試: スマホ幅（375px）での回答を前提にした最小限のスタイル */
+.otree-body { max-width: 720px; }
+.item-card { border-radius: 10px; }
+.item-card.missing { border: 2px solid #c00; }
+.item-text { font-weight: 600; margin-bottom: .5rem; }
+.likert .form-check { margin-bottom: .35rem; }
+.likert .form-check-input { width: 1.25em; height: 1.25em; margin-top: .15em; }
+.likert .form-check-label { padding-left: .25rem; }
+.amounts .form-check { margin-bottom: .3rem; }
+.split-box { background: #f1f5f9; border-radius: 10px; padding: .75rem 1rem; margin: .75rem 0; font-size: 1.1rem; }
+.split-box strong { font-size: 1.3rem; }
+.code-box { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 1.8rem; letter-spacing: .15em; background: #f1f5f9; border-radius: 10px; padding: .6rem 1rem; display: inline-block; margin: .5rem 0 1rem; }
+.form-control-errors { color: #c00; margin-top: .25rem; }
+details.dg-recap { background: #fffbe6; border: 1px solid #f0d879; border-radius: 10px; padding: .5rem .9rem; margin: .75rem 0 1rem; }
+
+/* v0.2 */
+.round-name { font-weight: 700; font-size: 1.15rem; margin-bottom: .75rem; }
+.dg-options { background: #f8fafc; border-radius: 10px; padding: .75rem 1rem .75rem 2.2rem; margin: 0 0 1rem; }
+.dg-options li { margin-bottom: .4rem; }
+.amount-input { max-width: 16rem; margin: .5rem 0 .25rem; }
+.amount-input input { font-size: 1.4rem; text-align: right; }
+.confirm-body { font-size: 1.15rem; font-weight: 600; }

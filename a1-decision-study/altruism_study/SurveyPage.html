@@ -1,0 +1,22 @@
+{{ extends "global/Page.html" }}
+{{ block title }}{{ T.survey_title }} ({{ page_no }}/{{ num_pages }}){{ endblock }}
+{{ block content }}
+<p class="text-muted">{{ T.survey_intro_short }}</p>
+{{ for it in items }}
+<div class="card item-card mb-3{{ if it.missing }} missing{{ endif }}">
+  <div class="card-body">
+    <p class="item-text">{{ it.text }}</p>
+    <div class="likert">
+    {{ for opt in it.options }}
+      <div class="form-check">
+        <input class="form-check-input" type="radio" name="{{ it.name }}" id="{{ it.name }}_{{ opt.v }}" value="{{ opt.v }}"{{ if opt.checked }} checked{{ endif }}>
+        <label class="form-check-label" for="{{ it.name }}_{{ opt.v }}">{{ opt.v }}. {{ opt.label }}</label>
+      </div>
+    {{ endfor }}
+    </div>
+    {{ formfield_errors it.name }}
+  </div>
+</div>
+{{ endfor }}
+{{ next_button }}
+{{ endblock }}

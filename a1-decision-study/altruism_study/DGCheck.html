@@ -1,0 +1,29 @@
+{{ extends "global/Page.html" }}
+{{ block title }}{{ T.check_title }}{{ endblock }}
+{{ block content }}
+{{ if retry }}
+<details class="dg-recap" open>
+  <summary>{{ T.dg_intro_title }}</summary>
+  {{ for b in intro_blocks }}
+  <p>{{ b.text }}</p>
+  {{ if b.options }}
+  <ol class="dg-options">
+    {{ for o in b.options }}
+    <li>{{ o }}</li>
+    {{ endfor }}
+  </ol>
+  {{ endif }}
+  {{ endfor }}
+  <p class="fw-bold">{{ T.dg_intro_example }}</p>
+</details>
+{{ endif }}
+<div class="mb-3">
+  <label class="col-form-label" for="id_dg_check">{{ T.check_question }}</label>
+  <div class="input-group" style="max-width: 16rem;">
+    <input type="number" class="form-control" name="dg_check" id="id_dg_check" min="0" step="1" inputmode="numeric" required>
+    <span class="input-group-text">{{ T.check_unit }}</span>
+  </div>
+  {{ formfield_errors 'dg_check' }}
+</div>
+{{ next_button }}
+{{ endblock }}

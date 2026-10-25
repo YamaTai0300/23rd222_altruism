@@ -1,0 +1,8 @@
+analysis,n,r,ci95_low,ci95_high,ci90_low,ci90_high,p,verdict
+"main: analysis sample, final dg_give, Spearman",112,0.3094,0.1287,0.4703,0.1618,0.4466,9e-4,再現
+(a) all finished (before exclusion),130,0.3288,0.1614,0.4825,0.1881,0.4582,1e-4,再現
+(b) first entry dg_give_1,112,0.313,0.1363,0.481,0.1641,0.4536,8e-4,再現
+(c) Pearson r,112,0.305,0.1354,0.4616,0.1613,0.4374,0.0011,再現
+(d) excluding eval_distract >= 5,98,0.3492,0.1656,0.519,0.1977,0.4952,4e-4,再現
+(f) excluding speeders (survey < 2.0 s/item or DG < 5 s),108,0.3211,0.1367,0.4882,0.1684,0.4624,7e-4,再現
+(g) excluding interrupted (a page >= 600 s),110,0.3189,0.144,0.4833,0.1732,0.4595,7e-4,再現

@@ -1,0 +1,12 @@
+{{ extends "global/Page.html" }}
+{{ block title }}{{ T.consent_title }}{{ endblock }}
+{{ block content }}
+{{ for p in T.consent_body }}
+<p>{{ p }}</p>
+{{ endfor }}
+<hr>
+{{ formfield 'consent' label=T.consent_check }}
+{{ formfield 'age_confirm' label=T.age_check }}
+{{ formfield 'student_confirm' label=T.student_check }}
+<div class="mt-3">{{ next_button }}</div>
+{{ endblock }}

@@ -1,0 +1,40 @@
+{{ extends "global/Page.html" }}
+{{ block title }}{{ T.demog_title }}{{ endblock }}
+{{ block content }}
+<p>{{ T.demog_intro }}</p>
+{{ formfield 'age' label=T.demog_age }}
+
+<div class="mb-3">
+  <label class="col-form-label">{{ T.demog_gender }}</label>
+  {{ for opt in gender_options }}
+  <div class="form-check">
+    <input class="form-check-input" type="radio" name="gender" id="gender_{{ opt.v }}" value="{{ opt.v }}"{{ if opt.checked }} checked{{ endif }}>
+    <label class="form-check-label" for="gender_{{ opt.v }}">{{ opt.label }}</label>
+  </div>
+  {{ endfor }}
+  {{ formfield_errors 'gender' }}
+</div>
+
+<div class="mb-3">
+  <label class="col-form-label" for="grade">{{ T.demog_grade }}</label>
+  <select class="form-select" name="grade" id="grade">
+    <option value="">--</option>
+    {{ for opt in grade_options }}
+    <option value="{{ opt.v }}"{{ if opt.checked }} selected{{ endif }}>{{ opt.label }}</option>
+    {{ endfor }}
+  </select>
+  {{ formfield_errors 'grade' }}
+</div>
+
+<div class="mb-3">
+  <label class="col-form-label">{{ T.demog_game_exp }}</label>
+  {{ for opt in game_exp_options }}
+  <div class="form-check">
+    <input class="form-check-input" type="radio" name="game_exp" id="game_exp_{{ opt.v }}" value="{{ opt.v }}"{{ if opt.checked }} checked{{ endif }}>
+    <label class="form-check-label" for="game_exp_{{ opt.v }}">{{ opt.label }}</label>
+  </div>
+  {{ endfor }}
+  {{ formfield_errors 'game_exp' }}
+</div>
+{{ next_button }}
+{{ endblock }}
