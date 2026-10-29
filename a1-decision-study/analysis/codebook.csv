@@ -1,5 +1,6 @@
 variable,type,values,min,max,step,label_ja,label_en,reverse,source_screen,in_export,analysis_role,original_variable
-task_order,int,1|2,,,,"順序群 1=質問紙→DG, 2=DG→質問紙",order condition,,creating_session,1,covariate/H4,（Study 15 のみ順序ランダム）
+task_order,int,1|2,,,,"順序群 1=質問紙→DG, 2=DG→質問紙（scale_order と 2×2 でブロックランダム化）",order condition,,creating_session,1,covariate/H4,（Study 15 のみ順序ランダム）
+scale_order,int,0|1|2,,,,"質問紙の段階の順序 1=FAB→HEXACO, 2=HEXACO→FAB, 0=HEXACO なし",questionnaire stage order,,creating_session,1,covariate (exploratory),
 lang,str,ja|en,,,,表示言語,language,,creating_session,1,,
 app_version,str,,,,,Git タグ,app version,,creating_session,1,,
 git_commit,str,,,,,コードの Git コミット（短縮ハッシュ、-dirty 付きは未コミットの変更あり）,git commit of the code,,creating_session,1,provenance,
@@ -8,63 +9,55 @@ rand_seed,int,,0,4294967295,,順序割り当て・項目順の乱数シード（
 cfg_endowment,int,,1,100000,,設定値: DG の元手（円）,config: endowment,,creating_session,1,provenance,
 cfg_dg_step,int,,1,1000,,設定値: DG の入力の刻み（円）,config: DG input step,,creating_session,1,provenance,
 cfg_fee,int,,0,100000,,設定値: 参加謝礼（円）。pairing.py が読む,config: participation fee,,creating_session,1,provenance,
-cfg_use_hexaco,bool,0|1,,,,設定値: HEXACO 項目を混ぜたか,config: HEXACO items included,,creating_session,1,provenance,
-user_agent,str,,,,,ブラウザの User-Agent（先頭 300 文字、未取得なら空）,browser user agent,,ParticipantCode,1,provenance,
-screen_width,int,,0,20000,,画面幅（px、未取得なら空）,screen width (px),,ParticipantCode,1,provenance,
+cfg_use_hexaco,bool,0|1,,,,設定値: HEXACO 質問紙を入れたか,config: HEXACO items included,,creating_session,1,provenance,
+user_agent,str,,,,,ブラウザの User-Agent（先頭 300 文字、未取得なら空）,browser user agent,,Consent,1,provenance,
+screen_width,int,,0,20000,,画面幅（px、未取得なら空）,screen width (px),,Consent,1,provenance,
 consent,bool,0|1,,,,同意,consent,,Consent,1,inclusion,cons
-age_confirm,bool,0|1,,,,18 歳以上,age >= 18,,Consent,1,inclusion,
-student_confirm,bool,0|1,,,,在籍確認,student,,Consent,1,inclusion,
-hg_1,int,,1,6,,FAB Help Giving（S1 hg_1）,FAB HG item hg_1,0,SurveyPage,1,predictor,hg_1
-hg_3,int,,1,6,,FAB Help Giving（S1 hg_3）,FAB HG item hg_3,0,SurveyPage,1,predictor,hg_3
-hg_7,int,,1,6,,FAB Help Giving（S1 hg_7）,FAB HG item hg_7,0,SurveyPage,1,predictor,hg_7
-hg_10,int,,1,6,,FAB Help Giving（S1 hg_10）,FAB HG item hg_10,0,SurveyPage,1,predictor,hg_10
-hg_13,int,,1,6,,FAB Help Giving（S1 hg_13）,FAB HG item hg_13,0,SurveyPage,1,predictor,hg_13
-pp_1,int,,1,6,,FAB Peer Punishment（S1 pp_1）,FAB PP item pp_1,0,SurveyPage,1,discriminant,pp_1
-pp_8,int,,1,6,,FAB Peer Punishment（S1 pp_8）,FAB PP item pp_8,0,SurveyPage,1,discriminant,pp_8
-pp_12,int,,1,6,,FAB Peer Punishment（S1 pp_12）,FAB PP item pp_12,0,SurveyPage,1,discriminant,pp_12
-pp_14,int,,1,6,,FAB Peer Punishment（S1 pp_14）,FAB PP item pp_14,0,SurveyPage,1,discriminant,pp_14
-pp_15,int,,1,6,,FAB Peer Punishment（S1 pp_15）,FAB PP item pp_15,0,SurveyPage,1,discriminant,pp_15
-mc_1,int,,1,6,,FAB Moral Courage（S1 mc_1）,FAB MC item mc_1,0,SurveyPage,1,discriminant,mc_1
-mc_3,int,,1,6,,FAB Moral Courage（S1 mc_3）,FAB MC item mc_3,0,SurveyPage,1,discriminant,mc_3
-mc_18,int,,1,6,,FAB Moral Courage（S1 mc_18）,FAB MC item mc_18,0,SurveyPage,1,discriminant,mc_18
-mc_20,int,,1,6,,FAB Moral Courage（S1 mc_20）,FAB MC item mc_20,0,SurveyPage,1,discriminant,mc_20
-mc_23,int,,1,6,,FAB Moral Courage（S1 mc_23）,FAB MC item mc_23,0,SurveyPage,1,discriminant,mc_23
-cq1,int,,1,6,,注意チェック1（正答 1 = 全くそう思わない）,control question 1 (correct = 1),,SurveyPage,1,exclusion,cq1
-cq2,int,,1,6,,注意チェック2（正答 6 = 強くそう思う）,control question 2 (correct = 6),,SurveyPage,1,exclusion,cq2
-cq1_pass,bool,0|1,,,,注意チェック1 合格,cq1 pass,,SurveyPage,1,exclusion,
-cq2_pass,bool,0|1,,,,注意チェック2 合格,cq2 pass,,SurveyPage,1,exclusion,
-fab_item_order,str,,,,,項目の提示順（カンマ区切り）,item order,,creating_session,1,record,
-hex_1,int,,1,6,,HEXACO-60 正直さ-謙虚さ 項目 6（Sincerity）,HEXACO-60 H-H item 6 (Sincerity),0,SurveyPage,1,exploratory H5,
-hex_2,int,,1,6,,HEXACO-60 正直さ-謙虚さ 項目 12（Fairness、逆転）,"HEXACO-60 H-H item 12 (Fairness, reversed)",1,SurveyPage,1,exploratory H5,
-hex_3,int,,1,6,,HEXACO-60 正直さ-謙虚さ 項目 18（Greed Avoidance）,HEXACO-60 H-H item 18 (Greed Avoidance),0,SurveyPage,1,exploratory H5,
-hex_4,int,,1,6,,HEXACO-60 正直さ-謙虚さ 項目 24（Modesty、逆転）,"HEXACO-60 H-H item 24 (Modesty, reversed)",1,SurveyPage,1,exploratory H5,
-hex_5,int,,1,6,,HEXACO-60 正直さ-謙虚さ 項目 30（Sincerity、逆転）,"HEXACO-60 H-H item 30 (Sincerity, reversed)",1,SurveyPage,1,exploratory H5,
-hex_6,int,,1,6,,HEXACO-60 正直さ-謙虚さ 項目 36（Fairness）,HEXACO-60 H-H item 36 (Fairness),0,SurveyPage,1,exploratory H5,
-hex_7,int,,1,6,,HEXACO-60 正直さ-謙虚さ 項目 42（Greed Avoidance、逆転）,"HEXACO-60 H-H item 42 (Greed Avoidance, reversed)",1,SurveyPage,1,exploratory H5,
-hex_8,int,,1,6,,HEXACO-60 正直さ-謙虚さ 項目 48（Modesty、逆転）,"HEXACO-60 H-H item 48 (Modesty, reversed)",1,SurveyPage,1,exploratory H5,
-hex_9,int,,1,6,,HEXACO-60 正直さ-謙虚さ 項目 54（Sincerity）,HEXACO-60 H-H item 54 (Sincerity),0,SurveyPage,1,exploratory H5,
-hex_10,int,,1,6,,HEXACO-60 正直さ-謙虚さ 項目 60（Fairness、逆転）,"HEXACO-60 H-H item 60 (Fairness, reversed)",1,SurveyPage,1,exploratory H5,
-age,int,,18,99,,年齢,age,,Demographics,1,control,age
-gender,int,1|2|3|4,,,,性別 1男 2女 3その他 4回答しない,gender,,Demographics,1,control,gender (f/m/nb)
-grade,str,B1|B2|B3|B4|M1|M2|D|other,,,,学年,year,,Demographics,1,control,edu
-game_exp,bool,0|1,,,,経済ゲーム経験,prior game experience,,Demographics,1,control,
+eligible_confirm,bool,0|1,,,,参加資格（18 歳以上かつ対象大学の学生）,eligible (18+ and student),,Consent,1,inclusion,
+hg_1,int,,1,6,,FAB Help Giving（S1 hg_1）,FAB HG item hg_1,0,FabPage,1,predictor,hg_1
+hg_3,int,,1,6,,FAB Help Giving（S1 hg_3）,FAB HG item hg_3,0,FabPage,1,predictor,hg_3
+hg_7,int,,1,6,,FAB Help Giving（S1 hg_7）,FAB HG item hg_7,0,FabPage,1,predictor,hg_7
+hg_10,int,,1,6,,FAB Help Giving（S1 hg_10）,FAB HG item hg_10,0,FabPage,1,predictor,hg_10
+hg_13,int,,1,6,,FAB Help Giving（S1 hg_13）,FAB HG item hg_13,0,FabPage,1,predictor,hg_13
+pp_1,int,,1,6,,FAB Peer Punishment（S1 pp_1）,FAB PP item pp_1,0,FabPage,1,discriminant,pp_1
+pp_8,int,,1,6,,FAB Peer Punishment（S1 pp_8）,FAB PP item pp_8,0,FabPage,1,discriminant,pp_8
+pp_12,int,,1,6,,FAB Peer Punishment（S1 pp_12）,FAB PP item pp_12,0,FabPage,1,discriminant,pp_12
+pp_14,int,,1,6,,FAB Peer Punishment（S1 pp_14）,FAB PP item pp_14,0,FabPage,1,discriminant,pp_14
+pp_15,int,,1,6,,FAB Peer Punishment（S1 pp_15）,FAB PP item pp_15,0,FabPage,1,discriminant,pp_15
+mc_1,int,,1,6,,FAB Moral Courage（S1 mc_1）,FAB MC item mc_1,0,FabPage,1,discriminant,mc_1
+mc_3,int,,1,6,,FAB Moral Courage（S1 mc_3）,FAB MC item mc_3,0,FabPage,1,discriminant,mc_3
+mc_18,int,,1,6,,FAB Moral Courage（S1 mc_18）,FAB MC item mc_18,0,FabPage,1,discriminant,mc_18
+mc_20,int,,1,6,,FAB Moral Courage（S1 mc_20）,FAB MC item mc_20,0,FabPage,1,discriminant,mc_20
+mc_23,int,,1,6,,FAB Moral Courage（S1 mc_23）,FAB MC item mc_23,0,FabPage,1,discriminant,mc_23
+cq1,int,,1,6,,注意チェック1（正答 1 = 全くそう思わない）,control question 1 (correct = 1),,FabPage,1,exclusion,cq1
+cq2,int,,1,6,,注意チェック2（正答 6 = 強くそう思う）,control question 2 (correct = 6),,FabPage,1,exclusion,cq2
+cq1_pass,bool,0|1,,,,注意チェック1 合格,cq1 pass,,FabPage,1,exclusion,
+cq2_pass,bool,0|1,,,,注意チェック2 合格,cq2 pass,,FabPage,1,exclusion,
+fab_item_order,str,,,,,FAB + 注意チェック 17 項目の提示順（カンマ区切り）,FAB item order (incl. control questions),,creating_session,1,record,
+hex_item_order,str,,,,,HEXACO 10 項目の提示順（カンマ区切り、HEXACO なしなら空）,HEXACO item order,,creating_session,1,record,
+hex_1,int,,1,5,,HEXACO-60 正直さ-謙虚さ（5 件法） 項目 6（Sincerity）,HEXACO-60 H-H item 6 (Sincerity),0,HexPage,1,exploratory H5,
+hex_2,int,,1,5,,HEXACO-60 正直さ-謙虚さ（5 件法） 項目 12（Fairness、逆転）,"HEXACO-60 H-H item 12 (Fairness, reversed)",1,HexPage,1,exploratory H5,
+hex_3,int,,1,5,,HEXACO-60 正直さ-謙虚さ（5 件法） 項目 18（Greed Avoidance）,HEXACO-60 H-H item 18 (Greed Avoidance),0,HexPage,1,exploratory H5,
+hex_4,int,,1,5,,HEXACO-60 正直さ-謙虚さ（5 件法） 項目 24（Modesty、逆転）,"HEXACO-60 H-H item 24 (Modesty, reversed)",1,HexPage,1,exploratory H5,
+hex_5,int,,1,5,,HEXACO-60 正直さ-謙虚さ（5 件法） 項目 30（Sincerity、逆転）,"HEXACO-60 H-H item 30 (Sincerity, reversed)",1,HexPage,1,exploratory H5,
+hex_6,int,,1,5,,HEXACO-60 正直さ-謙虚さ（5 件法） 項目 36（Fairness）,HEXACO-60 H-H item 36 (Fairness),0,HexPage,1,exploratory H5,
+hex_7,int,,1,5,,HEXACO-60 正直さ-謙虚さ（5 件法） 項目 42（Greed Avoidance、逆転）,"HEXACO-60 H-H item 42 (Greed Avoidance, reversed)",1,HexPage,1,exploratory H5,
+hex_8,int,,1,5,,HEXACO-60 正直さ-謙虚さ（5 件法） 項目 48（Modesty、逆転）,"HEXACO-60 H-H item 48 (Modesty, reversed)",1,HexPage,1,exploratory H5,
+hex_9,int,,1,5,,HEXACO-60 正直さ-謙虚さ（5 件法） 項目 54（Sincerity）,HEXACO-60 H-H item 54 (Sincerity),0,HexPage,1,exploratory H5,
+hex_10,int,,1,5,,HEXACO-60 正直さ-謙虚さ（5 件法） 項目 60（Fairness、逆転）,"HEXACO-60 H-H item 60 (Fairness, reversed)",1,HexPage,1,exploratory H5,
 dg_check,int,,0,100000,,理解確認の最終回答（円）,comprehension answer (last),,DGCheck,1,exclusion,
 dg_check_answer1,int,,0,100000,,理解確認 1 回目の回答,comprehension answer 1,,DGCheck,1,exclusion,
 dg_check_answer2,int,,0,100000,,理解確認 2 回目の回答,comprehension answer 2,,DGCheck,1,exclusion,
 dg_check_attempts,int,,0,2,,理解確認の試行回数,comprehension attempts,,DGCheck,1,exclusion,
 dg_check_pass,bool,0|1,,,,理解確認 合格（最終回答が正答）,comprehension pass,,DGCheck,1,exclusion,
-dg_predict,int,,0,1000,,自己予測額（円）,predicted giving,,DGPredict,1,secondary,
-dg_give,int,,0,1000,,相手に分ける額（円、最終決定）,amount given (final),,DGDecision/DGDecisionAgain,1,outcome H1,dg_give
-dg_give_1,int,,0,1000,,1 回目の入力,first entry,,DGDecision,1,record,dg_give (Study 09: 1 回目)
-dg_give_2,int,,0,1000,,2 回目の入力（入力し直したときのみ）,revised entry,,DGDecisionAgain,1,record,dg_give_2
-dg_correct,int,1|2,,,,入力の確認 1=正しい 2=入力し直す,entry confirmed,,DGConfirm,1,record,dg_correct
+dg_give,int,,0,1000,,相手に分ける額（円）,amount given,,DGDecision,1,outcome H1,dg_give
 dg_share,bool,0|1,,,,送金有無（dg_give > 0）,gave anything,,DGDecision,1,outcome H2,dg_binary
 eval_understand,int,,1,6,,事後評価: 課題は理解しやすかった,post: easy to understand,,PostSurvey,1,manipulation check,AG11_05
 eval_difficult,int,,1,6,,事後評価: 決定は難しかった,post: difficult to decide,,PostSurvey,1,manipulation check,AG11_02
 eval_reflect,int,,1,6,,事後評価: 実生活の決定を反映,post: reflects real life,,PostSurvey,1,manipulation check,AG11_04
 eval_distract,int,,1,6,,事後評価: 気が散っていた,post: distracted,,PostSurvey,1,exclusion (exploratory),AG11_06
 comment_open,str,,,,,自由記述（任意）,open comment,,PostSurvey,1,record,AG12_01
-t_start,str,,,,,開始時刻 ISO8601 UTC,start time,,ParticipantCode,1,duration,STARTED
+t_start,str,,,,,開始時刻 ISO8601 UTC,start time,,Consent,1,duration,STARTED
 t_end,str,,,,,終了時刻 ISO8601 UTC,end time,,End,1,duration,
 duration_sec,int,,0,86400,,所要時間（秒）,duration (s),,End,1,exclusion,TIME_SUM
 finished,bool,0|1,,,,最終ページ到達,finished,,End,1,payment,FINISHED

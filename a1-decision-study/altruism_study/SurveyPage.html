@@ -1,17 +1,33 @@
 {{ extends "global/Page.html" }}
-{{ block title }}{{ T.survey_title }} ({{ page_no }}/{{ num_pages }}){{ endblock }}
+{{ block title }}{{ stage_title }}{{ endblock }}
 {{ block content }}
-<p class="text-muted">{{ T.survey_intro_short }}</p>
+{{ include "global/progress.html" }}
+{{ if page_note }}<p class="text-muted small mb-2">{{ page_note }}</p>{{ endif }}
+{{ if first_page }}
+<div class="intro-box">
+  {{ for p in intro }}
+  <p>{{ p }}</p>
+  {{ endfor }}
+  <p class="mb-1 small text-muted">{{ T.scale_heading }}</p>
+  <ol class="scale-list">
+  {{ for s in scale_labels }}
+    <li value="{{ s.v }}">{{ s.label }}</li>
+  {{ endfor }}
+  </ol>
+</div>
+{{ else }}
+<p class="text-muted">{{ intro_short }}</p>
+{{ endif }}
 {{ for it in items }}
 <div class="card item-card mb-3{{ if it.missing }} missing{{ endif }}">
   <div class="card-body">
     <p class="item-text">{{ it.text }}</p>
     <div class="likert">
     {{ for opt in it.options }}
-      <div class="form-check">
+      <label class="likert-option" for="{{ it.name }}_{{ opt.v }}">
         <input class="form-check-input" type="radio" name="{{ it.name }}" id="{{ it.name }}_{{ opt.v }}" value="{{ opt.v }}"{{ if opt.checked }} checked{{ endif }}>
-        <label class="form-check-label" for="{{ it.name }}_{{ opt.v }}">{{ opt.v }}. {{ opt.label }}</label>
-      </div>
+        <span class="likert-num">{{ opt.v }}</span><span class="likert-label">{{ opt.label }}</span>
+      </label>
     {{ endfor }}
     </div>
     {{ formfield_errors it.name }}

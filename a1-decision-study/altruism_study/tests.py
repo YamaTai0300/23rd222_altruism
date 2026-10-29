@@ -1,56 +1,49 @@
-"""ボットテスト（設計書 §10.1）v0.2。
+"""ボットテスト（設計書 §10.1）v0.5。
 
-実行: otree test a1_ja 20   （20 名 × 7 ケース）
+実行: otree test a1_ja 24   （24 名 × 6 ケース。4 名ごとに task_order × scale_order の 4 通りが揃う）
 ケース:
-  normal          正常系（注意チェック正答、理解確認 1 回で正答、300 円を分ける、入力確認「はい」）
+  normal          正常系（注意チェック正答、理解確認 1 回で正答、300 円を分ける）
   cq_fail         注意チェック cq1 に誤答 → exclude_reason_in_app に 'cq'
   check_retry_ok  理解確認 1 回目誤答 → 再回答で正答 → dg_check_pass = True, attempts = 2
   check_fail      理解確認 2 回とも誤答 → dg_check_pass = False だが最後まで進める
   zero_give       0 円を分ける → dg_share = False
-  revise          入力確認で「いいえ」→ 入力し直し（200 → 400）→ dg_give_1 = 200, dg_give_2 = 400, dg_give = 400
   bad_amount      範囲外・刻み違いの額は受け付けない（元手超過、負の値、dg_step の倍数でない値）
+v0.5 で外したもの: revise（入力確認）、属性、自己予測、参加者コードページ。
 """
 from otree.api import Bot, Submission, SubmissionMustFail, expect
 
 from . import (
     C,
     Consent,
-    ParticipantCode,
-    SurveyIntroA, SurveyPage1A, SurveyPage2A, DemographicsA,
-    DGIntroB, DGCheckB, DGPredictB, DGDecisionB, DGConfirmB, DGDecisionAgainB,
-    SurveyIntroB, SurveyPage1B, SurveyPage2B, DemographicsB,
-    DGIntroA, DGCheckA, DGPredictA, DGDecisionA, DGConfirmA, DGDecisionAgainA,
+    HexFirstA, FabPage1A, FabPage2A, HexLastA, DGIntroA, DGCheckA, DGDecisionA,
+    DGIntroB, DGCheckB, DGDecisionB, HexFirstB, FabPage1B, FabPage2B, HexLastB,
     PostSurvey,
     End,
-    survey_fields,
+    fab_fields, hex_fields,
 )
 
 
 class PlayerBot(Bot):
-    cases = ['normal', 'cq_fail', 'check_retry_ok', 'check_fail', 'zero_give', 'revise', 'bad_amount']
+    cases = ['normal', 'cq_fail', 'check_retry_ok', 'check_fail', 'zero_give', 'bad_amount']
 
     def play_round(self):
         c = self.case
         cfg = self.session.config
         correct = cfg['endowment'] - C.CHECK_GIVE
 
-        # 同意: 未チェックでは進めない
-        yield SubmissionMustFail(Consent, dict(consent=True, age_confirm='', student_confirm=True))  # '' = 未チェック
-        yield Consent, dict(consent=True, age_confirm=True, student_confirm=True)
-        # 来歴の hidden 項目（v0.3）。ブラウザが埋めるが、未取得でも進める
+        # 同意: 2 項目とも必須。hidden の来歴項目はブラウザが埋めるが、未取得でも進める
+        yield SubmissionMustFail(Consent, dict(consent=True, eligible_confirm=''))  # '' = 未チェック
         if c == 'normal':
-            yield ParticipantCode, dict(user_agent='bot/1.0 ' + 'x' * 400, screen_width=375)
+            yield Consent, dict(consent=True, eligible_confirm=True, user_agent='bot/1.0 ' + 'x' * 400, screen_width=375)
         else:
-            yield ParticipantCode
+            yield Consent, dict(consent=True, eligible_confirm=True)
 
         if self.player.task_order == 1:
-            yield from self.survey(c, SurveyIntroA, SurveyPage1A, SurveyPage2A)
-            yield from self.demog(DemographicsA)
-            yield from self.dg(c, correct, DGIntroA, DGCheckA, DGPredictA, DGDecisionA, DGConfirmA, DGDecisionAgainA)
+            yield from self.survey(c, HexFirstA, FabPage1A, FabPage2A, HexLastA)
+            yield from self.dg(c, correct, DGIntroA, DGCheckA, DGDecisionA)
         else:
-            yield from self.dg(c, correct, DGIntroB, DGCheckB, DGPredictB, DGDecisionB, DGConfirmB, DGDecisionAgainB)
-            yield from self.survey(c, SurveyIntroB, SurveyPage1B, SurveyPage2B)
-            yield from self.demog(DemographicsB)
+            yield from self.dg(c, correct, DGIntroB, DGCheckB, DGDecisionB)
+            yield from self.survey(c, HexFirstB, FabPage1B, FabPage2B, HexLastB)
 
         # 事後評価: 評価項目は必須、自由記述は任意
         yield SubmissionMustFail(PostSurvey, dict(eval_understand=5, eval_difficult=2, eval_reflect=4))
@@ -63,8 +56,16 @@ class PlayerBot(Bot):
         expect(p.duration_sec >= 0, True)
         expect(p.dg_share, p.dg_give > 0)
         expect(p.eval_distract, 1)
-        n_items = 17 + (10 if cfg['use_hexaco'] else 0)
-        expect(len(p.fab_item_order.split(',')), n_items)
+        expect(len(p.fab_item_order.split(',')), 17)  # FAB 15 + 注意チェック 2
+        if cfg['use_hexaco']:
+            expect(p.scale_order in (1, 2), True)
+            expect(len(p.hex_item_order.split(',')), 10)
+            expect(sorted(p.hex_item_order.split(',')), sorted(C.HEX_FIELDS))
+            for f in C.HEX_FIELDS:
+                expect(getattr(p, f), 3)  # 5 件法の中央
+        else:
+            expect(p.scale_order, 0)
+            expect(p.hex_item_order, '')
         # 来歴（v0.3）: 設定値・版・乱数シードが各行に残る
         expect(p.cfg_endowment, cfg['endowment'])
         expect(p.cfg_dg_step, cfg['dg_step'])
@@ -97,25 +98,18 @@ class PlayerBot(Bot):
             expect(p.dg_check_attempts, 2)
             expect(p.dg_check_pass, False)
             expect('check' in p.exclude_reason_in_app, True)
-        if c in ('normal', 'zero_give', 'revise', 'bad_amount'):
+        if c in ('normal', 'zero_give', 'bad_amount'):
             expect(p.excluded_in_app, False)
         if c == 'zero_give':
             expect(p.dg_give, 0)
-            expect(p.dg_give_1, 0)
-        if c == 'revise':
-            expect(p.dg_correct, 2)
-            expect(p.dg_give_1, 200)
-            expect(p.dg_give_2, 400)
-            expect(p.dg_give, 400)
-        else:
-            expect(p.dg_correct, 1)
-            expect(p.dg_give_1, p.dg_give)
-            expect(p.field_maybe_none('dg_give_2'), None)
 
-    def survey(self, c, intro, page1, page2):
-        yield intro
-        for page_no, page in ((1, page1), (2, page2)):
-            fields = survey_fields(self.player, page_no)
+    def survey(self, c, hex_first, fab1, fab2, hex_last):
+        cfg = self.session.config
+        hexaco = bool(cfg['use_hexaco'])
+        if hexaco and self.player.scale_order == 2:
+            yield from self.hex_stage(hex_first)
+        for page_no, page in ((1, fab1), (2, fab2)):
+            fields = fab_fields(self.player, page_no)
             answers = {f: 4 for f in fields}
             # 注意チェックの正答（原研究: cq1 = strongly disagree, cq2 = strongly agree）
             for cq, v in C.CQ_EXPECTED.items():
@@ -129,12 +123,20 @@ class PlayerBot(Bot):
                 partial.pop(fields[0])
                 yield SubmissionMustFail(page, partial)
             yield page, answers
+        if hexaco and self.player.scale_order == 1:
+            yield from self.hex_stage(hex_last)
 
-    def demog(self, page):
-        yield SubmissionMustFail(page, dict(age=21, gender=1, grade='B3'))  # game_exp 未回答
-        yield page, dict(age=21, gender=1, grade='B3', game_exp=False)
+    def hex_stage(self, page):
+        fields = hex_fields(self.player)
+        expect(len(fields), 10)
+        answers = {f: 3 for f in fields}
+        yield SubmissionMustFail(page, {f: 6 for f in fields})   # 6 は 5 件法の範囲外
+        partial = dict(answers)
+        partial.pop(fields[-1])
+        yield SubmissionMustFail(page, partial)                  # 未回答があれば留まる
+        yield page, answers
 
-    def dg(self, c, correct, intro, check, predict, decide, confirm, again):
+    def dg(self, c, correct, intro, check, decide):
         cfg = self.session.config
         yield intro
         if c == 'check_retry_ok':
@@ -146,21 +148,9 @@ class PlayerBot(Bot):
         else:
             yield check, dict(dg_check=correct)
         if c == 'bad_amount':
-            yield SubmissionMustFail(predict, dict(dg_predict=cfg['endowment'] + 1))
-            yield SubmissionMustFail(predict, dict(dg_predict=-1))
-            if cfg['dg_step'] > 1:
-                yield SubmissionMustFail(predict, dict(dg_predict=cfg['dg_step'] // 2))
-        yield predict, dict(dg_predict=300)
-        if c == 'bad_amount':
             yield SubmissionMustFail(decide, dict(dg_give=cfg['endowment'] + 1))
             yield SubmissionMustFail(decide, dict(dg_give=-5))
             if cfg['dg_step'] > 1:
                 yield SubmissionMustFail(decide, dict(dg_give=cfg['dg_step'] // 2))
-        give = 0 if c == 'zero_give' else (200 if c == 'revise' else 300)
+        give = 0 if c == 'zero_give' else 300
         yield decide, dict(dg_give=give)
-        yield SubmissionMustFail(confirm, dict())  # 未選択では進めない
-        if c == 'revise':
-            yield confirm, dict(dg_correct=2)
-            yield again, dict(dg_give=400)
-        else:
-            yield confirm, dict(dg_correct=1)

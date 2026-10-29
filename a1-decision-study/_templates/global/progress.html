@@ -1,0 +1,5 @@
+{# 進捗表示（v0.5）。各テンプレートの content ブロックの先頭で include する #}
+<div class="progress-line" aria-label="{{ progress_text }}">
+  <div class="progress-bar-outer"><div class="progress-bar-inner" style="width: {{ progress.percent }}%"></div></div>
+  <div class="progress-text">{{ progress_text }}</div>
+</div>

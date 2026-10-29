@@ -1,18 +1,23 @@
 @echo off
 rem ============================================================
-rem  A-1 decision study : start the oTree dev server (Windows)
+rem  A-1 decision study v0.5 : start the oTree dev server (Windows)
 rem  Double-click this file. See README.md section "動かし方".
 rem
-rem  1. copies the project to %LOCALAPPDATA%\a1-decision-study
-rem     (runtime copy outside OneDrive; .venv and db.sqlite3 stay there)
+rem  1. copies the project to %LOCALAPPDATA%\a1-decision-study_v0.5
+rem     (runtime copy outside OneDrive; .venv and db.sqlite3 stay there; v0.4 uses a different folder)
 rem  2. finds Python 3.10-3.12 (A1_PYTHON / py launcher / conda env "a1" / python on PATH), creates a venv, installs requirements
-rem  3. starts otree devserver and opens http://localhost:8000/demo
+rem  3. starts otree devserver; tools\ensure_room.py then creates a session in room "demo" and opens the REUSABLE link
+rem     http://localhost:8000/join/<code>  (a new participant every time you open it; up to 100 times per server start)
+rem     The fixed link http://localhost:8000/room/demo also works (same browser resumes the same run).
+rem  Options:  run_dev.bat [port] [a1_ja|a1_en]      e.g.  run_dev.bat 8001 a1_en
 rem ============================================================
 setlocal
 set "SRC=%~dp0"
-set "DST=%LOCALAPPDATA%\a1-decision-study"
+set "DST=%LOCALAPPDATA%\a1-decision-study_v0.5"
 set "PORT=8000"
 if not "%~1"=="" set "PORT=%~1"
+set "CONFIG=a1_ja"
+if not "%~2"=="" set "CONFIG=%~2"
 
 rem  ---- find a Python interpreter: 3.11 preferred, 3.12 or 3.10 also work; 3.13 does not (v0.4) ----
 rem   order: A1_PYTHON (full path to python.exe)  >  py -3.11 / -3.12 / -3.10 (py launcher)
@@ -62,7 +67,7 @@ set "A1_GIT_COMMIT="
 for /f "delims=" %%i in ('git -C "%SRC%." rev-parse --short=12 HEAD 2^>nul') do set "A1_GIT_COMMIT=%%i"
 
 echo [1/3] Syncing project to %DST% ...
-robocopy "%SRC%." "%DST%" /MIR /NFL /NDL /NJH /NJS /XD .venv __pycache__ __temp_bots _static_root .git shots docs /XF db.sqlite3 .env >nul
+robocopy "%SRC%." "%DST%" /MIR /NFL /NDL /NJH /NJS /XD .venv __pycache__ __temp_bots _static_root .git shots docs /XF db.sqlite3 .env __demo_links.txt >nul
 if errorlevel 8 (
   echo [ERROR] robocopy failed.
   pause
@@ -91,12 +96,15 @@ echo [3/3] Starting oTree dev server on port %PORT% ...
 set "OTREE_ADMIN_PASSWORD=admin"
 rem  devserver re-launches itself as "otree devserver_inner" by name, so the venv must be on PATH (WinError 2 otherwise)
 set "PATH=%DST%\.venv\Scripts;%PATH%"
-rem  open the browser only once the server answers (up to 5 minutes), instead of a fixed 6-second wait (v0.4)
-start "" /min powershell -NoProfile -ExecutionPolicy Bypass -Command "for($i=0;$i -lt 150;$i++){ try { $null = Invoke-WebRequest -UseBasicParsing -TimeoutSec 2 http://127.0.0.1:%PORT%/; Start-Process 'http://localhost:%PORT%/demo'; break } catch { Start-Sleep -Seconds 2 } }"
+rem  v0.5: once the server answers (up to 5 minutes), create a session in room "demo" and open the reusable link.
+rem        The links are also written to %DST%\__demo_links.txt
+start "" /min ".venv\Scripts\python.exe" tools\ensure_room.py --port %PORT% --config %CONFIG% --open --wait 300 --log __demo_links.txt
 echo.
-echo   The browser opens http://localhost:%PORT%/demo automatically when the server is ready
-echo   (if it shows "connection refused", wait for the line "Open your browser to ..." below, then reload;
-echo    http://127.0.0.1:%PORT%/demo also works).  Choose "A-1 Japanese version".
+echo   When the server is ready, the browser opens the REUSABLE demo link (config %CONFIG%):
+echo     every time you open that link you start again as a new participant (no need to go back to /demo).
+echo   Fixed link (same form as the real study):  http://localhost:%PORT%/room/demo
+echo     same browser = continue the same run; private window / phone / other browser = new participant.
+echo   All links:  %DST%\__demo_links.txt      Demo page: http://localhost:%PORT%/demo
 echo   Admin: http://localhost:%PORT%/   user admin / password admin  (local only)
 echo   Press Ctrl+C in this window to stop the server.
 echo.

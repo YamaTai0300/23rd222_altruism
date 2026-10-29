@@ -1,4 +1,4 @@
-# 00_setup.R — 解析スクリプト共通の設定・ヘルパー（v0.3）
+# 00_setup.R — 解析スクリプト共通の設定・ヘルパー（v0.3; v0.5 で HEXACO を 5 件法・別段階に、自己予測・入力確認の変数を廃止）
 # 各スクリプトの先頭で source("analysis/00_setup.R") する。
 # 方針（実験計画書「分析計画」「記録・分析ノート・図表」）:
 #   - 定数（seed、ブートストラップ回数、除外閾値、SESOI）は 1 か所で決め、分析ノートに自動で残す
@@ -35,7 +35,7 @@ CFG <- list(
 )
 
 HG_ITEMS <- c("hg_1", "hg_3", "hg_7", "hg_10", "hg_13")
-HEX_ITEMS <- sprintf("hex_%d", 1:10)  # HEXACO-60 正直さ-謙虚さ（逆転は codebook の reverse 列で 7 - x 済み）
+HEX_ITEMS <- sprintf("hex_%d", 1:10)  # HEXACO-60 正直さ-謙虚さ（v0.5: 1–5 の 5 件法。逆転は codebook の min/max から (min + max) - x で 01_clean.R が行う）
 PP_ITEMS <- c("pp_1", "pp_8", "pp_12", "pp_14", "pp_15")
 MC_ITEMS <- c("mc_1", "mc_3", "mc_18", "mc_20", "mc_23")
 
@@ -118,12 +118,12 @@ SHAPE_ORDER <- c(`1` = 16, `2` = 17)
 
 LAB <- if (CFG$fig_lang == "ja") list(
   order = c(`1` = "質問紙→DG", `2` = "DG→質問紙"), hg = "Help Giving（1–6、5 項目の平均）",
-  give = "相手に分けた額（円）", predict = "自己予測額（円）", count = "人数", rs = "Spearman rs（HG × 分配額）",
-  all = "全体", actual = "実際", pred = "予測", group = "順序群"
+  give = "相手に分けた額（円）", hh = "正直さ-謙虚さ（1–5、10 項目の平均）", count = "人数", rs = "Spearman rs（HG × 分配額）",
+  all = "全体", group = "順序群", scale_order = c(`1` = "FAB→HEXACO", `2` = "HEXACO→FAB")
 ) else list(
   order = c(`1` = "Survey first", `2` = "DG first"), hg = "Help Giving (1-6, mean of 5 items)",
-  give = "Amount given (yen)", predict = "Predicted amount (yen)", count = "Participants", rs = "Spearman rs (HG x amount given)",
-  all = "All", actual = "Actual", pred = "Predicted", group = "Order"
+  give = "Amount given (yen)", hh = "Honesty-Humility (1-5, mean of 10 items)", count = "Participants", rs = "Spearman rs (HG x amount given)",
+  all = "All", group = "Order", scale_order = c(`1` = "FAB first", `2` = "HEXACO first")
 )
 # 日本語の図のフォント。環境変数 A1_FIG_FONT で変更（Windows: "Yu Gothic" / "Meiryo"、macOS: "Hiragino Sans"）。
 # 日本語が「…」や □ になるときはロケールが UTF-8 でないかフォントがない（run_analysis.sh は UTF-8 を設定する）

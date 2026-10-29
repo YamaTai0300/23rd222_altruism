@@ -1,12 +1,25 @@
 {{ extends "global/Page.html" }}
 {{ block title }}{{ T.consent_title }}{{ endblock }}
 {{ block content }}
+{{ include "global/progress.html" }}
 {{ for p in T.consent_body }}
 <p>{{ p }}</p>
 {{ endfor }}
 <hr>
 {{ formfield 'consent' label=T.consent_check }}
-{{ formfield 'age_confirm' label=T.age_check }}
-{{ formfield 'student_confirm' label=T.student_check }}
+{{ formfield 'eligible_confirm' label=T.eligible_check }}
+{# 来歴の記録（v0.3）: ブラウザの種類と画面幅。参加者には見えない。取得できなくても進める #}
+<input type="hidden" name="user_agent" id="id_user_agent" value="">
+<input type="hidden" name="screen_width" id="id_screen_width" value="">
 <div class="mt-3">{{ next_button }}</div>
+{{ endblock }}
+{{ block scripts }}
+<script>
+  (function () {
+    try {
+      document.getElementById('id_user_agent').value = (navigator.userAgent || '').slice(0, 300);
+      document.getElementById('id_screen_width').value = String(window.screen && window.screen.width ? window.screen.width : '');
+    } catch (e) { /* 記録に失敗しても回答は続けられる */ }
+  })();
+</script>
 {{ endblock }}

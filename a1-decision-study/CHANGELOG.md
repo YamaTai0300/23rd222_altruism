@@ -1,5 +1,51 @@
 # 変更履歴
 
+## v0.5-pilot（2026-10-29）— 画面を必要最低限に、質問紙を 2 段階に、参加者の手間を減らす、使い回せるデモ URL
+
+デモ（v0.4）を見ての修正。修正前（v0.4）は `../a1-decision-study/` にそのまま残し、比較は `docs/compare_v0.4_v0.5.md`、
+`docs/compare_screens_v0.4_v0.5_ja.pdf`（画面の並列比較）、`docs/diff_v0.4_to_v0.5.patch`（ソースの差分）。
+
+### 1. 画面を実験に必要な最低限にした（__init__.py, texts/ja.py, en.py, テンプレート, settings.py, codebook.csv）
+- 謝礼（額・受け取り方法）と連絡先（お問い合わせ、Google フォーム）の案内を画面から外した。リンクを配布するときに伝える。
+  `contact_form_url` を削除。`participation_fee_yen` は画面に出さず `cfg_fee` としてデータに残す（pairing.py が使う）。
+- 削除した画面: 参加者コード（開始時）、質問紙の教示ページ、属性、自己予測、入力の確認と入力し直し。
+  参加者コードは終了画面にだけ表示。来歴の hidden 項目（user_agent, screen_width）と t_start は同意ページで取る。
+- 同意のチェックを 2 つに（同意／18 歳以上かつ [大学名] の学生 = `eligible_confirm`）。所要時間の目安を約 10 分に。
+- 参加者が通るページ数 13 → 9。削除した変数: age_confirm, student_confirm, age, gender, grade, game_exp, dg_predict, dg_give_1, dg_give_2, dg_correct。
+
+### 2. 質問紙を FAB と HEXACO の 2 段階にした（__init__.py, texts, SurveyPage.html, codebook.csv）
+- 質問紙 1/2 = FAB 15 + 注意チェック 2（6 件法、2 ページ、原研究と同じくランダム順・注意チェックはページの端に置かない）、
+  質問紙 2/2 = HEXACO 正直さ-謙虚さ 10（**原版と同じ 5 件法**、1 ページ、ランダム順、教示文は HEXACO-60 の要約）。
+- 段階の順序 `scale_order`（1 = FAB→HEXACO, 2 = HEXACO→FAB）を参加者ごとにランダム化。`task_order` と 2 × 2 の 4 通りを 4 人ずつブロック。
+- `hex_item_order` を記録。`fab_item_order` は 17 項目。HEXACO の逆転は解析側で 6 − x（codebook の min/max から）。
+- 日本語の HEXACO 10 項目と選択肢の語は若林 (2014) からの転記待ち（文言は【未転記】のまま）。
+
+### 3. 参加者の手間を減らす（_templates/global/Page.html, progress.html, style.css, テンプレート）
+- 進捗「ページ k / n」とバー（参加者ごとに実際に通るページで計算。`progress()`）。
+- 未回答・誤りの項目まで自動スクロール。行全体をタップで選択、選択済みを薄い青 + ✓ で表示。「次へ」の二重送信を防ぐ。
+- 各段階の 1 ページ目に教示と選択肢の一覧を枠で表示、2 ページ目は短い教示だけ。
+- 理解確認: 説明を折りたたみでいつでも読み直せる（再回答時は開く）。入力欄を大きく、自動フォーカス。決定のヒントに「次へで確定」を明記。
+
+### 4. 使い回せるデモ URL（settings.py ROOMS, tools/ensure_room.py, run_dev.bat）
+- Room `demo` を追加。`run_dev.bat` はサーバー起動後に `tools/ensure_room.py` でセッション（`DEMO_ROOM_PARTICIPANTS` = 100 人）を作り、
+  開くたびに新しい参加者で始まる使い回しリンク `/join/<code>` をブラウザで開く。固定リンク `/room/demo` も表示（同じブラウザは続きから）。
+  リンクは `__demo_links.txt` にも書く。`run_dev.bat [port] [a1_ja|a1_en]`。
+- 実行時のコピー先を `%LOCALAPPDATA%\a1-decision-study_v0.5` に変え、v0.4 と共存できるようにした。
+
+### 5. 解析・ツール・テストの同期（analysis/, tools/, tests.py）
+- 01_clean.R: 逆転を `(min + max) − x`、ページ名（FabPage*, Hex*）、`revised`・`dg_predict`・`age` の削除。
+- 02_main.R: 自己予測の分析を削除、感度分析 (b) は欠番、H5 の注記（5 件法・別段階）、`scale_order` ごとの HG・HH を記述的に表示。
+- 04_figures.R: 図 d を HEXACO × 分配額（探索 H5）に置き換え。99_synthetic.R: v0.5 の列構成。合成データ N = 130 で最後まで通ることを確認（R 4.3.3）。
+- tests.py: 6 ケース（revise を削除）、HEXACO 段階（範囲外 6 の拒否、未回答の拒否）、scale_order・hex_item_order の検査。
+  `otree test a1_ja/a1_en 24` が use_hexaco = True/False、dg_step = 1/100 で通る。export_check OK（64 変数）。
+- tools/browser_walk.py: 4 人分を通して全種類の画面を撮り `--pdf` でまとめる。tools/compare_screens.py（新規）: v0.4/v0.5 の並列比較 PDF。
+- 画面: `docs/screens_v0.5_ja.pdf`, `docs/screens_v0.5_en.pdf`。
+
+### 確認が必要な点
+- 謝礼・連絡先・参加者コードの扱いを「リンク配布時の案内文」として書く（計画書「倫理・謝礼」）。
+- HEXACO の日本語 10 項目と 5 件法の選択肢の語（若林 2014）の転記。
+- 計画書の材料・手続き・分析計画（自己予測と感度分析 (b) の削除、段階順のランダム化）を v0.5 に合わせる。
+
 ## v0.4-pilot（2026-10-24）— HEXACO 採用、完了者だけの保存、設定値の読み取り、Page Times
 
 実験計画書の「不足」への回答（2026-10-24）に沿った変更。画面の構成は変えていないが、謝礼に関する文言を変えた。

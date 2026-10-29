@@ -1,0 +1,3427 @@
+diff -ruN '--exclude=.venv' '--exclude=__pycache__' '--exclude=*.sqlite3' '--exclude=*.pdf' '--exclude=*.png' '--exclude=example_output_synthetic' '--exclude=diff_v0.4_to_v0.5.patch' '--exclude=.gitignore' '--exclude=screens_v0.1_ja.pdf' a1-decision-study/CHANGELOG.md a1-decision-study_v0.5/CHANGELOG.md
+--- a1-decision-study/CHANGELOG.md	2026-10-26 05:11:24.000000000 +0900
++++ a1-decision-study_v0.5/CHANGELOG.md	2026-10-29 10:20:26.410578808 +0900
+@@ -1,5 +1,51 @@
+ # 変更履歴
+ 
++## v0.5-pilot（2026-10-29）— 画面を必要最低限に、質問紙を 2 段階に、参加者の手間を減らす、使い回せるデモ URL
++
++デモ（v0.4）を見ての修正。修正前（v0.4）は `../a1-decision-study/` にそのまま残し、比較は `docs/compare_v0.4_v0.5.md`、
++`docs/compare_screens_v0.4_v0.5_ja.pdf`（画面の並列比較）、`docs/diff_v0.4_to_v0.5.patch`（ソースの差分）。
++
++### 1. 画面を実験に必要な最低限にした（__init__.py, texts/ja.py, en.py, テンプレート, settings.py, codebook.csv）
++- 謝礼（額・受け取り方法）と連絡先（お問い合わせ、Google フォーム）の案内を画面から外した。リンクを配布するときに伝える。
++  `contact_form_url` を削除。`participation_fee_yen` は画面に出さず `cfg_fee` としてデータに残す（pairing.py が使う）。
++- 削除した画面: 参加者コード（開始時）、質問紙の教示ページ、属性、自己予測、入力の確認と入力し直し。
++  参加者コードは終了画面にだけ表示。来歴の hidden 項目（user_agent, screen_width）と t_start は同意ページで取る。
++- 同意のチェックを 2 つに（同意／18 歳以上かつ [大学名] の学生 = `eligible_confirm`）。所要時間の目安を約 10 分に。
++- 参加者が通るページ数 13 → 9。削除した変数: age_confirm, student_confirm, age, gender, grade, game_exp, dg_predict, dg_give_1, dg_give_2, dg_correct。
++
++### 2. 質問紙を FAB と HEXACO の 2 段階にした（__init__.py, texts, SurveyPage.html, codebook.csv）
++- 質問紙 1/2 = FAB 15 + 注意チェック 2（6 件法、2 ページ、原研究と同じくランダム順・注意チェックはページの端に置かない）、
++  質問紙 2/2 = HEXACO 正直さ-謙虚さ 10（**原版と同じ 5 件法**、1 ページ、ランダム順、教示文は HEXACO-60 の要約）。
++- 段階の順序 `scale_order`（1 = FAB→HEXACO, 2 = HEXACO→FAB）を参加者ごとにランダム化。`task_order` と 2 × 2 の 4 通りを 4 人ずつブロック。
++- `hex_item_order` を記録。`fab_item_order` は 17 項目。HEXACO の逆転は解析側で 6 − x（codebook の min/max から）。
++- 日本語の HEXACO 10 項目と選択肢の語は若林 (2014) からの転記待ち（文言は【未転記】のまま）。
++
++### 3. 参加者の手間を減らす（_templates/global/Page.html, progress.html, style.css, テンプレート）
++- 進捗「ページ k / n」とバー（参加者ごとに実際に通るページで計算。`progress()`）。
++- 未回答・誤りの項目まで自動スクロール。行全体をタップで選択、選択済みを薄い青 + ✓ で表示。「次へ」の二重送信を防ぐ。
++- 各段階の 1 ページ目に教示と選択肢の一覧を枠で表示、2 ページ目は短い教示だけ。
++- 理解確認: 説明を折りたたみでいつでも読み直せる（再回答時は開く）。入力欄を大きく、自動フォーカス。決定のヒントに「次へで確定」を明記。
++
++### 4. 使い回せるデモ URL（settings.py ROOMS, tools/ensure_room.py, run_dev.bat）
++- Room `demo` を追加。`run_dev.bat` はサーバー起動後に `tools/ensure_room.py` でセッション（`DEMO_ROOM_PARTICIPANTS` = 100 人）を作り、
++  開くたびに新しい参加者で始まる使い回しリンク `/join/<code>` をブラウザで開く。固定リンク `/room/demo` も表示（同じブラウザは続きから）。
++  リンクは `__demo_links.txt` にも書く。`run_dev.bat [port] [a1_ja|a1_en]`。
++- 実行時のコピー先を `%LOCALAPPDATA%\a1-decision-study_v0.5` に変え、v0.4 と共存できるようにした。
++
++### 5. 解析・ツール・テストの同期（analysis/, tools/, tests.py）
++- 01_clean.R: 逆転を `(min + max) − x`、ページ名（FabPage*, Hex*）、`revised`・`dg_predict`・`age` の削除。
++- 02_main.R: 自己予測の分析を削除、感度分析 (b) は欠番、H5 の注記（5 件法・別段階）、`scale_order` ごとの HG・HH を記述的に表示。
++- 04_figures.R: 図 d を HEXACO × 分配額（探索 H5）に置き換え。99_synthetic.R: v0.5 の列構成。合成データ N = 130 で最後まで通ることを確認（R 4.3.3）。
++- tests.py: 6 ケース（revise を削除）、HEXACO 段階（範囲外 6 の拒否、未回答の拒否）、scale_order・hex_item_order の検査。
++  `otree test a1_ja/a1_en 24` が use_hexaco = True/False、dg_step = 1/100 で通る。export_check OK（64 変数）。
++- tools/browser_walk.py: 4 人分を通して全種類の画面を撮り `--pdf` でまとめる。tools/compare_screens.py（新規）: v0.4/v0.5 の並列比較 PDF。
++- 画面: `docs/screens_v0.5_ja.pdf`, `docs/screens_v0.5_en.pdf`。
++
++### 確認が必要な点
++- 謝礼・連絡先・参加者コードの扱いを「リンク配布時の案内文」として書く（計画書「倫理・謝礼」）。
++- HEXACO の日本語 10 項目と 5 件法の選択肢の語（若林 2014）の転記。
++- 計画書の材料・手続き・分析計画（自己予測と感度分析 (b) の削除、段階順のランダム化）を v0.5 に合わせる。
++
+ ## v0.4-pilot（2026-10-24）— HEXACO 採用、完了者だけの保存、設定値の読み取り、Page Times
+ 
+ 実験計画書の「不足」への回答（2026-10-24）に沿った変更。画面の構成は変えていないが、謝礼に関する文言を変えた。
+diff -ruN '--exclude=.venv' '--exclude=__pycache__' '--exclude=*.sqlite3' '--exclude=*.pdf' '--exclude=*.png' '--exclude=example_output_synthetic' '--exclude=diff_v0.4_to_v0.5.patch' '--exclude=.gitignore' '--exclude=screens_v0.1_ja.pdf' a1-decision-study/README.md a1-decision-study_v0.5/README.md
+--- a1-decision-study/README.md	2026-10-26 05:11:22.000000000 +0900
++++ a1-decision-study_v0.5/README.md	2026-10-29 10:22:02.562547162 +0900
+@@ -1,4 +1,4 @@
+-# a1-decision-study — A-1 追試（FAB 質問紙 × 独裁者ゲーム）の oTree 実装（v0.4・日本語版）
++# a1-decision-study_v0.5 — A-1 追試（FAB・HEXACO 質問紙 × 独裁者ゲーム）の oTree 実装（v0.5・日本語版）
+ 
+ Binder, Schultze, Chen & Windmann (2026, *Sci Rep* 16:11600) の「Help Giving → 独裁者ゲーム」を
+ 日本の大学生で再現する一回完結のオンライン実験。設計はこの文書に従う:
+@@ -7,21 +7,32 @@
+ - 実験計画書 A-1: https://claude.ai/code/artifact/7d6d3bf2-110f-4096-87f7-f1ae9ec69219
+ - 再現要素一覧（Excel）: `../A-1_再現要素一覧.xlsx`
+ - 原研究の公開資料（OSF T5MF2）からの抜粋と対応表: `docs/osf_sources.md`、変更履歴: `CHANGELOG.md`
++- 修正前の v0.4 は `../a1-decision-study/` にそのまま残してある。v0.4 → v0.5 の比較: `docs/compare_v0.4_v0.5.md`（文言・変数・解析）、
++  `docs/compare_screens_v0.4_v0.5_ja.pdf`（画面の並列比較）、`docs/diff_v0.4_to_v0.5.patch`（ソースの差分）
+ 
+-参加者は各自のスマホ・PC から募集期間中の好きな時刻に 1 人で参加する（完全非同期、約 15 分）。
++参加者は各自のスマホ・PC から募集期間中の好きな時刻に 1 人で参加する（完全非同期、約 10 分）。
+ WaitPage やグループは使わない。DG の相手とのペアは締切後に `tools/pairing.py` でオフラインに組む。
+ 
+-## 状態（2026-10-24, v0.4）
++## 状態（2026-10-29, v0.5）
+ 
+ v0.2 で OSF T5MF2 の原資料（補足資料 S1、codebook、前処理・解析スクリプト、卒論付録の教示原文）に合わせて改訂し、
+ v0.3 で実験計画書の「記録・分析ノート・図表」と改訂した「分析計画」（判定基準・感度分析・不確実性の明示）を実装、
+-v0.4 で HEXACO の採用、完了者だけの保存、設定値の CSV からの読み取り、Page Times による速い回答の検出を加えた。
++v0.4 で HEXACO の採用、完了者だけの保存、設定値の CSV からの読み取り、Page Times による速い回答の検出を加え、
++v0.5 でデモを見て画面を必要最低限（9 ページ）にし、質問紙を FAB / HEXACO の 2 段階にし、参加者の手間を減らし、使い回せるデモ URL を付けた。
+ 変更点の一覧は `CHANGELOG.md`。
+ 
+ できていること
+ 
+-- **HEXACO 正直さ-謙虚さ（v0.4）**: `use_hexaco=True` が既定。HEXACO-60 の 10 項目（英語は `texts/en.py`、hexaco.org と要照合）を
+-  FAB と一体でランダム提示（6 件法）。逆転項目は `codebook.csv` の `reverse` 列、平均 `hh_mean` は `01_clean.R`、探索 H5 は `02_main.R`
++- **最低限の画面（v0.5）**: 同意 → 質問紙 1/2（FAB + 注意チェック、2 ページ）→ 質問紙 2/2（HEXACO、1 ページ）→ DG 説明 → 理解確認 → 決定
++  → 事後評価 → 終了（順序群 2 は DG が質問紙の前）。謝礼・連絡先の案内、参加者コードの前置き、属性、自己予測、入力確認は外した
++  （案内はリンク配布時に伝える）。参加者コードは終了画面にだけ出す
++- **質問紙の 2 段階（v0.5）**: FAB は 6 件法、HEXACO 正直さ-謙虚さ 10 項目は原版と同じ 5 件法で別の段階。段階の順序 `scale_order` を
++  `task_order` と 2 × 2 でブロックランダム化（4 人ごとに 4 通り）。各段階内はランダム順（`fab_item_order`, `hex_item_order`）
++- **参加者の手間（v0.5）**: 進捗「ページ k / 9」、未回答項目への自動スクロール、行全体をタップ、回答済みの印、教示は各段階の 1 ページ目に統合、
++  理解確認で説明を折りたたみから読み直せる、二重送信の防止
++- **使い回せるデモ URL（v0.5）**: `run_dev.bat` が Room `demo` にセッションを作り、開くたびに新しい参加者で始まるリンクを開く（下の「動かし方」）
++- **HEXACO 正直さ-謙虚さ（v0.4）**: `use_hexaco=True` が既定。HEXACO-60 の 10 項目（英語は `texts/en.py`、hexaco.org と要照合）。
++  逆転項目は `codebook.csv` の `reverse` 列（解析で 6 − x）、平均 `hh_mean` は `01_clean.R`、探索 H5 は `02_main.R`
+ - **完了者だけを保存（v0.4）**: `tools/archive_export.py` が管理画面のエクスポートから `finished == 1` の行だけを `raw/<purpose>/` に保存し、
+   Page Times も同じ参加者に絞って SHA-256 を記録する。未完了の行は保存しない（同意文にも明記）
+ - **設定値の読み取り（v0.4）**: `cfg_fee` を各回答に記録し、`tools/pairing.py` は元手と参加謝礼を CSV の `cfg_endowment`・`cfg_fee` から読む
+@@ -35,18 +46,17 @@
+   結果は `results.md`（人が読む）と `results.json`・CSV（機械可読）、分析ノート `analysis_notes.md`（入力の MD5・除外・検定・版・seed を自動記録）。
+   合成データ（`analysis/99_synthetic.R`）で最後まで通ることを確認済み。出力先は本データと分けてある
+ 
+-- 全 26 ページ（同意 → コード → 質問紙 2 ページ → 属性 → DG 説明 → 理解確認 → 自己予測 → DG 決定 → 入力確認
+-  →（入力し直し）→ 事後評価 → 終了）を順序 2 群（質問紙→DG / DG→質問紙）で実装。順序はセッション作成時にブロックランダム化
++- ページクラス 17（参加者が通るのは 9）を順序 2 群（質問紙→DG / DG→質問紙）× 段階順 2 群で実装。割り当てはセッション作成時にブロックランダム化
+ - FAB 15 項目は Supplement S1 の確定文言（英語は原文、日本語は訳案）。変数名は原研究と同じ `hg_1 … mc_23`
+ - 注意チェック 2 項目（`cq1` = 全くそう思わない, `cq2` = 強くそう思う。原研究の control question と同じ文言・正答）を
+   FAB と一体でランダム順に提示し、順序を `fab_item_order` に記録
+-- DG は原研究と同じく 0〜元手の任意の額を数値入力（刻みは `dg_step`）。入力後に確認画面（原研究 Study 09 の `dg_correct`）、
+-  「いいえ」なら 1 回だけ入力し直せる（`dg_give_1`, `dg_give_2`, 最終 `dg_give`）
+-- 未回答チェック（回答済みの選択を保持したまま未回答項目を赤枠で表示）、理解確認の 1 回だけの再回答、
+-  DG 決定画面の取り分の即時表示、終了画面から連絡先フォームへ参加者コード付きで誘導
++- DG は原研究と同じく 0〜元手の任意の額を数値入力（刻みは `dg_step`）。入力は 1 回で確定（v0.5 で確認画面を廃止。原研究 Study 09 の
++  `dg_correct` は使わない）
++- 未回答チェック（回答済みの選択を保持したまま未回答項目を赤枠で表示し、そこまでスクロール）、理解確認の 1 回だけの再回答、
++  DG 決定画面の取り分の即時表示、終了画面に参加者コード
+ - 事後評価 4 項目（原研究 Study 11 の評価項目）と自由記述
+ - 所要時間・完了・アプリ内除外フラグ（注意チェック・理解確認）の記録
+-- ボットテスト 7 ケース（`otree test a1_ja` / `a1_en`）が `dg_step` = 1 と 100 の両方で通る
++- ボットテスト 6 ケース（`otree test a1_ja` / `a1_en`）が `dg_step` = 1 と 100、`use_hexaco` = True / False で通る
+ - `tools/pairing.py`（ペアリング・役割抽選・支払額）、`tools/export_check.py`（CSV とコードブックの突合）、
+   `analysis/`（コードブック、除外・主分析・原データとの比較の R スクリプト）
+ 
+@@ -54,21 +64,22 @@
+ 
+ 1. **FAB の和訳の確定**: `altruism_study/texts/ja.py` の 15 項目はすべて訳案。バックトランスレーション
+    （和訳 → 別の人が英訳 → S1 の原文と比較 → 修正）を経た確定版に置き換える。英語原文は `en.py` と `docs/osf_sources.md`
+-2. **連絡先フォーム**: Google フォーム（参加者コード + メールアドレス）を作り、事前入力 URL を
+-   `settings.py` の `contact_form_url` に入れる（`entry.NNNN=` の後ろにコードが付く）
+-3. **同意文の固有情報**: `consent_body` の [研究者名・所属・メールアドレス]、`student_check` の [大学名]
++2. **リンク配布時の案内文**: 謝礼（参加謝礼の額、DG の結果に応じた額、種類・送付方法・時期）、連絡先、終了画面の参加者コードをどう申告するかを、
++   実験の外（募集メール・掲示）で伝える。画面には出さない（v0.5）。文面を計画書「倫理・謝礼」に入れる
++3. **同意文の固有情報**: `eligible_check` の [大学名]
+ 4. **決めること（CHANGELOG「確認が必要な点」）**: DG の刻み（既定 1 円）、注意チェックの正答（両端）、
+-   所要時間の除外閾値（中央値の 1/4）、事後評価を入れるか、混ぜる尺度（HEXACO）を使うか
+-5. `docs/screens_v0.2_ja.pdf`（v0.2 の全 18 画面、スマホ幅）を見て文言・レイアウトを確認する（v0.4 で同意文・DG 説明・終了画面の
+-   謝礼に関する文言を変えたので撮り直す）
+-8. **HEXACO 日本語版 10 項目の転記**: `texts/ja.py` の `hex_1〜hex_10` は未転記。若林 (2014) の日本語版から
++   所要時間の除外閾値（中央値の 1/4）、事後評価の 4 項目を残すか
++5. `docs/screens_v0.5_ja.pdf`（v0.5 の全画面、スマホ幅）と `docs/compare_screens_v0.4_v0.5_ja.pdf` を見て文言・レイアウトを確認する。
++   実機（iOS / Android）での通し確認
++8. **HEXACO 日本語版 10 項目の転記**: `texts/ja.py` の `hex_1〜hex_10` と 5 件法の選択肢の語 `likert5` は未転記。若林 (2014) の日本語版から
+    `../FAB_和訳作業シート.xlsx`「HEXACO-HH」の対応表（HEXACO-60 の項目番号・逆転）に沿って転記する。英語原文も hexaco.org と照合する
+-9. **謝礼の種類・支払い方法**: 未決。画面の文言は方法を指定しない形にしてある（「謝礼としてお支払い」「受け取り方法はメールで案内」）。
+-   決まったら実験計画書と文言（`consent_body`, `dg_intro_body`, `end_body`）に入れる
++9. **謝礼の種類・支払い方法**: 未決。決まったら実験計画書と配布時の案内文に入れる（画面の文言には入れない）
+ 6. **R の解析環境**: R 4.2 以上と `install.packages(c("tidyverse", "psych", "GPArotation", "lavaan", "boot", "jsonlite", "digest", "patchwork"))`
+    を入れ、`run_analysis.bat synthetic` が最後まで通ることを確認する（下の「解析」）
+-7. **事前登録**: 実験計画書の判定基準（SESOI r = .10 の 3 段階）・感度分析 (a)〜(e)・停止規則を AsPredicted / OSF に転記し、
++7. **事前登録**: 実験計画書の判定基準（SESOI r = .10 の 3 段階）・感度分析 (a)(c)〜(g)・停止規則を AsPredicted / OSF に転記し、
+    `analysis/` のスクリプトをデータ収集前に凍結する
++10. **実験計画書の同期**: 材料（HEXACO 5 件法・別段階・段階順ランダム）、手続き（9 ページ）、分析計画（自己予測と感度分析 (b) の削除）、
++   倫理・謝礼（案内文）を v0.5 に合わせる
+ 
+ ## 動かし方（ローカル）
+ 
+@@ -80,16 +91,20 @@
+    miniconda3 / anaconda3 の `envs\a1` を自動で見つける）→ PATH 上の `python` が 3.10〜3.12 の場合。
+    見つからないと黒い窓にエラーと 3 つの対処が表示され、キーを押すと閉じる。
+ 2. `run_dev.bat` をダブルクリック。初回は 2〜3 分かかる（仮想環境の作成とパッケージの取得）。
+-3. ブラウザで http://localhost:8000/demo が開く → 「A-1 日本語版（予備実験）」→ 参加者リンクのどれかを開く。
+-   スマホ表示を見るにはブラウザの開発者ツール（F12）→ デバイスツールバーで幅 375 にする。
++3. サーバーが起動すると、`tools/ensure_room.py` が Room `demo` にセッション（100 人分）を作り、**使い回しリンク**
++   `http://localhost:8000/join/<code>` をブラウザで開く。このリンクは**開くたびに新しい参加者として最初から始まる**ので、
++   /demo に戻って参加者リンクを選び直す必要がない（100 回まで。足りなくなったら `run_dev.bat` を再実行）。
++   固定リンク `http://localhost:8000/room/demo`（本実験と同じ URL の形）も使える。こちらは同じブラウザで開き直すと続きから再開し、
++   シークレットウィンドウ・スマホ・別のブラウザからは新しい参加者になる。リンクは `%LOCALAPPDATA%\a1-decision-study_v0.5\__demo_links.txt` にも書かれる。
++   スマホ表示を見るにはブラウザの開発者ツール（F12）→ デバイスツールバーで幅 375 にする。英語版は `run_dev.bat 8000 a1_en`。
+ 4. 止めるときは黒い窓で Ctrl+C。
+ 
+-`run_dev.bat` は、このフォルダー（OneDrive 配下）の中身を `%LOCALAPPDATA%\a1-decision-study` にコピーしてから
+-起動する。OneDrive の同期と `db.sqlite3` の書き込みがぶつかるのを避けるため。**コードの編集はこのフォルダーで行い、
+-編集後に `run_dev.bat` をもう一度実行する**（コピー先を直接編集すると次回上書きされる）。ポートが使用中なら
+-`run_dev.bat 8001` のように引数で変えられる。
++`run_dev.bat` は、このフォルダー（OneDrive 配下）の中身を `%LOCALAPPDATA%\a1-decision-study_v0.5` にコピーしてから
++起動する（v0.4 の `%LOCALAPPDATA%\a1-decision-study` とは別なので両方を見比べられる）。OneDrive の同期と `db.sqlite3` の書き込みが
++ぶつかるのを避けるため。**コードの編集はこのフォルダーで行い、編集後に `run_dev.bat` をもう一度実行する**（コピー先を直接編集すると
++次回上書きされる）。ポートが使用中なら `run_dev.bat 8001` のように引数で変えられる。
+ 
+-ボットテストと CSV 出力は `run_tests.bat`（引数で人数、既定 14 = 7 ケース × 2）。結果は `%LOCALAPPDATA%\a1-decision-study\__temp_bots\`。
++ボットテストと CSV 出力は `run_tests.bat`（引数で人数、既定 24 = 6 ケース × 4 通りの順序）。結果は `%LOCALAPPDATA%\a1-decision-study_v0.5\__temp_bots\`。
+ 
+ ### 手動で行う場合（PowerShell / macOS / Linux）
+ 
+@@ -99,14 +114,17 @@
+ pip install -r requirements.txt
+ $env:OTREE_ADMIN_PASSWORD = "admin"  # macOS/Linux: export OTREE_ADMIN_PASSWORD=admin
+ otree devserver                   # http://localhost:8000 → Demo → 「A-1 日本語版（予備実験）」
+-otree test a1_ja 14               # ボット 14 名 × 7 ケース
++python tools/ensure_room.py --port 8000 --open   # 別のターミナルで: 使い回しリンクを作ってブラウザで開く
++otree test a1_ja 24               # ボット 24 名 × 6 ケース
+ otree test a1_ja 40 --export __temp_bots   # CSV を書き出す
+ python tools/export_check.py __temp_bots/altruism_study.csv
++python tools/browser_walk.py shots a1_ja --base http://localhost:8000 --pdf docs/screens_v0.5_ja.pdf   # 全画面のスクリーンショット
+ ```
+ 
+ ### 画面だけ先に見たいとき
+ 
+-`docs/screens_v0.2_ja.pdf` に、v0.2 のスマホ幅の全 18 画面（エラー表示・再回答・入力し直し・事後評価を含む）が入っている。v0.1 は `screens_v0.1_ja.pdf`。
++`docs/screens_v0.5_ja.pdf` に v0.5 のスマホ幅の全画面（エラー表示・再回答・4 通りの順序を含む）、`docs/screens_v0.5_en.pdf` に英語版、
++`docs/compare_screens_v0.4_v0.5_ja.pdf` に v0.4 との並列比較が入っている。v0.1〜v0.2 の画面は `../a1-decision-study/docs/`。
+ 
+ ### つまずきやすい点
+ 
+@@ -120,23 +138,27 @@
+ ## 構成
+ 
+ ```
+-settings.py                  SESSION_CONFIGS（a1_ja / a1_en）、ROOMS（pilot / main）、言語・通貨
++settings.py                  SESSION_CONFIGS（a1_ja / a1_en）、ROOMS（demo / pilot / main）、DEMO_ROOM_PARTICIPANTS、言語・通貨
+ altruism_study/
+-  __init__.py                定数 C、Player モデル、ページ、page_sequence、creating_session
++  __init__.py                定数 C、Player モデル、ページ、page_sequence、creating_session、進捗の計算
+   texts/ja.py, en.py         すべての表示文言（テンプレートには文言を書かない）。FAB 項目は S1 の原文／訳案
+-  *.html                     画面テンプレート 12 種（順序群で共用）
+-  tests.py                   ボットテスト 7 ケース
+-_templates/global/Page.html  全ページ共通（スタイルシートの読み込み）
++  *.html                     画面テンプレート 7 種（Consent, SurveyPage, DGIntro, DGCheck, DGDecision, PostSurvey, End。順序群・段階で共用）
++  tests.py                   ボットテスト 6 ケース
++_templates/global/Page.html  全ページ共通（スタイルシートの読み込み、自動スクロール・回答済みの印・二重送信防止の JS）
++_templates/global/progress.html  進捗表示（各テンプレートが include）
+ _static/study/style.css
++tools/ensure_room.py         Room demo にセッションを作り、使い回しリンク／固定リンクを表示・ブラウザで開く（run_dev.bat が呼ぶ）（v0.5）
+ tools/pairing.py             締切後: ペアリング・役割抽選・支払額 CSV（--seed 必須）
+ tools/export_check.py        エクスポート CSV を analysis/codebook.csv と突合
+ tools/archive_export.py      エクスポートから完了者だけを raw/<purpose>/ に保存し、Page Times を絞り、SHA-256 を記録（v0.4）
+ tools/run_log.py             エクスポート CSV からセッションの要約を docs/run_log.csv に追記（v0.3）
+-tools/browser_walk.py        Playwright で通し確認（任意）
+-run_dev.bat / run_tests.bat  Windows 用の起動・テスト（OneDrive 外にコピーして実行）
++tools/browser_walk.py        Playwright で 4 人分を通し、全種類の画面を撮って PDF にまとめる
++tools/compare_screens.py     v0.4 と v0.5 のスクリーンショットを左右に並べた比較 PDF を作る（v0.5）
++run_dev.bat / run_tests.bat  Windows 用の起動・テスト（OneDrive 外 %LOCALAPPDATA%\a1-decision-study_v0.5 にコピーして実行）
+ run_analysis.bat / .sh       解析パイプライン 01 → 02 → 04 を順に実行（synthetic / original モードあり）（v0.3）
+ docs/osf_sources.md          OSF T5MF2 から取得した原資料の抜粋（教示文・注意チェック・除外基準・変数名）
+-docs/screens_v0.2_ja.pdf     v0.2 の全画面のスクリーンショット（v0.1 は screens_v0.1_ja.pdf）
++docs/screens_v0.5_ja.pdf     v0.5 の全画面のスクリーンショット（英語版は screens_v0.5_en.pdf）
++docs/compare_v0.4_v0.5.md    v0.4 → v0.5 の比較（文言・変数・解析・手続き）。画面は compare_screens_v0.4_v0.5_ja.pdf、ソースは diff_v0.4_to_v0.5.patch
+ docs/run_log.csv             run ログ（セッションごとの設定・版・人数。tools/run_log.py が書く）（v0.3）
+ docs/example_output_synthetic/  合成データで作った出力の例（results.md, analysis_notes.md, fig_main.png など。本物のデータではない）
+ analysis/codebook.csv        変数定義（名前・型・範囲・画面・役割・原研究の対応変数）
+@@ -158,8 +180,7 @@
+ | `endowment` | 1000 | DG の元手（円）。理解確認の正答は `endowment - 300` |
+ | `dg_step` | 1 | DG の入力の刻み（円）。原研究は任意の額（刻みなし）。100 にすると 100 円単位 |
+ | `participation_fee_yen` | 300 | 参加謝礼（文言と pairing.py に使う） |
+-| `use_hexaco` | True | HEXACO-60 正直さ-謙虚さ 10 項目を質問紙に混ぜる（v0.4 で採用。日本語訳は未転記） |
+-| `contact_form_url` | 要差し替え | 連絡先フォームの事前入力 URL |
++| `use_hexaco` | True | HEXACO-60 正直さ-謙虚さ 10 項目を 2 つ目の質問紙として入れる（5 件法。日本語訳は未転記）。False なら FAB だけ（scale_order = 0） |
+ | `rand_seed` | 0 | 順序割り当て・項目順の乱数シード。0 = セッションコードから決定的に導く。各回答の `rand_seed` 列に記録される |
+ | `app_version` | v0.4-pilot | データに記録する版（Git タグと合わせる） |
+ 
+@@ -168,7 +189,8 @@
+ ## 設計書との差分
+ 
+ - `order` は oTree の予約語のため、順序群の変数名は **`task_order`** にした（1 = 質問紙→DG, 2 = DG→質問紙）。
+-  コードブック・R スクリプトも `task_order`
++  コードブック・R スクリプトも `task_order`。質問紙の段階順は `scale_order`（1 = FAB→HEXACO, 2 = HEXACO→FAB）
++- v0.5 で設計書・計画書から外した画面: 参加者コード（開始時）、属性、自己予測、入力確認。謝礼・連絡先の案内も画面にはない（`docs/compare_v0.4_v0.5.md`）
+ - FAB・注意チェック・属性の各フィールドは `blank=True` にし、必須チェックは `error_message` で行う。
+   こうすると未回答があっても回答済みの値を保存でき、再表示時に選択が消えない（設計書 §7 の意図どおり）
+ - ページのテンプレートは先頭で `{{ extends "global/Page.html" }}` を宣言する（oTree 5 では
+@@ -207,10 +229,12 @@
+ 
+ - 本番は `.env`（`.env.example` をコピー）で `OTREE_PRODUCTION=1`、`OTREE_AUTH_LEVEL=STUDY`、
+   `OTREE_ADMIN_PASSWORD`、`OTREE_SECRET_KEY` を設定し、`otree resetdb` → `otree prodserver`
+-- 募集 URL は Rooms → `pilot` / `main` にセッションをつないで表示される URL。参加者枠は累計の上限
++- 募集 URL は Rooms → `pilot` / `main` にセッションをつないで表示される URL（`/room/pilot`, `/room/main`）。参加者枠は累計の上限。
++  `demo` ルームは開発用（`tools/ensure_room.py` が本番でも使える: `OTREE_REST_KEY` を設定して `--room pilot --config a1_ja --participants 150`）
+ - 本実験中は `otree resetdb` を実行しない（全データが消える）。毎日 CSV をエクスポートして保管し、
+   `python tools/run_log.py raw/main/altruism_study_<date>.csv --purpose main` で run ログを更新する
+ - 起動前に環境変数 `A1_GIT_COMMIT` にコードのコミットを入れる（`run_dev.bat` は `git rev-parse` で自動設定。Git 管理していなければ
+   `unknown` になるので、`app_version` を版ごとに必ず変える）
+ - 締切後: `python tools/pairing.py --data raw/final/altruism_study_<date>.csv --contacts raw/contacts_<date>.csv --seed <整数>`
+-  → `payout/pairs_<date>.csv` の `payout_yen` を支払う（元手・参加謝礼は CSV の記録値から読む。支払いの方法・送付手順は未決、計画書に記載予定）
++  → `payout/pairs_<date>.csv` の `payout_yen` を支払う（元手・参加謝礼は CSV の記録値から読む。支払いの方法・送付手順は未決、計画書に記載予定）。
++  `--contacts` の CSV は v0.5 では実験の外で集める（参加者が申告した参加者コード + 連絡先）
+diff -ruN '--exclude=.venv' '--exclude=__pycache__' '--exclude=*.sqlite3' '--exclude=*.pdf' '--exclude=*.png' '--exclude=example_output_synthetic' '--exclude=diff_v0.4_to_v0.5.patch' '--exclude=.gitignore' '--exclude=screens_v0.1_ja.pdf' a1-decision-study/_static/study/style.css a1-decision-study_v0.5/_static/study/style.css
+--- a1-decision-study/_static/study/style.css	2026-10-18 20:07:33.000000000 +0900
++++ a1-decision-study_v0.5/_static/study/style.css	2026-10-29 09:52:54.204600844 +0900
+@@ -3,15 +3,12 @@
+ .item-card { border-radius: 10px; }
+ .item-card.missing { border: 2px solid #c00; }
+ .item-text { font-weight: 600; margin-bottom: .5rem; }
+-.likert .form-check { margin-bottom: .35rem; }
+-.likert .form-check-input { width: 1.25em; height: 1.25em; margin-top: .15em; }
+-.likert .form-check-label { padding-left: .25rem; }
+-.amounts .form-check { margin-bottom: .3rem; }
+ .split-box { background: #f1f5f9; border-radius: 10px; padding: .75rem 1rem; margin: .75rem 0; font-size: 1.1rem; }
+ .split-box strong { font-size: 1.3rem; }
+ .code-box { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 1.8rem; letter-spacing: .15em; background: #f1f5f9; border-radius: 10px; padding: .6rem 1rem; display: inline-block; margin: .5rem 0 1rem; }
+ .form-control-errors { color: #c00; margin-top: .25rem; }
+ details.dg-recap { background: #fffbe6; border: 1px solid #f0d879; border-radius: 10px; padding: .5rem .9rem; margin: .75rem 0 1rem; }
++details.dg-recap summary { cursor: pointer; font-weight: 600; }
+ 
+ /* v0.2 */
+ .round-name { font-weight: 700; font-size: 1.15rem; margin-bottom: .75rem; }
+@@ -19,4 +16,25 @@
+ .dg-options li { margin-bottom: .4rem; }
+ .amount-input { max-width: 16rem; margin: .5rem 0 .25rem; }
+ .amount-input input { font-size: 1.4rem; text-align: right; }
+-.confirm-body { font-size: 1.15rem; font-weight: 600; }
++
++/* v0.5: 進捗表示 */
++.progress-line { display: flex; align-items: center; gap: .6rem; margin: -.25rem 0 1rem; }
++.progress-bar-outer { flex: 1; height: 6px; background: #e5e7eb; border-radius: 3px; overflow: hidden; }
++.progress-bar-inner { height: 100%; background: #2563eb; border-radius: 3px; transition: width .3s; }
++.progress-text { font-size: .8rem; color: #6b7280; white-space: nowrap; }
++
++/* v0.5: 段階の教示文と選択肢の説明 */
++.intro-box { background: #f8fafc; border-radius: 10px; padding: .75rem 1rem .25rem; margin-bottom: 1rem; }
++.intro-box p { margin-bottom: .5rem; }
++.scale-list { margin: 0 0 .5rem; padding-left: 1.6rem; font-size: .9rem; color: #374151; }
++.scale-list li { margin-bottom: .1rem; }
++
++/* v0.5: 選択肢の行全体をタップできるようにし、選んだ項目を薄く塗る */
++.likert { display: flex; flex-direction: column; gap: .25rem; }
++.likert-option { display: flex; align-items: center; gap: .55rem; padding: .35rem .5rem; border-radius: 8px; cursor: pointer; margin: 0; -webkit-tap-highlight-color: transparent; }
++.likert-option:hover { background: #f1f5f9; }
++.likert-option .form-check-input { width: 1.25em; height: 1.25em; margin: 0; flex: none; }
++.likert-num { color: #6b7280; min-width: 1.1em; text-align: right; font-variant-numeric: tabular-nums; }
++.likert-option:has(input:checked) { background: #e0ecff; }
++.item-card.answered { border-color: #93c5fd; }
++.item-card.answered .item-text::after { content: " ✓"; color: #2563eb; font-weight: 700; }
+diff -ruN '--exclude=.venv' '--exclude=__pycache__' '--exclude=*.sqlite3' '--exclude=*.pdf' '--exclude=*.png' '--exclude=example_output_synthetic' '--exclude=diff_v0.4_to_v0.5.patch' '--exclude=.gitignore' '--exclude=screens_v0.1_ja.pdf' a1-decision-study/_templates/global/Page.html a1-decision-study_v0.5/_templates/global/Page.html
+--- a1-decision-study/_templates/global/Page.html	2026-10-15 18:05:08.000000000 +0900
++++ a1-decision-study_v0.5/_templates/global/Page.html	2026-10-29 09:52:05.972599266 +0900
+@@ -6,4 +6,33 @@
+ {{ endblock }}
+ 
+ {{ block global_scripts }}
++<script>
++  // v0.5: 参加者の手間を減らす共通の動作（文言は持たない）
++  (function () {
++    // 1) 未回答・誤りの項目があれば、その最初の項目まで自動でスクロールして目立たせる
++    var target = document.querySelector('.item-card.missing, .form-control-errors:not(:empty), .alert-danger');
++    if (target) {
++      var card = target.closest('.item-card') || target;
++      setTimeout(function () { card.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 50);
++    }
++    // 2) 回答済みの項目カードに印を付ける（選択するとすぐ反映）
++    document.querySelectorAll('.item-card').forEach(function (c) {
++      var mark = function () {
++        var done = c.querySelector('input[type=radio]:checked');
++        c.classList.toggle('answered', !!done);
++        if (done) c.classList.remove('missing');
++      };
++      c.addEventListener('change', mark);
++      mark();
++    });
++    // 3) 「次へ」の二重送信を防ぐ
++    var form = document.getElementById('form');
++    if (form) {
++      form.addEventListener('submit', function () {
++        var btn = form.querySelector('.otree-btn-next');
++        if (btn) setTimeout(function () { btn.disabled = true; }, 0);
++      });
++    }
++  })();
++</script>
+ {{ endblock }}
+diff -ruN '--exclude=.venv' '--exclude=__pycache__' '--exclude=*.sqlite3' '--exclude=*.pdf' '--exclude=*.png' '--exclude=example_output_synthetic' '--exclude=diff_v0.4_to_v0.5.patch' '--exclude=.gitignore' '--exclude=screens_v0.1_ja.pdf' a1-decision-study/_templates/global/progress.html a1-decision-study_v0.5/_templates/global/progress.html
+--- a1-decision-study/_templates/global/progress.html	1970-01-01 09:00:00.000000000 +0900
++++ a1-decision-study_v0.5/_templates/global/progress.html	2026-10-29 09:52:08.564599351 +0900
+@@ -0,0 +1,5 @@
++{# 進捗表示（v0.5）。各テンプレートの content ブロックの先頭で include する #}
++<div class="progress-line" aria-label="{{ progress_text }}">
++  <div class="progress-bar-outer"><div class="progress-bar-inner" style="width: {{ progress.percent }}%"></div></div>
++  <div class="progress-text">{{ progress_text }}</div>
++</div>
+diff -ruN '--exclude=.venv' '--exclude=__pycache__' '--exclude=*.sqlite3' '--exclude=*.pdf' '--exclude=*.png' '--exclude=example_output_synthetic' '--exclude=diff_v0.4_to_v0.5.patch' '--exclude=.gitignore' '--exclude=screens_v0.1_ja.pdf' a1-decision-study/altruism_study/Consent.html a1-decision-study_v0.5/altruism_study/Consent.html
+--- a1-decision-study/altruism_study/Consent.html	2026-10-15 15:13:17.000000000 +0900
++++ a1-decision-study_v0.5/altruism_study/Consent.html	2026-10-29 09:52:12.968599495 +0900
+@@ -1,12 +1,25 @@
+ {{ extends "global/Page.html" }}
+ {{ block title }}{{ T.consent_title }}{{ endblock }}
+ {{ block content }}
++{{ include "global/progress.html" }}
+ {{ for p in T.consent_body }}
+ <p>{{ p }}</p>
+ {{ endfor }}
+ <hr>
+ {{ formfield 'consent' label=T.consent_check }}
+-{{ formfield 'age_confirm' label=T.age_check }}
+-{{ formfield 'student_confirm' label=T.student_check }}
++{{ formfield 'eligible_confirm' label=T.eligible_check }}
++{# 来歴の記録（v0.3）: ブラウザの種類と画面幅。参加者には見えない。取得できなくても進める #}
++<input type="hidden" name="user_agent" id="id_user_agent" value="">
++<input type="hidden" name="screen_width" id="id_screen_width" value="">
+ <div class="mt-3">{{ next_button }}</div>
+ {{ endblock }}
++{{ block scripts }}
++<script>
++  (function () {
++    try {
++      document.getElementById('id_user_agent').value = (navigator.userAgent || '').slice(0, 300);
++      document.getElementById('id_screen_width').value = String(window.screen && window.screen.width ? window.screen.width : '');
++    } catch (e) { /* 記録に失敗しても回答は続けられる */ }
++  })();
++</script>
++{{ endblock }}
+diff -ruN '--exclude=.venv' '--exclude=__pycache__' '--exclude=*.sqlite3' '--exclude=*.pdf' '--exclude=*.png' '--exclude=example_output_synthetic' '--exclude=diff_v0.4_to_v0.5.patch' '--exclude=.gitignore' '--exclude=screens_v0.1_ja.pdf' a1-decision-study/altruism_study/DGCheck.html a1-decision-study_v0.5/altruism_study/DGCheck.html
+--- a1-decision-study/altruism_study/DGCheck.html	2026-10-18 20:07:33.000000000 +0900
++++ a1-decision-study_v0.5/altruism_study/DGCheck.html	2026-10-29 09:52:27.376599966 +0900
+@@ -1,9 +1,20 @@
+ {{ extends "global/Page.html" }}
+ {{ block title }}{{ T.check_title }}{{ endblock }}
+ {{ block content }}
+-{{ if retry }}
+-<details class="dg-recap" open>
+-  <summary>{{ T.dg_intro_title }}</summary>
++{{ include "global/progress.html" }}
++<p class="text-muted">{{ T.check_lead }}</p>
++<div class="mb-3">
++  <label class="col-form-label fw-bold" for="id_dg_check">{{ T.check_question }}</label>
++  <div class="input-group amount-input">
++    <input type="number" class="form-control form-control-lg" name="dg_check" id="id_dg_check" min="0" step="1" inputmode="numeric" required autofocus>
++    <span class="input-group-text">{{ T.check_unit }}</span>
++  </div>
++  {{ formfield_errors 'dg_check' }}
++</div>
++{# 説明はいつでも読み直せる（折りたたみ）。再回答のときは開いた状態にする（v0.5） #}
++<details class="dg-recap"{{ if retry }} open{{ endif }}>
++  <summary>{{ T.dg_reread }}</summary>
++  <p class="round-name mt-2">{{ T.dg_round_name }}</p>
+   {{ for b in intro_blocks }}
+   <p>{{ b.text }}</p>
+   {{ if b.options }}
+@@ -16,14 +27,5 @@
+   {{ endfor }}
+   <p class="fw-bold">{{ T.dg_intro_example }}</p>
+ </details>
+-{{ endif }}
+-<div class="mb-3">
+-  <label class="col-form-label" for="id_dg_check">{{ T.check_question }}</label>
+-  <div class="input-group" style="max-width: 16rem;">
+-    <input type="number" class="form-control" name="dg_check" id="id_dg_check" min="0" step="1" inputmode="numeric" required>
+-    <span class="input-group-text">{{ T.check_unit }}</span>
+-  </div>
+-  {{ formfield_errors 'dg_check' }}
+-</div>
+ {{ next_button }}
+ {{ endblock }}
+diff -ruN '--exclude=.venv' '--exclude=__pycache__' '--exclude=*.sqlite3' '--exclude=*.pdf' '--exclude=*.png' '--exclude=example_output_synthetic' '--exclude=diff_v0.4_to_v0.5.patch' '--exclude=.gitignore' '--exclude=screens_v0.1_ja.pdf' a1-decision-study/altruism_study/DGConfirm.html a1-decision-study_v0.5/altruism_study/DGConfirm.html
+--- a1-decision-study/altruism_study/DGConfirm.html	2026-10-18 20:07:33.000000000 +0900
++++ a1-decision-study_v0.5/altruism_study/DGConfirm.html	1970-01-01 09:00:00.000000000 +0900
+@@ -1,15 +0,0 @@
+-{{ extends "global/Page.html" }}
+-{{ block title }}{{ T.confirm_title }}{{ endblock }}
+-{{ block content }}
+-<p class="confirm-body">{{ body }}</p>
+-<div class="mb-3">
+-  {{ for opt in options }}
+-  <div class="form-check">
+-    <input class="form-check-input" type="radio" name="dg_correct" id="dg_correct_{{ opt.v }}" value="{{ opt.v }}"{{ if opt.checked }} checked{{ endif }}>
+-    <label class="form-check-label" for="dg_correct_{{ opt.v }}">{{ opt.label }}</label>
+-  </div>
+-  {{ endfor }}
+-  {{ formfield_errors 'dg_correct' }}
+-</div>
+-{{ next_button }}
+-{{ endblock }}
+diff -ruN '--exclude=.venv' '--exclude=__pycache__' '--exclude=*.sqlite3' '--exclude=*.pdf' '--exclude=*.png' '--exclude=example_output_synthetic' '--exclude=diff_v0.4_to_v0.5.patch' '--exclude=.gitignore' '--exclude=screens_v0.1_ja.pdf' a1-decision-study/altruism_study/DGDecision.html a1-decision-study_v0.5/altruism_study/DGDecision.html
+--- a1-decision-study/altruism_study/DGDecision.html	2026-10-18 20:07:34.000000000 +0900
++++ a1-decision-study_v0.5/altruism_study/DGDecision.html	2026-10-29 09:52:33.568600169 +0900
+@@ -1,15 +1,13 @@
+ {{ extends "global/Page.html" }}
+ {{ block title }}{{ T.decision_title }}{{ endblock }}
+ {{ block content }}
+-{{ if again }}
+-<p class="alert alert-warning">{{ T.decision_again_lead }}</p>
+-{{ endif }}
++{{ include "global/progress.html" }}
+ <p>{{ T.decision_lead }}</p>
+ <p class="fw-bold">{{ T.decision_question }}</p>
+ <p class="text-muted small">{{ T.decision_hint }}</p>
+ <div class="input-group amount-input">
+-  <input type="number" class="form-control form-control-lg" name="{{ field }}" id="id_{{ field }}"
+-         min="0" max="{{ endowment }}" step="{{ step }}" inputmode="numeric" required
++  <input type="number" class="form-control form-control-lg" name="dg_give" id="id_dg_give"
++         min="0" max="{{ endowment }}" step="{{ step }}" inputmode="numeric" required autofocus
+          {{ if has_value }}value="{{ value }}"{{ endif }}>
+   <span class="input-group-text">{{ unit }}</span>
+ </div>
+diff -ruN '--exclude=.venv' '--exclude=__pycache__' '--exclude=*.sqlite3' '--exclude=*.pdf' '--exclude=*.png' '--exclude=example_output_synthetic' '--exclude=diff_v0.4_to_v0.5.patch' '--exclude=.gitignore' '--exclude=screens_v0.1_ja.pdf' a1-decision-study/altruism_study/DGIntro.html a1-decision-study_v0.5/altruism_study/DGIntro.html
+--- a1-decision-study/altruism_study/DGIntro.html	2026-10-18 20:07:34.000000000 +0900
++++ a1-decision-study_v0.5/altruism_study/DGIntro.html	2026-10-29 09:52:21.768599783 +0900
+@@ -1,6 +1,7 @@
+ {{ extends "global/Page.html" }}
+ {{ block title }}{{ T.dg_intro_title }}{{ endblock }}
+ {{ block content }}
++{{ include "global/progress.html" }}
+ <p class="round-name">{{ T.dg_round_name }}</p>
+ {{ for b in intro_blocks }}
+ <p>{{ b.text }}</p>
+diff -ruN '--exclude=.venv' '--exclude=__pycache__' '--exclude=*.sqlite3' '--exclude=*.pdf' '--exclude=*.png' '--exclude=example_output_synthetic' '--exclude=diff_v0.4_to_v0.5.patch' '--exclude=.gitignore' '--exclude=screens_v0.1_ja.pdf' a1-decision-study/altruism_study/DGPredict.html a1-decision-study_v0.5/altruism_study/DGPredict.html
+--- a1-decision-study/altruism_study/DGPredict.html	2026-10-18 20:07:35.000000000 +0900
++++ a1-decision-study_v0.5/altruism_study/DGPredict.html	1970-01-01 09:00:00.000000000 +0900
+@@ -1,14 +0,0 @@
+-{{ extends "global/Page.html" }}
+-{{ block title }}{{ T.predict_title }}{{ endblock }}
+-{{ block content }}
+-<p>{{ T.predict_question }}</p>
+-<p class="text-muted small">{{ T.predict_note }} {{ T.decision_hint }}</p>
+-<div class="input-group amount-input">
+-  <input type="number" class="form-control form-control-lg" name="{{ field }}" id="id_{{ field }}"
+-         min="0" max="{{ endowment }}" step="{{ step }}" inputmode="numeric" required
+-         {{ if has_value }}value="{{ value }}"{{ endif }}>
+-  <span class="input-group-text">{{ unit }}</span>
+-</div>
+-{{ formfield_errors 'dg_predict' }}
+-{{ next_button }}
+-{{ endblock }}
+diff -ruN '--exclude=.venv' '--exclude=__pycache__' '--exclude=*.sqlite3' '--exclude=*.pdf' '--exclude=*.png' '--exclude=example_output_synthetic' '--exclude=diff_v0.4_to_v0.5.patch' '--exclude=.gitignore' '--exclude=screens_v0.1_ja.pdf' a1-decision-study/altruism_study/Demographics.html a1-decision-study_v0.5/altruism_study/Demographics.html
+--- a1-decision-study/altruism_study/Demographics.html	2026-10-15 15:13:19.000000000 +0900
++++ a1-decision-study_v0.5/altruism_study/Demographics.html	1970-01-01 09:00:00.000000000 +0900
+@@ -1,40 +0,0 @@
+-{{ extends "global/Page.html" }}
+-{{ block title }}{{ T.demog_title }}{{ endblock }}
+-{{ block content }}
+-<p>{{ T.demog_intro }}</p>
+-{{ formfield 'age' label=T.demog_age }}
+-
+-<div class="mb-3">
+-  <label class="col-form-label">{{ T.demog_gender }}</label>
+-  {{ for opt in gender_options }}
+-  <div class="form-check">
+-    <input class="form-check-input" type="radio" name="gender" id="gender_{{ opt.v }}" value="{{ opt.v }}"{{ if opt.checked }} checked{{ endif }}>
+-    <label class="form-check-label" for="gender_{{ opt.v }}">{{ opt.label }}</label>
+-  </div>
+-  {{ endfor }}
+-  {{ formfield_errors 'gender' }}
+-</div>
+-
+-<div class="mb-3">
+-  <label class="col-form-label" for="grade">{{ T.demog_grade }}</label>
+-  <select class="form-select" name="grade" id="grade">
+-    <option value="">--</option>
+-    {{ for opt in grade_options }}
+-    <option value="{{ opt.v }}"{{ if opt.checked }} selected{{ endif }}>{{ opt.label }}</option>
+-    {{ endfor }}
+-  </select>
+-  {{ formfield_errors 'grade' }}
+-</div>
+-
+-<div class="mb-3">
+-  <label class="col-form-label">{{ T.demog_game_exp }}</label>
+-  {{ for opt in game_exp_options }}
+-  <div class="form-check">
+-    <input class="form-check-input" type="radio" name="game_exp" id="game_exp_{{ opt.v }}" value="{{ opt.v }}"{{ if opt.checked }} checked{{ endif }}>
+-    <label class="form-check-label" for="game_exp_{{ opt.v }}">{{ opt.label }}</label>
+-  </div>
+-  {{ endfor }}
+-  {{ formfield_errors 'game_exp' }}
+-</div>
+-{{ next_button }}
+-{{ endblock }}
+diff -ruN '--exclude=.venv' '--exclude=__pycache__' '--exclude=*.sqlite3' '--exclude=*.pdf' '--exclude=*.png' '--exclude=example_output_synthetic' '--exclude=diff_v0.4_to_v0.5.patch' '--exclude=.gitignore' '--exclude=screens_v0.1_ja.pdf' a1-decision-study/altruism_study/End.html a1-decision-study_v0.5/altruism_study/End.html
+--- a1-decision-study/altruism_study/End.html	2026-10-15 15:13:21.000000000 +0900
++++ a1-decision-study_v0.5/altruism_study/End.html	2026-10-29 09:52:40.984600411 +0900
+@@ -1,10 +1,11 @@
+ {{ extends "global/Page.html" }}
+ {{ block title }}{{ T.end_title }}{{ endblock }}
+ {{ block content }}
++{{ include "global/progress.html" }}
+ {{ for p in T.end_body }}
+ <p>{{ p }}</p>
+ {{ endfor }}
+ <p class="mb-0">{{ T.end_code_label }}</p>
+ <div class="code-box">{{ code }}</div>
+-<p><a class="btn btn-primary" href="{{ contact_url }}" target="_blank" rel="noopener">{{ T.end_button }}</a></p>
++<p class="text-muted">{{ T.end_close }}</p>
+ {{ endblock }}
+diff -ruN '--exclude=.venv' '--exclude=__pycache__' '--exclude=*.sqlite3' '--exclude=*.pdf' '--exclude=*.png' '--exclude=example_output_synthetic' '--exclude=diff_v0.4_to_v0.5.patch' '--exclude=.gitignore' '--exclude=screens_v0.1_ja.pdf' a1-decision-study/altruism_study/ParticipantCode.html a1-decision-study_v0.5/altruism_study/ParticipantCode.html
+--- a1-decision-study/altruism_study/ParticipantCode.html	2026-10-24 12:14:42.000000000 +0900
++++ a1-decision-study_v0.5/altruism_study/ParticipantCode.html	1970-01-01 09:00:00.000000000 +0900
+@@ -1,21 +0,0 @@
+-{{ extends "global/Page.html" }}
+-{{ block title }}{{ T.code_title }}{{ endblock }}
+-{{ block content }}
+-<p>{{ T.code_body }}</p>
+-<div class="code-box">{{ code }}</div>
+-<p class="text-muted">{{ T.code_note }}</p>
+-{# 来歴の記録（v0.3）: ブラウザの種類と画面幅。参加者には見えない。取得できなくても進める #}
+-<input type="hidden" name="user_agent" id="id_user_agent" value="">
+-<input type="hidden" name="screen_width" id="id_screen_width" value="">
+-{{ next_button }}
+-{{ endblock }}
+-{{ block scripts }}
+-<script>
+-  (function () {
+-    try {
+-      document.getElementById('id_user_agent').value = (navigator.userAgent || '').slice(0, 300);
+-      document.getElementById('id_screen_width').value = String(window.screen && window.screen.width ? window.screen.width : '');
+-    } catch (e) { /* 記録に失敗しても回答は続けられる */ }
+-  })();
+-</script>
+-{{ endblock }}
+diff -ruN '--exclude=.venv' '--exclude=__pycache__' '--exclude=*.sqlite3' '--exclude=*.pdf' '--exclude=*.png' '--exclude=example_output_synthetic' '--exclude=diff_v0.4_to_v0.5.patch' '--exclude=.gitignore' '--exclude=screens_v0.1_ja.pdf' a1-decision-study/altruism_study/PostSurvey.html a1-decision-study_v0.5/altruism_study/PostSurvey.html
+--- a1-decision-study/altruism_study/PostSurvey.html	2026-10-18 20:07:35.000000000 +0900
++++ a1-decision-study_v0.5/altruism_study/PostSurvey.html	2026-10-29 09:52:38.776600339 +0900
+@@ -1,6 +1,7 @@
+ {{ extends "global/Page.html" }}
+ {{ block title }}{{ T.post_title }}{{ endblock }}
+ {{ block content }}
++{{ include "global/progress.html" }}
+ <p class="text-muted">{{ T.post_intro }}</p>
+ {{ for it in items }}
+ <div class="card item-card mb-3{{ if it.missing }} missing{{ endif }}">
+@@ -8,10 +9,10 @@
+     <p class="item-text">{{ it.text }}</p>
+     <div class="likert">
+     {{ for opt in it.options }}
+-      <div class="form-check">
++      <label class="likert-option" for="{{ it.name }}_{{ opt.v }}">
+         <input class="form-check-input" type="radio" name="{{ it.name }}" id="{{ it.name }}_{{ opt.v }}" value="{{ opt.v }}"{{ if opt.checked }} checked{{ endif }}>
+-        <label class="form-check-label" for="{{ it.name }}_{{ opt.v }}">{{ opt.v }}. {{ opt.label }}</label>
+-      </div>
++        <span class="likert-num">{{ opt.v }}</span><span class="likert-label">{{ opt.label }}</span>
++      </label>
+     {{ endfor }}
+     </div>
+     {{ formfield_errors it.name }}
+@@ -20,7 +21,7 @@
+ {{ endfor }}
+ <div class="mb-3">
+   <label class="col-form-label" for="id_comment_open">{{ T.post_comment }}</label>
+-  <textarea class="form-control" name="comment_open" id="id_comment_open" rows="4" maxlength="2000">{{ comment_text }}</textarea>
++  <textarea class="form-control" name="comment_open" id="id_comment_open" rows="3" maxlength="2000">{{ comment_text }}</textarea>
+ </div>
+ {{ next_button }}
+ {{ endblock }}
+diff -ruN '--exclude=.venv' '--exclude=__pycache__' '--exclude=*.sqlite3' '--exclude=*.pdf' '--exclude=*.png' '--exclude=example_output_synthetic' '--exclude=diff_v0.4_to_v0.5.patch' '--exclude=.gitignore' '--exclude=screens_v0.1_ja.pdf' a1-decision-study/altruism_study/SurveyIntro.html a1-decision-study_v0.5/altruism_study/SurveyIntro.html
+--- a1-decision-study/altruism_study/SurveyIntro.html	2026-10-15 15:13:18.000000000 +0900
++++ a1-decision-study_v0.5/altruism_study/SurveyIntro.html	1970-01-01 09:00:00.000000000 +0900
+@@ -1,13 +0,0 @@
+-{{ extends "global/Page.html" }}
+-{{ block title }}{{ T.survey_title }}{{ endblock }}
+-{{ block content }}
+-{{ for p in T.survey_intro }}
+-<p>{{ p }}</p>
+-{{ endfor }}
+-<ol class="text-muted small">
+-{{ for lbl in T.likert6 }}
+-  <li>{{ lbl }}</li>
+-{{ endfor }}
+-</ol>
+-{{ next_button }}
+-{{ endblock }}
+diff -ruN '--exclude=.venv' '--exclude=__pycache__' '--exclude=*.sqlite3' '--exclude=*.pdf' '--exclude=*.png' '--exclude=example_output_synthetic' '--exclude=diff_v0.4_to_v0.5.patch' '--exclude=.gitignore' '--exclude=screens_v0.1_ja.pdf' a1-decision-study/altruism_study/SurveyPage.html a1-decision-study_v0.5/altruism_study/SurveyPage.html
+--- a1-decision-study/altruism_study/SurveyPage.html	2026-10-15 15:13:19.000000000 +0900
++++ a1-decision-study_v0.5/altruism_study/SurveyPage.html	2026-10-29 10:12:09.098639704 +0900
+@@ -1,17 +1,33 @@
+ {{ extends "global/Page.html" }}
+-{{ block title }}{{ T.survey_title }} ({{ page_no }}/{{ num_pages }}){{ endblock }}
++{{ block title }}{{ stage_title }}{{ endblock }}
+ {{ block content }}
+-<p class="text-muted">{{ T.survey_intro_short }}</p>
++{{ include "global/progress.html" }}
++{{ if page_note }}<p class="text-muted small mb-2">{{ page_note }}</p>{{ endif }}
++{{ if first_page }}
++<div class="intro-box">
++  {{ for p in intro }}
++  <p>{{ p }}</p>
++  {{ endfor }}
++  <p class="mb-1 small text-muted">{{ T.scale_heading }}</p>
++  <ol class="scale-list">
++  {{ for s in scale_labels }}
++    <li value="{{ s.v }}">{{ s.label }}</li>
++  {{ endfor }}
++  </ol>
++</div>
++{{ else }}
++<p class="text-muted">{{ intro_short }}</p>
++{{ endif }}
+ {{ for it in items }}
+ <div class="card item-card mb-3{{ if it.missing }} missing{{ endif }}">
+   <div class="card-body">
+     <p class="item-text">{{ it.text }}</p>
+     <div class="likert">
+     {{ for opt in it.options }}
+-      <div class="form-check">
++      <label class="likert-option" for="{{ it.name }}_{{ opt.v }}">
+         <input class="form-check-input" type="radio" name="{{ it.name }}" id="{{ it.name }}_{{ opt.v }}" value="{{ opt.v }}"{{ if opt.checked }} checked{{ endif }}>
+-        <label class="form-check-label" for="{{ it.name }}_{{ opt.v }}">{{ opt.v }}. {{ opt.label }}</label>
+-      </div>
++        <span class="likert-num">{{ opt.v }}</span><span class="likert-label">{{ opt.label }}</span>
++      </label>
+     {{ endfor }}
+     </div>
+     {{ formfield_errors it.name }}
+diff -ruN '--exclude=.venv' '--exclude=__pycache__' '--exclude=*.sqlite3' '--exclude=*.pdf' '--exclude=*.png' '--exclude=example_output_synthetic' '--exclude=diff_v0.4_to_v0.5.patch' '--exclude=.gitignore' '--exclude=screens_v0.1_ja.pdf' a1-decision-study/altruism_study/__init__.py a1-decision-study_v0.5/altruism_study/__init__.py
+--- a1-decision-study/altruism_study/__init__.py	2026-10-24 12:54:38.000000000 +0900
++++ a1-decision-study_v0.5/altruism_study/__init__.py	2026-10-29 10:12:09.097540151 +0900
+@@ -1,12 +1,16 @@
+-"""A-1 追試: FAB 質問紙 × 独裁者ゲーム（一回完結・順序ランダム化・役割不確定法）v0.4
++"""A-1 追試: FAB 質問紙 × HEXACO × 独裁者ゲーム（一回完結・順序ランダム化・役割不確定法）v0.5
+ 
+ 設計書: https://claude.ai/code/artifact/5f9cc974-cbb4-4fd0-840b-7836e6283d47
+ 原資料: https://osf.io/t5mf2/（Binder et al., 2026 の補足資料。CHANGELOG.md に対応表）
+ - 全画面を 1 つのアプリ（1 ラウンド）に置き、順序の分岐は is_displayed で行う（§4）
+ - WaitPage・グループは使わない。各参加者は自分のペースで最後まで進む（FR-25）
+ - 文言は texts/ から引く。テンプレートに文言を書かない（§8）
+-- 変数名は原研究の整形済みデータ（Studies/XX/XX_data.csv）に合わせる: hg_1 … mc_23, cq1, cq2, dg_give, dg_correct
+-- v0.4: HEXACO 正直さ-謙虚さ 10 項目を既定で混ぜる（codebook に逆転フラグ）。cfg_fee を記録。文言から支払い方法の指定を外した
++- 変数名は原研究の整形済みデータ（Studies/XX/XX_data.csv）に合わせる: hg_1 … mc_23, cq1, cq2, dg_give
++- v0.5: 画面を実験に必要な最低限にした（同意 → 質問紙 2 段階 → DG 説明・理解確認・決定 → 事後評価 → 終了。順序群で前後が入れ替わる）。
++  謝礼・連絡先の案内、参加者コードの前置きページ、属性、自己予測、入力確認を外した（案内はリンク配布時に伝える）。
++  質問紙を FAB（+注意チェック、6 件法、2 ページ）と HEXACO（5 件法、1 ページ）の 2 段階にし、段階の順序 scale_order も
++  参加者ごとにランダム化（task_order と 2×2 でブロック）。各ページに進捗を表示
++- v0.4: HEXACO 正直さ-謙虚さ 10 項目を採用。cfg_fee を記録
+ - v0.3: 各回答に来歴（app_version, git_commit, otree_version, 設定値, 乱数シード, ブラウザ, 画面幅）を記録し、
+   順序割り当てと項目順のランダム化を seed 付きで再現できるようにした（実験計画書「記録・分析ノート・図表」）
+ """
+@@ -49,7 +53,8 @@
+ 
+ doc = """
+ Binder et al. (2026) の Help Giving → 独裁者ゲームの関連を日本の大学生で再現する一回完結のオンライン実験。
+-質問紙（FAB 15 項目 + 注意チェック 2）と意思決定課題（DG, 元手は session config）の順序を参加者ごとにランダム化する。
++質問紙（FAB 15 項目 + 注意チェック 2、HEXACO 正直さ-謙虚さ 10 項目）と意思決定課題（DG, 元手は session config）の
++順序、および 2 つの質問紙の順序を参加者ごとにランダム化する。
+ """
+ 
+ 
+@@ -65,11 +70,13 @@
+     # 注意チェック（原研究の control question）。cq1 = strongly disagree (1), cq2 = strongly agree (6)
+     CQ_FIELDS = ['cq1', 'cq2']
+     CQ_EXPECTED = dict(cq1=1, cq2=6)
++    # HEXACO-60 正直さ-謙虚さ 10 項目（v0.5: 原版と同じ 5 件法で、FAB とは別の段階として提示）
+     HEX_FIELDS = [f'hex_{i}' for i in range(1, 11)]
+     EVAL_FIELDS = ['eval_understand', 'eval_difficult', 'eval_reflect', 'eval_distract']
+-    LIKERT = [1, 2, 3, 4, 5, 6]
++    LIKERT6 = [1, 2, 3, 4, 5, 6]
++    LIKERT5 = [1, 2, 3, 4, 5]
+     CHECK_GIVE = 300  # 理解確認「300 円を分けると取り分は？」
+-    SURVEY_PAGES = 2
++    FAB_PAGES = 2     # FAB + 注意チェック 17 項目を 2 ページに分ける
+ 
+ 
+ # ---------------------------------------------------------------------------
+@@ -79,10 +86,10 @@
+     return datetime.now(timezone.utc).isoformat(timespec='seconds')
+ 
+ 
+-def likert_field():
++def likert_field(choices=C.LIKERT6):
+     # blank=True にして必須チェックは error_message で行う。
+     # こうすると未回答があっても回答済みの値を保存でき、再表示時に選択が消えない。
+-    return models.IntegerField(choices=C.LIKERT, blank=True)
++    return models.IntegerField(choices=choices, blank=True)
+ 
+ 
+ def endowment(player):
+@@ -93,30 +100,55 @@
+     return player.session.config['dg_step']
+ 
+ 
+-def amount_error(player, value):
+-    """DG の金額入力（dg_give, dg_predict）の検証: 0〜endowment、dg_step の倍数。"""
++def use_hexaco(player):
++    return bool(player.session.config['use_hexaco'])
++
++
++def dg_give_error_message(player, value):
++    """DG の金額入力の検証: 0〜endowment、dg_step の倍数。"""
+     if value is None or value < 0 or value > endowment(player) or value % step(player) != 0:
+         return texts(player)['amount_error']
+ 
+ 
+-def dg_give_error_message(player, value):
+-    return amount_error(player, value)
++def fab_fields(player, page_no):
++    """FAB 段階の page_no（1 or 2）に表示するフィールド名。順序は creating_session で確定済み。"""
++    items = list(player.participant.fab_order)
++    half = (len(items) + 1) // 2
++    return items[:half] if page_no == 1 else items[half:]
+ 
+ 
+-def dg_predict_error_message(player, value):
+-    return amount_error(player, value)
++def hex_fields(player):
++    return list(player.participant.hex_order)
+ 
+ 
+-def survey_fields(player, page_no):
+-    """質問紙の page_no（1 or 2）に表示するフィールド名。順序は creating_session で確定済み。"""
+-    items = list(player.participant.item_order)
+-    half = (len(items) + 1) // 2
+-    return items[:half] if page_no == 1 else items[half:]
++def visible_pages(player):
++    """この参加者が実際に通るページの page_sequence 上の位置（1 始まり）。進捗表示に使う。"""
++    out = []
++    for i, pg in enumerate(page_sequence, start=1):
++        pred = pg.__dict__.get('is_displayed')  # 自分で定義した staticmethod だけを評価（基底の既定は常に表示）
++        if pred is None or pred(player):
++            out.append(i)
++    return out
++
++
++def progress(player):
++    """進捗（現在のページ番号 / この参加者が通るページ数）。oTree の _index_in_pages は page_sequence 上の 1 始まりの位置。"""
++    idx = player.participant._index_in_pages or 1
++    vis = visible_pages(player)
++    pos = vis.index(idx) + 1 if idx in vis else len(vis)
++    return dict(page=pos, pages=len(vis), percent=int(round(100 * pos / max(len(vis), 1))))
+ 
+ 
+-def likert_items(player, fields, labels_src, highlight):
++def ctx(player, **extra):
++    """全ページ共通のテンプレート変数（文言 T と進捗）。"""
+     T = texts(player)
+-    labels = T['likert6']
++    pr = progress(player)
++    d = dict(T=T, progress=pr, progress_text=fill(T['progress_label'], page=pr['page'], pages=pr['pages']))
++    d.update(extra)
++    return d
++
++
++def likert_items(player, fields, labels_src, scale_labels, choices, highlight):
+     items = []
+     for f in fields:
+         val = player.field_maybe_none(f)
+@@ -125,18 +157,46 @@
+                 name=f,
+                 text=labels_src[f],
+                 missing=highlight and val is None,
+-                options=[dict(v=v, label=labels[v - 1], checked=(val == v)) for v in C.LIKERT],
++                options=[dict(v=v, label=scale_labels[v - 1], checked=(val == v)) for v in choices],
+             )
+         )
+     return items
+ 
+ 
+-def survey_vars(player, page_no):
++def stage_numbers(player):
++    """FAB と HEXACO の段階番号（1 or 2）。HEXACO を使わないときは FAB だけ（段階数 1）。"""
++    if not use_hexaco(player):
++        return dict(fab=1, hex=None, stages=1)
++    so = player.scale_order
++    return dict(fab=1 if so == 1 else 2, hex=2 if so == 1 else 1, stages=2)
++
++
++def survey_vars(player, kind, page_no):
++    """質問紙ページ（kind = 'fab' / 'hex'）のテンプレート変数。
++    段階の最初のページには教示文と選択肢の説明を出し、2 ページ目以降は短い教示だけにする（v0.5）。"""
+     T = texts(player)
+     highlight = bool(player.participant.survey_error)
+     player.participant.survey_error = False
+-    items = likert_items(player, survey_fields(player, page_no), T['items'], highlight)
+-    return dict(T=T, items=items, page_no=page_no, num_pages=C.SURVEY_PAGES)
++    st = stage_numbers(player)
++    if kind == 'fab':
++        fields, labels, choices = fab_fields(player, page_no), T['likert6'], C.LIKERT6
++        intro, intro_short, num_pages, stage = T['fab_intro'], T['fab_intro_short'], C.FAB_PAGES, st['fab']
++    else:
++        fields, labels, choices = hex_fields(player), T['likert5'], C.LIKERT5
++        intro, intro_short, num_pages, stage = T['hex_intro'], T['hex_intro_short'], 1, st['hex']
++    items = likert_items(player, fields, T['items'], labels, choices, highlight)
++    title = fill(T['survey_stage_title'], stage=stage, stages=st['stages']) if st['stages'] > 1 else T['survey_title']
++    page_note = fill(T['survey_page_note'], page=page_no, pages=num_pages) if num_pages > 1 else ''
++    return ctx(
++        player,
++        items=items,
++        stage_title=title,
++        page_note=page_note,
++        first_page=(page_no == 1),
++        intro=intro,
++        intro_short=intro_short,
++        scale_labels=[dict(v=v, label=labels[v - 1]) for v in choices],
++    )
+ 
+ 
+ def survey_error_message(player, values):
+@@ -181,14 +241,17 @@
+     players = subsession.get_players()
+     seed = session_seed(session)
+     rng = random.Random(seed)
+-    # 順序のブロックランダム化（2 人ずつ 1,2 をシャッフル）→ 各群がほぼ同数になる
+-    orders = []
+-    for _ in range(0, len(players), 2):
+-        block = [1, 2]
++    hexaco = bool(cfg['use_hexaco'])
++    # 2×2 のブロックランダム化（4 人ずつ、task_order × scale_order の 4 通りをシャッフル）→ 各セルがほぼ同数になる。
++    # task_order: 1 = 質問紙→DG, 2 = DG→質問紙。scale_order: 1 = FAB→HEXACO, 2 = HEXACO→FAB（HEXACO を使わないときは 0）
++    combos = []
++    for _ in range(0, len(players), 4):
++        block = [(1, 1), (1, 2), (2, 1), (2, 2)]
+         rng.shuffle(block)
+-        orders.extend(block)
+-    for p, o in zip(players, orders):
+-        p.task_order = o
++        combos.extend(block)
++    for p, (to, so) in zip(players, combos):
++        p.task_order = to
++        p.scale_order = so if hexaco else 0
+         p.lang = cfg['lang']
+         p.app_version = cfg['app_version']
+         # 来歴（実験計画書「記録・分析ノート・図表」）: 条件の違いを後から機械的に確認できるようにする
+@@ -198,9 +261,9 @@
+         p.cfg_endowment = cfg['endowment']
+         p.cfg_dg_step = cfg['dg_step']
+         p.cfg_fee = cfg['participation_fee_yen']
+-        p.cfg_use_hexaco = bool(cfg['use_hexaco'])
+-        # 原研究と同じく FAB 項目は常にランダム順。注意チェックと混ぜる尺度も一体でシャッフルする
+-        items = C.FAB_FIELDS + C.CQ_FIELDS + (C.HEX_FIELDS if cfg['use_hexaco'] else [])
++        p.cfg_use_hexaco = hexaco
++        # 原研究と同じく FAB 項目は常にランダム順。注意チェックは FAB と一体でシャッフルする
++        items = C.FAB_FIELDS + C.CQ_FIELDS
+         rng.shuffle(items)
+         # 注意チェックをページの先頭・末尾に置かない（各ページ内で中央寄りに動かす）
+         half = (len(items) + 1) // 2
+@@ -211,9 +274,14 @@
+                     page.remove(cq)
+                     page.insert(len(page) // 2, cq)
+         items = pages[0] + pages[1]
+-        p.participant.item_order = items
+-        p.participant.survey_error = False
++        p.participant.fab_order = items
+         p.fab_item_order = ','.join(items)
++        # HEXACO は別の段階として、段階内でランダム順
++        hex_items = list(C.HEX_FIELDS)
++        rng.shuffle(hex_items)
++        p.participant.hex_order = hex_items if hexaco else []
++        p.hex_item_order = ','.join(hex_items) if hexaco else ''
++        p.participant.survey_error = False
+ 
+ 
+ class Group(BaseGroup):
+@@ -222,7 +290,8 @@
+ 
+ class Player(BasePlayer):
+     # 割り当て・メタ
+-    task_order = models.IntegerField()  # 1 = 質問紙→DG, 2 = DG→質問紙（oTree では order が予約語）
++    task_order = models.IntegerField()   # 1 = 質問紙→DG, 2 = DG→質問紙（oTree では order が予約語）
++    scale_order = models.IntegerField()  # 1 = FAB→HEXACO, 2 = HEXACO→FAB, 0 = HEXACO なし（v0.5）
+     lang = models.StringField()
+     app_version = models.StringField()
+     # 来歴（v0.3）: どのコード・設定・乱数で集めた回答かを各行に残す
+@@ -231,14 +300,13 @@
+     rand_seed = models.IntegerField(blank=True)
+     cfg_endowment = models.IntegerField(blank=True)
+     cfg_dg_step = models.IntegerField(blank=True)
+-    cfg_fee = models.IntegerField(blank=True)  # 参加謝礼。tools/pairing.py はこの列と cfg_endowment から支払額を計算する
++    cfg_fee = models.IntegerField(blank=True)  # 参加謝礼（画面には出さない）。tools/pairing.py はこの列と cfg_endowment から支払額を計算する
+     cfg_use_hexaco = models.BooleanField(blank=True)
+     user_agent = models.LongStringField(blank=True)
+     screen_width = models.IntegerField(blank=True)
+-    # 同意
++    # 同意（v0.5: 同意 + 参加資格の 2 項目）
+     consent = models.BooleanField(widget=widgets.CheckboxInput, blank=True)
+-    age_confirm = models.BooleanField(widget=widgets.CheckboxInput, blank=True)
+-    student_confirm = models.BooleanField(widget=widgets.CheckboxInput, blank=True)
++    eligible_confirm = models.BooleanField(widget=widgets.CheckboxInput, blank=True)  # 18 歳以上かつ対象大学の学生
+     # FAB（原研究の変数名。1〜6、逆転項目なし）
+     hg_1 = likert_field()
+     hg_3 = likert_field()
+@@ -261,33 +329,25 @@
+     cq1_pass = models.BooleanField(blank=True)
+     cq2_pass = models.BooleanField(blank=True)
+     fab_item_order = models.LongStringField(blank=True)
+-    # 混ぜる尺度（任意）
+-    hex_1 = likert_field()
+-    hex_2 = likert_field()
+-    hex_3 = likert_field()
+-    hex_4 = likert_field()
+-    hex_5 = likert_field()
+-    hex_6 = likert_field()
+-    hex_7 = likert_field()
+-    hex_8 = likert_field()
+-    hex_9 = likert_field()
+-    hex_10 = likert_field()
+-    # 属性
+-    age = models.IntegerField(min=18, max=99, blank=True)
+-    gender = models.IntegerField(choices=[1, 2, 3, 4], blank=True)
+-    grade = models.StringField(choices=['B1', 'B2', 'B3', 'B4', 'M1', 'M2', 'D', 'other'], blank=True)
+-    game_exp = models.BooleanField(blank=True)
++    # HEXACO-60 正直さ-謙虚さ（1〜5。逆転は codebook の reverse 列、解析側で 6 − x）
++    hex_1 = likert_field(C.LIKERT5)
++    hex_2 = likert_field(C.LIKERT5)
++    hex_3 = likert_field(C.LIKERT5)
++    hex_4 = likert_field(C.LIKERT5)
++    hex_5 = likert_field(C.LIKERT5)
++    hex_6 = likert_field(C.LIKERT5)
++    hex_7 = likert_field(C.LIKERT5)
++    hex_8 = likert_field(C.LIKERT5)
++    hex_9 = likert_field(C.LIKERT5)
++    hex_10 = likert_field(C.LIKERT5)
++    hex_item_order = models.LongStringField(blank=True)
+     # DG
+     dg_check = models.IntegerField(min=0, max=100000)
+     dg_check_answer1 = models.IntegerField(blank=True)
+     dg_check_answer2 = models.IntegerField(blank=True)
+     dg_check_attempts = models.IntegerField(initial=0)
+     dg_check_pass = models.BooleanField(blank=True)
+-    dg_predict = models.IntegerField(min=0)
+-    dg_give = models.IntegerField(min=0)        # 最終決定（dg_correct = 2 なら 2 回目の入力）
+-    dg_give_1 = models.IntegerField(blank=True)  # 1 回目の入力
+-    dg_give_2 = models.IntegerField(blank=True)  # 2 回目の入力（入力し直したときだけ）
+-    dg_correct = models.IntegerField(choices=[1, 2], blank=True)  # 1 = 入力は正しい, 2 = 入力し直す（原研究 Study 09）
++    dg_give = models.IntegerField(min=0)  # 分配額（v0.5: 入力は 1 回、確認画面なし）
+     dg_share = models.BooleanField(blank=True)
+     # 事後評価（原研究 Study 11 の AG11 項目）
+     eval_understand = likert_field()
+@@ -308,28 +368,19 @@
+ # ページ（共通部分）
+ # ---------------------------------------------------------------------------
+ class Consent(Page):
++    # ブラウザの種類と画面幅を hidden input（JS で埋める）から受け取る。未取得でも進める（blank=True）
+     form_model = 'player'
+-    form_fields = ['consent', 'age_confirm', 'student_confirm']
++    form_fields = ['consent', 'eligible_confirm', 'user_agent', 'screen_width']
+ 
+     @staticmethod
+     def vars_for_template(player: Player):
+-        return dict(T=texts(player))
++        return ctx(player)
+ 
+     @staticmethod
+     def error_message(player: Player, values):
+-        if not (values['consent'] and values['age_confirm'] and values['student_confirm']):
++        if not (values['consent'] and values['eligible_confirm']):
+             return texts(player)['consent_error']
+ 
+-
+-class ParticipantCode(Page):
+-    # ブラウザの種類と画面幅を hidden input（JS で埋める）から受け取る。未取得でも進める（blank=True）
+-    form_model = 'player'
+-    form_fields = ['user_agent', 'screen_width']
+-
+-    @staticmethod
+-    def vars_for_template(player: Player):
+-        return dict(T=texts(player), code=player.participant.code)
+-
+     @staticmethod
+     def before_next_page(player: Player, timeout_happened):
+         if not player.field_maybe_none('t_start'):
+@@ -339,14 +390,6 @@
+             player.user_agent = ua[:300]
+ 
+ 
+-class SurveyIntroBase(Page):
+-    template_name = 'altruism_study/SurveyIntro.html'
+-
+-    @staticmethod
+-    def vars_for_template(player: Player):
+-        return dict(T=texts(player))
+-
+-
+ class SurveyPageBase(Page):
+     form_model = 'player'
+     template_name = 'altruism_study/SurveyPage.html'
+@@ -363,27 +406,34 @@
+                 setattr(player, f'{cq}_pass', v == C.CQ_EXPECTED[cq])
+ 
+ 
+-class DemographicsBase(Page):
+-    form_model = 'player'
+-    form_fields = ['age', 'gender', 'grade', 'game_exp']
+-    template_name = 'altruism_study/Demographics.html'
++class FabPage1Base(SurveyPageBase):
++    @staticmethod
++    def get_form_fields(player: Player):
++        return fab_fields(player, 1)
+ 
+     @staticmethod
+     def vars_for_template(player: Player):
+-        T = texts(player)
+-        g = player.field_maybe_none('gender')
+-        gr = player.field_maybe_none('grade')
+-        ge = player.field_maybe_none('game_exp')
+-        return dict(
+-            T=T,
+-            gender_options=[dict(v=v, label=lbl, checked=(g == v)) for v, lbl in T['gender_options']],
+-            grade_options=[dict(v=v, label=lbl, checked=(gr == v)) for v, lbl in T['grade_options']],
+-            game_exp_options=[dict(v=v, label=lbl, checked=(ge == v)) for v, lbl in T['game_exp_options']],
+-        )
++        return survey_vars(player, 'fab', 1)
+ 
++
++class FabPage2Base(SurveyPageBase):
+     @staticmethod
+-    def error_message(player: Player, values):
+-        return survey_error_message(player, values)
++    def get_form_fields(player: Player):
++        return fab_fields(player, 2)
++
++    @staticmethod
++    def vars_for_template(player: Player):
++        return survey_vars(player, 'fab', 2)
++
++
++class HexPageBase(SurveyPageBase):
++    @staticmethod
++    def get_form_fields(player: Player):
++        return hex_fields(player)
++
++    @staticmethod
++    def vars_for_template(player: Player):
++        return survey_vars(player, 'hex', 1)
+ 
+ 
+ class DGIntroBase(Page):
+@@ -392,7 +442,7 @@
+     @staticmethod
+     def vars_for_template(player: Player):
+         T = texts(player)
+-        return dict(T=T, intro_blocks=intro_blocks(T))
++        return ctx(player, intro_blocks=intro_blocks(T))
+ 
+ 
+ class DGCheckBase(Page):
+@@ -403,7 +453,8 @@
+     @staticmethod
+     def vars_for_template(player: Player):
+         T = texts(player)
+-        return dict(T=T, intro_blocks=intro_blocks(T), retry=player.dg_check_attempts >= 1)
++        # 説明は折りたたみで常に読み直せるようにし、再回答のときは開いた状態にする（v0.5）
++        return ctx(player, intro_blocks=intro_blocks(T), retry=player.dg_check_attempts >= 1)
+ 
+     @staticmethod
+     def error_message(player: Player, values):
+@@ -424,29 +475,6 @@
+         player.dg_check_pass = last == correct
+ 
+ 
+-def amount_vars(player, field):
+-    cfg = player.session.config
+-    return dict(
+-        T=texts(player),
+-        field=field,
+-        value=player.field_maybe_none(field),
+-        has_value=player.field_maybe_none(field) is not None,
+-        endowment=cfg['endowment'],
+-        step=cfg['dg_step'],
+-        unit=cfg['currency_label'],
+-    )
+-
+-
+-class DGPredictBase(Page):
+-    form_model = 'player'
+-    form_fields = ['dg_predict']
+-    template_name = 'altruism_study/DGPredict.html'
+-
+-    @staticmethod
+-    def vars_for_template(player: Player):
+-        return amount_vars(player, 'dg_predict')
+-
+-
+ class DGDecisionBase(Page):
+     """DG の決定。原研究と同じく 0〜元手の任意の額を数値で入力する（刻みは session config の dg_step）。"""
+     form_model = 'player'
+@@ -455,65 +483,23 @@
+ 
+     @staticmethod
+     def vars_for_template(player: Player):
+-        v = amount_vars(player, 'dg_give')
+-        v['again'] = False
+-        return v
+-
+-    @staticmethod
+-    def js_vars(player: Player):
+         cfg = player.session.config
+-        return dict(endowment=cfg['endowment'], unit=cfg['currency_label'])
+-
+-    @staticmethod
+-    def before_next_page(player: Player, timeout_happened):
+-        player.dg_give_1 = player.dg_give
+-        player.dg_share = player.dg_give > 0
+-
+-
+-class DGConfirmBase(Page):
+-    """入力の確認（原研究 Study 09 の dg_correct「Korrekte Eingabe?」）。「いいえ」なら 1 回だけ入力し直せる。"""
+-    form_model = 'player'
+-    form_fields = ['dg_correct']
+-    template_name = 'altruism_study/DGConfirm.html'
+-
+-    @staticmethod
+-    def vars_for_template(player: Player):
+-        T = texts(player)
+-        give = player.dg_give
+-        keep = endowment(player) - give
+-        sel = player.field_maybe_none('dg_correct')
+-        return dict(
+-            T=T,
+-            body=fill(T['confirm_body'], give=f'{give:,}', keep=f'{keep:,}'),
+-            options=[dict(v=v, label=lbl, checked=(sel == v)) for v, lbl in T['confirm_options']],
++        return ctx(
++            player,
++            value=player.field_maybe_none('dg_give'),
++            has_value=player.field_maybe_none('dg_give') is not None,
++            endowment=cfg['endowment'],
++            step=cfg['dg_step'],
++            unit=cfg['currency_label'],
+         )
+ 
+     @staticmethod
+-    def error_message(player: Player, values):
+-        if values['dg_correct'] is None:
+-            return texts(player)['confirm_error']
+-
+-
+-class DGDecisionAgainBase(Page):
+-    """dg_correct = 2（入力し直す）のときだけ表示。ここでの入力が最終決定（dg_give）になる。"""
+-    form_model = 'player'
+-    form_fields = ['dg_give']
+-    template_name = 'altruism_study/DGDecision.html'
+-
+-    @staticmethod
+-    def vars_for_template(player: Player):
+-        v = amount_vars(player, 'dg_give')
+-        v['again'] = True
+-        return v
+-
+-    @staticmethod
+     def js_vars(player: Player):
+         cfg = player.session.config
+         return dict(endowment=cfg['endowment'], unit=cfg['currency_label'])
+ 
+     @staticmethod
+     def before_next_page(player: Player, timeout_happened):
+-        player.dg_give_2 = player.dg_give
+         player.dg_share = player.dg_give > 0
+ 
+ 
+@@ -526,8 +512,8 @@
+         T = texts(player)
+         highlight = bool(player.participant.survey_error)
+         player.participant.survey_error = False
+-        items = likert_items(player, C.EVAL_FIELDS, T['post_items'], highlight)
+-        return dict(T=T, items=items, comment_text=player.field_maybe_none('comment_open') or '')
++        items = likert_items(player, C.EVAL_FIELDS, T['post_items'], T['likert6'], C.LIKERT6, highlight)
++        return ctx(player, items=items, comment_text=player.field_maybe_none('comment_open') or '')
+ 
+     @staticmethod
+     def error_message(player: Player, values):
+@@ -552,149 +538,90 @@
+             player.excluded_in_app = bool(reasons)
+             player.exclude_reason_in_app = ','.join(reasons)
+             player.finished = True
+-        return dict(
+-            T=texts(player),
+-            code=player.participant.code,
+-            contact_url=player.session.config['contact_form_url'] + player.participant.code,
+-        )
++        return ctx(player, code=player.participant.code)
+ 
+ 
+ # ---------------------------------------------------------------------------
+-# 順序群ごとのページ（A = order 1: 質問紙→DG, B = order 2: DG→質問紙）
++# 順序群ごとのページ（A = task_order 1: 質問紙→DG, B = task_order 2: DG→質問紙）
++# HEXACO の段階は scale_order で FAB の前（First）か後（Last）に出る
+ # ---------------------------------------------------------------------------
+-def shown_if_order(n, revise=False):
++def shown_if(task_order, scale_order=None):
+     def is_displayed(player: Player):
+-        if player.task_order != n:
++        if player.task_order != task_order:
+             return False
+-        if revise:
+-            return player.field_maybe_none('dg_correct') == 2
++        if scale_order is not None:
++            return use_hexaco(player) and player.scale_order == scale_order
+         return True
+ 
+     return staticmethod(is_displayed)
+ 
+ 
+-class SurveyIntroA(SurveyIntroBase):
+-    is_displayed = shown_if_order(1)
++# --- task_order 1: 質問紙 → DG ---
++class HexFirstA(HexPageBase):
++    is_displayed = shown_if(1, scale_order=2)
+ 
+ 
+-class SurveyPage1A(SurveyPageBase):
+-    is_displayed = shown_if_order(1)
++class FabPage1A(FabPage1Base):
++    is_displayed = shown_if(1)
+ 
+-    @staticmethod
+-    def get_form_fields(player: Player):
+-        return survey_fields(player, 1)
+ 
+-    @staticmethod
+-    def vars_for_template(player: Player):
+-        return survey_vars(player, 1)
++class FabPage2A(FabPage2Base):
++    is_displayed = shown_if(1)
+ 
+ 
+-class SurveyPage2A(SurveyPageBase):
+-    is_displayed = shown_if_order(1)
++class HexLastA(HexPageBase):
++    is_displayed = shown_if(1, scale_order=1)
+ 
+-    @staticmethod
+-    def get_form_fields(player: Player):
+-        return survey_fields(player, 2)
+ 
+-    @staticmethod
+-    def vars_for_template(player: Player):
+-        return survey_vars(player, 2)
++class DGIntroA(DGIntroBase):
++    is_displayed = shown_if(1)
+ 
+ 
+-class DemographicsA(DemographicsBase):
+-    is_displayed = shown_if_order(1)
++class DGCheckA(DGCheckBase):
++    is_displayed = shown_if(1)
+ 
+ 
+-class DGIntroB(DGIntroBase):
+-    is_displayed = shown_if_order(2)
++class DGDecisionA(DGDecisionBase):
++    is_displayed = shown_if(1)
+ 
+ 
+-class DGCheckB(DGCheckBase):
+-    is_displayed = shown_if_order(2)
++# --- task_order 2: DG → 質問紙 ---
++class DGIntroB(DGIntroBase):
++    is_displayed = shown_if(2)
+ 
+ 
+-class DGPredictB(DGPredictBase):
+-    is_displayed = shown_if_order(2)
++class DGCheckB(DGCheckBase):
++    is_displayed = shown_if(2)
+ 
+ 
+ class DGDecisionB(DGDecisionBase):
+-    is_displayed = shown_if_order(2)
+-
+-
+-class DGConfirmB(DGConfirmBase):
+-    is_displayed = shown_if_order(2)
+-
+-
+-class DGDecisionAgainB(DGDecisionAgainBase):
+-    is_displayed = shown_if_order(2, revise=True)
+-
+-
+-class SurveyIntroB(SurveyIntroBase):
+-    is_displayed = shown_if_order(2)
+-
+-
+-class SurveyPage1B(SurveyPageBase):
+-    is_displayed = shown_if_order(2)
+-
+-    @staticmethod
+-    def get_form_fields(player: Player):
+-        return survey_fields(player, 1)
+-
+-    @staticmethod
+-    def vars_for_template(player: Player):
+-        return survey_vars(player, 1)
+-
++    is_displayed = shown_if(2)
+ 
+-class SurveyPage2B(SurveyPageBase):
+-    is_displayed = shown_if_order(2)
+-
+-    @staticmethod
+-    def get_form_fields(player: Player):
+-        return survey_fields(player, 2)
+-
+-    @staticmethod
+-    def vars_for_template(player: Player):
+-        return survey_vars(player, 2)
+-
+-
+-class DemographicsB(DemographicsBase):
+-    is_displayed = shown_if_order(2)
+ 
++class HexFirstB(HexPageBase):
++    is_displayed = shown_if(2, scale_order=2)
+ 
+-class DGIntroA(DGIntroBase):
+-    is_displayed = shown_if_order(1)
+-
+-
+-class DGCheckA(DGCheckBase):
+-    is_displayed = shown_if_order(1)
+ 
+-
+-class DGPredictA(DGPredictBase):
+-    is_displayed = shown_if_order(1)
+-
+-
+-class DGDecisionA(DGDecisionBase):
+-    is_displayed = shown_if_order(1)
++class FabPage1B(FabPage1Base):
++    is_displayed = shown_if(2)
+ 
+ 
+-class DGConfirmA(DGConfirmBase):
+-    is_displayed = shown_if_order(1)
++class FabPage2B(FabPage2Base):
++    is_displayed = shown_if(2)
+ 
+ 
+-class DGDecisionAgainA(DGDecisionAgainBase):
+-    is_displayed = shown_if_order(1, revise=True)
++class HexLastB(HexPageBase):
++    is_displayed = shown_if(2, scale_order=1)
+ 
+ 
+ page_sequence = [
+     Consent,
+-    ParticipantCode,
+-    # order 1: 質問紙 → 属性 → DG
+-    SurveyIntroA, SurveyPage1A, SurveyPage2A, DemographicsA,
+-    # order 2: DG → 質問紙 → 属性
+-    DGIntroB, DGCheckB, DGPredictB, DGDecisionB, DGConfirmB, DGDecisionAgainB,
+-    SurveyIntroB, SurveyPage1B, SurveyPage2B, DemographicsB,
+-    # order 1 の DG
+-    DGIntroA, DGCheckA, DGPredictA, DGDecisionA, DGConfirmA, DGDecisionAgainA,
++    # task_order 1: 質問紙（HEXACO → FAB または FAB → HEXACO）→ DG
++    HexFirstA, FabPage1A, FabPage2A, HexLastA,
++    DGIntroA, DGCheckA, DGDecisionA,
++    # task_order 2: DG → 質問紙
++    DGIntroB, DGCheckB, DGDecisionB,
++    HexFirstB, FabPage1B, FabPage2B, HexLastB,
+     # 共通: 事後評価 → 終了
+     PostSurvey,
+     End,
+diff -ruN '--exclude=.venv' '--exclude=__pycache__' '--exclude=*.sqlite3' '--exclude=*.pdf' '--exclude=*.png' '--exclude=example_output_synthetic' '--exclude=diff_v0.4_to_v0.5.patch' '--exclude=.gitignore' '--exclude=screens_v0.1_ja.pdf' a1-decision-study/altruism_study/tests.py a1-decision-study_v0.5/altruism_study/tests.py
+--- a1-decision-study/altruism_study/tests.py	2026-10-24 12:54:39.000000000 +0900
++++ a1-decision-study_v0.5/altruism_study/tests.py	2026-10-29 09:53:49.336602647 +0900
+@@ -1,56 +1,49 @@
+-"""ボットテスト（設計書 §10.1）v0.2。
++"""ボットテスト（設計書 §10.1）v0.5。
+ 
+-実行: otree test a1_ja 20   （20 名 × 7 ケース）
++実行: otree test a1_ja 24   （24 名 × 6 ケース。4 名ごとに task_order × scale_order の 4 通りが揃う）
+ ケース:
+-  normal          正常系（注意チェック正答、理解確認 1 回で正答、300 円を分ける、入力確認「はい」）
++  normal          正常系（注意チェック正答、理解確認 1 回で正答、300 円を分ける）
+   cq_fail         注意チェック cq1 に誤答 → exclude_reason_in_app に 'cq'
+   check_retry_ok  理解確認 1 回目誤答 → 再回答で正答 → dg_check_pass = True, attempts = 2
+   check_fail      理解確認 2 回とも誤答 → dg_check_pass = False だが最後まで進める
+   zero_give       0 円を分ける → dg_share = False
+-  revise          入力確認で「いいえ」→ 入力し直し（200 → 400）→ dg_give_1 = 200, dg_give_2 = 400, dg_give = 400
+   bad_amount      範囲外・刻み違いの額は受け付けない（元手超過、負の値、dg_step の倍数でない値）
++v0.5 で外したもの: revise（入力確認）、属性、自己予測、参加者コードページ。
+ """
+ from otree.api import Bot, Submission, SubmissionMustFail, expect
+ 
+ from . import (
+     C,
+     Consent,
+-    ParticipantCode,
+-    SurveyIntroA, SurveyPage1A, SurveyPage2A, DemographicsA,
+-    DGIntroB, DGCheckB, DGPredictB, DGDecisionB, DGConfirmB, DGDecisionAgainB,
+-    SurveyIntroB, SurveyPage1B, SurveyPage2B, DemographicsB,
+-    DGIntroA, DGCheckA, DGPredictA, DGDecisionA, DGConfirmA, DGDecisionAgainA,
++    HexFirstA, FabPage1A, FabPage2A, HexLastA, DGIntroA, DGCheckA, DGDecisionA,
++    DGIntroB, DGCheckB, DGDecisionB, HexFirstB, FabPage1B, FabPage2B, HexLastB,
+     PostSurvey,
+     End,
+-    survey_fields,
++    fab_fields, hex_fields,
+ )
+ 
+ 
+ class PlayerBot(Bot):
+-    cases = ['normal', 'cq_fail', 'check_retry_ok', 'check_fail', 'zero_give', 'revise', 'bad_amount']
++    cases = ['normal', 'cq_fail', 'check_retry_ok', 'check_fail', 'zero_give', 'bad_amount']
+ 
+     def play_round(self):
+         c = self.case
+         cfg = self.session.config
+         correct = cfg['endowment'] - C.CHECK_GIVE
+ 
+-        # 同意: 未チェックでは進めない
+-        yield SubmissionMustFail(Consent, dict(consent=True, age_confirm='', student_confirm=True))  # '' = 未チェック
+-        yield Consent, dict(consent=True, age_confirm=True, student_confirm=True)
+-        # 来歴の hidden 項目（v0.3）。ブラウザが埋めるが、未取得でも進める
++        # 同意: 2 項目とも必須。hidden の来歴項目はブラウザが埋めるが、未取得でも進める
++        yield SubmissionMustFail(Consent, dict(consent=True, eligible_confirm=''))  # '' = 未チェック
+         if c == 'normal':
+-            yield ParticipantCode, dict(user_agent='bot/1.0 ' + 'x' * 400, screen_width=375)
++            yield Consent, dict(consent=True, eligible_confirm=True, user_agent='bot/1.0 ' + 'x' * 400, screen_width=375)
+         else:
+-            yield ParticipantCode
++            yield Consent, dict(consent=True, eligible_confirm=True)
+ 
+         if self.player.task_order == 1:
+-            yield from self.survey(c, SurveyIntroA, SurveyPage1A, SurveyPage2A)
+-            yield from self.demog(DemographicsA)
+-            yield from self.dg(c, correct, DGIntroA, DGCheckA, DGPredictA, DGDecisionA, DGConfirmA, DGDecisionAgainA)
+-        else:
+-            yield from self.dg(c, correct, DGIntroB, DGCheckB, DGPredictB, DGDecisionB, DGConfirmB, DGDecisionAgainB)
+-            yield from self.survey(c, SurveyIntroB, SurveyPage1B, SurveyPage2B)
+-            yield from self.demog(DemographicsB)
++            yield from self.survey(c, HexFirstA, FabPage1A, FabPage2A, HexLastA)
++            yield from self.dg(c, correct, DGIntroA, DGCheckA, DGDecisionA)
++        else:
++            yield from self.dg(c, correct, DGIntroB, DGCheckB, DGDecisionB)
++            yield from self.survey(c, HexFirstB, FabPage1B, FabPage2B, HexLastB)
+ 
+         # 事後評価: 評価項目は必須、自由記述は任意
+         yield SubmissionMustFail(PostSurvey, dict(eval_understand=5, eval_difficult=2, eval_reflect=4))
+@@ -63,8 +56,16 @@
+         expect(p.duration_sec >= 0, True)
+         expect(p.dg_share, p.dg_give > 0)
+         expect(p.eval_distract, 1)
+-        n_items = 17 + (10 if cfg['use_hexaco'] else 0)
+-        expect(len(p.fab_item_order.split(',')), n_items)
++        expect(len(p.fab_item_order.split(',')), 17)  # FAB 15 + 注意チェック 2
++        if cfg['use_hexaco']:
++            expect(p.scale_order in (1, 2), True)
++            expect(len(p.hex_item_order.split(',')), 10)
++            expect(sorted(p.hex_item_order.split(',')), sorted(C.HEX_FIELDS))
++            for f in C.HEX_FIELDS:
++                expect(getattr(p, f), 3)  # 5 件法の中央
++        else:
++            expect(p.scale_order, 0)
++            expect(p.hex_item_order, '')
+         # 来歴（v0.3）: 設定値・版・乱数シードが各行に残る
+         expect(p.cfg_endowment, cfg['endowment'])
+         expect(p.cfg_dg_step, cfg['dg_step'])
+@@ -97,25 +98,18 @@
+             expect(p.dg_check_attempts, 2)
+             expect(p.dg_check_pass, False)
+             expect('check' in p.exclude_reason_in_app, True)
+-        if c in ('normal', 'zero_give', 'revise', 'bad_amount'):
++        if c in ('normal', 'zero_give', 'bad_amount'):
+             expect(p.excluded_in_app, False)
+         if c == 'zero_give':
+             expect(p.dg_give, 0)
+-            expect(p.dg_give_1, 0)
+-        if c == 'revise':
+-            expect(p.dg_correct, 2)
+-            expect(p.dg_give_1, 200)
+-            expect(p.dg_give_2, 400)
+-            expect(p.dg_give, 400)
+-        else:
+-            expect(p.dg_correct, 1)
+-            expect(p.dg_give_1, p.dg_give)
+-            expect(p.field_maybe_none('dg_give_2'), None)
+ 
+-    def survey(self, c, intro, page1, page2):
+-        yield intro
+-        for page_no, page in ((1, page1), (2, page2)):
+-            fields = survey_fields(self.player, page_no)
++    def survey(self, c, hex_first, fab1, fab2, hex_last):
++        cfg = self.session.config
++        hexaco = bool(cfg['use_hexaco'])
++        if hexaco and self.player.scale_order == 2:
++            yield from self.hex_stage(hex_first)
++        for page_no, page in ((1, fab1), (2, fab2)):
++            fields = fab_fields(self.player, page_no)
+             answers = {f: 4 for f in fields}
+             # 注意チェックの正答（原研究: cq1 = strongly disagree, cq2 = strongly agree）
+             for cq, v in C.CQ_EXPECTED.items():
+@@ -129,12 +123,20 @@
+                 partial.pop(fields[0])
+                 yield SubmissionMustFail(page, partial)
+             yield page, answers
++        if hexaco and self.player.scale_order == 1:
++            yield from self.hex_stage(hex_last)
+ 
+-    def demog(self, page):
+-        yield SubmissionMustFail(page, dict(age=21, gender=1, grade='B3'))  # game_exp 未回答
+-        yield page, dict(age=21, gender=1, grade='B3', game_exp=False)
++    def hex_stage(self, page):
++        fields = hex_fields(self.player)
++        expect(len(fields), 10)
++        answers = {f: 3 for f in fields}
++        yield SubmissionMustFail(page, {f: 6 for f in fields})   # 6 は 5 件法の範囲外
++        partial = dict(answers)
++        partial.pop(fields[-1])
++        yield SubmissionMustFail(page, partial)                  # 未回答があれば留まる
++        yield page, answers
+ 
+-    def dg(self, c, correct, intro, check, predict, decide, confirm, again):
++    def dg(self, c, correct, intro, check, decide):
+         cfg = self.session.config
+         yield intro
+         if c == 'check_retry_ok':
+@@ -146,21 +148,9 @@
+         else:
+             yield check, dict(dg_check=correct)
+         if c == 'bad_amount':
+-            yield SubmissionMustFail(predict, dict(dg_predict=cfg['endowment'] + 1))
+-            yield SubmissionMustFail(predict, dict(dg_predict=-1))
+-            if cfg['dg_step'] > 1:
+-                yield SubmissionMustFail(predict, dict(dg_predict=cfg['dg_step'] // 2))
+-        yield predict, dict(dg_predict=300)
+-        if c == 'bad_amount':
+             yield SubmissionMustFail(decide, dict(dg_give=cfg['endowment'] + 1))
+             yield SubmissionMustFail(decide, dict(dg_give=-5))
+             if cfg['dg_step'] > 1:
+                 yield SubmissionMustFail(decide, dict(dg_give=cfg['dg_step'] // 2))
+-        give = 0 if c == 'zero_give' else (200 if c == 'revise' else 300)
++        give = 0 if c == 'zero_give' else 300
+         yield decide, dict(dg_give=give)
+-        yield SubmissionMustFail(confirm, dict())  # 未選択では進めない
+-        if c == 'revise':
+-            yield confirm, dict(dg_correct=2)
+-            yield again, dict(dg_give=400)
+-        else:
+-            yield confirm, dict(dg_correct=1)
+diff -ruN '--exclude=.venv' '--exclude=__pycache__' '--exclude=*.sqlite3' '--exclude=*.pdf' '--exclude=*.png' '--exclude=example_output_synthetic' '--exclude=diff_v0.4_to_v0.5.patch' '--exclude=.gitignore' '--exclude=screens_v0.1_ja.pdf' a1-decision-study/altruism_study/texts/en.py a1-decision-study_v0.5/altruism_study/texts/en.py
+--- a1-decision-study/altruism_study/texts/en.py	2026-10-24 12:54:40.000000000 +0900
++++ a1-decision-study_v0.5/altruism_study/texts/en.py	2026-10-29 10:12:09.096593084 +0900
+@@ -1,47 +1,55 @@
+ # -*- coding: utf-8 -*-
+-"""English texts (v0.2). Keys mirror ja.py.
++"""English texts (v0.5). Keys mirror ja.py.
+ 
+ Sources (all at https://osf.io/t5mf2/)
+ - FAB items: Supplement.pdf S1, quoted verbatim. Keys are the original variable names (hg_1 ... mc_23).
+ - FAB instruction: Studies/11/11_codebook_raw.csv, QUESTION column.
+ - Control questions: Studies/09 and 11 codebooks (cq1 = "strongly disagree", cq2 = "strongly agree").
+ - Dictator Game wording: Studies/03/03_thesis_blinded.pdf appendix p.44 (German, translated) and the paper's Methods.
+-- Entry confirmation (dg_correct): Studies/09 codebook / preprocessing.R.
+ - Post-task evaluation items: Studies/11 codebook (AG11_01-06).
++- HEXACO-60 instruction and 5-point scale: hexaco.org (HEXACO-60).
++
++Removed in v0.5 (told to participants when the link is sent instead): payment and contact information, the Google form,
++the participant-code page at the start, demographics, self-prediction, entry confirmation.
+ """
+ 
+ TEXT = dict(
+     title='Decision Study',
++    progress_label='Page {page} of {pages}',
+ 
+     consent_title='Invitation to take part',
+     consent_body=[
+-        'You are invited to take part in a study on decision making and everyday behavior. It takes about 15 minutes, '
+-        'can be done at any time and place on your own smartphone or computer, and consists of a short decision task and a questionnaire.',
+-        'You will receive {fee} {currency} for taking part, plus an amount that depends on the decision task (how to receive it is explained on the final page).',
+-        'Participation is voluntary. Once you start, please complete the study in one sitting without interruption (about 15 minutes). '
+-        'If you want to stop, close this page; incomplete responses are not kept and no payment can be made.',
++        'You are invited to take part in a study on decision making and everyday behavior. It consists of a short decision task '
++        'and two questionnaires and takes about 10 minutes. You can do it on your own smartphone or computer.',
++        'Participation is voluntary. Once you start, please complete the study in one sitting without interruption. '
++        'If you want to stop, close this page; incomplete responses are not kept.',
+         'Your answers are stored under a random participant code; no names or email addresses are stored with them. '
+         'Anonymized data may be shared publicly for research.',
+-        'Contact: [researcher name, affiliation, email]',
+     ],
+     consent_check='I have read the above and agree to take part.',
+-    age_check='I am 18 years or older.',
+-    student_check='I am a student at [university].',
+-    consent_error='To take part, please tick all three boxes.',
+-
+-    code_title='Your participant code',
+-    code_body='Your participant code is shown below. Please write it down or take a screenshot: you will need it to receive your payment.',
+-    code_note='Do not close this tab until you reach the final page. If your connection drops, open the same URL again to continue where you left off.',
++    eligible_check='I am 18 years or older and a student at [university].',
++    consent_error='To take part, please tick both boxes.',
+ 
+     survey_title='Questionnaire',
+-    survey_intro=[
+-        'The following pages show statements about how people behave and act in everyday life.',
++    survey_stage_title='Questionnaire {stage} of {stages}',
++    survey_page_note='This questionnaire has {pages} pages (this is page {page}).',
++    required_error='Some items are unanswered. Please answer all items on this page.',
++    scale_heading='Answer options',
++
++    fab_intro=[
++        'The following statements are about how people behave and act in everyday life.',
+         'Please state honestly and spontaneously how you would typically behave or act. '
+         'Answers are on a six-point scale. There are no right or wrong answers.',
+     ],
+-    survey_intro_short='Please state honestly and spontaneously how you would typically behave or act.',
++    fab_intro_short='Please state honestly and spontaneously how you would typically behave or act.',
+     likert6=['strongly disagree', 'disagree', 'rather disagree', 'rather agree', 'agree', 'strongly agree'],
+-    required_error='Some items are unanswered. Please answer all items on this page.',
++
++    hex_intro=[
++        'The following statements are about you. Please read each statement and decide how much you agree or disagree with it.',
++        'Answers are on a five-point scale. Please answer every statement, even if you are not completely sure of your response.',
++    ],
++    hex_intro_short='Please indicate how much you agree or disagree with each statement.',
++    likert5=['strongly disagree', 'disagree', 'neutral (neither agree nor disagree)', 'agree', 'strongly agree'],
+ 
+     items=dict(
+         # Help Giving (S1)
+@@ -67,7 +75,7 @@
+         cq2='Please tick the option "strongly agree" for this question. This is a control question.',
+         # HEXACO-60 Honesty-Humility (Ashton & Lee, 2009; hexaco.org, free for research use). hex_1..hex_10 = HEXACO-60 items
+         # 6, 12R, 18, 24R, 30R, 36, 42R, 48R, 54, 60R (R = reverse-keyed; see codebook.csv). Transcribed from memory on 2026-10-24:
+-        # verify against hexaco.org before use. Note: shown on the FAB 6-point scale (original HEXACO uses 5 points).
++        # verify against hexaco.org before use. v0.5: shown as a separate stage on the original 5-point scale.
+         hex_1="I wouldn't use flattery to get a raise or promotion at work, even if I thought it would succeed.",
+         hex_2="If I knew that I could never get caught, I would be willing to steal a million dollars.",
+         hex_3="Having a lot of money is not especially important to me.",
+@@ -80,20 +88,6 @@
+         hex_10="I'd be tempted to use counterfeit money, if I were sure I could get away with it.",
+     ),
+ 
+-    demog_title='About you',
+-    demog_intro='Please tell us a little about yourself.',
+-    demog_age='Age',
+-    demog_gender='Gender',
+-    gender_options=[[1, 'Male'], [2, 'Female'], [3, 'Other'], [4, 'Prefer not to say']],
+-    demog_grade='Year',
+-    grade_options=[
+-        ['B1', '1st year undergraduate'], ['B2', '2nd year undergraduate'], ['B3', '3rd year undergraduate'],
+-        ['B4', '4th year undergraduate'], ['M1', "Master's 1st year"], ['M2', "Master's 2nd year"],
+-        ['D', 'Doctoral'], ['other', 'Other'],
+-    ],
+-    demog_game_exp='Have you ever taken part in an economic experiment or a money-splitting task like this before?',
+-    game_exp_options=[[True, 'Yes'], [False, 'No']],
+-
+     # Dictator Game. Original (Study 03 appendix p.44): "You are lucky! You are in our winner group ... We give you this
+     # amount as a gift. 1. You can keep it. 2. You can share it with another participant who was not in the winner group and
+     # received no gift. That person stays anonymous to you and you to them. How much do you give to a person in the unlucky group?"
+@@ -109,7 +103,7 @@
+         'Because the lottery has not been drawn yet, everyone now decides as if they were in the lucky group. '
+         'The decisions of those who end up in the lucky group are carried out exactly: they keep what they did not give, '
+         'and their partner in the unlucky group receives what was given.',
+-        'Payments are made later together with the participation fee of {fee} {currency}. You decide only once. There are no right or wrong answers.',
++        'You decide only once. There are no right or wrong answers.',
+     ],
+     dg_options=[
+         'Keep the whole {endowment} {currency}.',
+@@ -117,30 +111,22 @@
+         'That person stays anonymous to you, and you stay anonymous to them.',
+     ],
+     dg_intro_example='Example: if a person in the lucky group gives 200 {currency}, they keep 800 {currency} and their partner receives 200 {currency}.',
++    dg_reread='Read the task description again',
+ 
+     check_title='Comprehension question',
++    check_lead='A quick check that the task description was clear.',
+     check_question='Suppose you are in the lucky group and decide to give {check_amount} {currency} to your partner. How much do you keep?',
+     check_unit='{currency}',
+     check_retry='That is not correct. Please read the description below again and answer once more.',
+ 
+-    predict_title='Before you decide',
+-    predict_question='Before you decide: how much do you think you will actually give to your partner?',
+-    predict_note='This answer does not affect any payment.',
+-
+     decision_title='Your decision',
+     decision_lead='Suppose you are in the lucky group. You receive a gift of {endowment} {currency}.',
+     decision_question='How much of the {endowment} {currency} do you give to your partner in the unlucky group?',
+-    decision_hint='Enter any amount from 0 to {endowment} ({currency}).',
++    decision_hint='Enter any amount from 0 to {endowment} ({currency}). Your decision is final once you press "Next".',
+     decision_keep='You keep',
+     decision_other='Your partner receives',
+     amount_error='Please enter an amount from 0 to {endowment} in steps of {step} {currency}.',
+ 
+-    confirm_title='Please check your entry',
+-    confirm_body='You give {give} {currency} to your partner and keep {keep} {currency}. Is this entry correct?',
+-    confirm_options=[[1, 'Yes, it is correct'], [2, 'No, I want to enter it again']],
+-    confirm_error='Please choose one option.',
+-    decision_again_lead='Please enter your decision again. This entry will be final.',
+-
+     post_title='Finally',
+     post_intro='A few questions about this study. Please indicate how much you agree with each statement.',
+     post_items=dict(
+@@ -153,11 +139,9 @@
+ 
+     end_title='Thank you',
+     end_body=[
+-        'The study is now complete. Your participant code is shown below.',
+-        'To receive your payment, open the contact form with the button below and enter your email address (the form already contains your code).',
+-        'Pairs and the lucky/unlucky lottery are drawn after the study closes. How and when you receive your payment will be sent to the email address you enter.',
+-        'You may now close this page.',
++        'The study is now complete.',
++        'Your participant code is shown below. Please write it down or take a screenshot.',
+     ],
+     end_code_label='Participant code',
+-    end_button='Open the contact form',
++    end_close='You may now close this page.',
+ )
+diff -ruN '--exclude=.venv' '--exclude=__pycache__' '--exclude=*.sqlite3' '--exclude=*.pdf' '--exclude=*.png' '--exclude=example_output_synthetic' '--exclude=diff_v0.4_to_v0.5.patch' '--exclude=.gitignore' '--exclude=screens_v0.1_ja.pdf' a1-decision-study/altruism_study/texts/ja.py a1-decision-study_v0.5/altruism_study/texts/ja.py
+--- a1-decision-study/altruism_study/texts/ja.py	2026-10-24 12:54:39.000000000 +0900
++++ a1-decision-study_v0.5/altruism_study/texts/ja.py	2026-10-29 10:12:09.095933081 +0900
+@@ -1,5 +1,5 @@
+ # -*- coding: utf-8 -*-
+-"""日本語版の文言（v0.2: OSF T5MF2 の原資料に合わせて改訂）。
++"""日本語版の文言（v0.5: 画面を必要最低限にし、質問紙を FAB / HEXACO の 2 段階にした）。
+ 
+ 出典（すべて https://osf.io/t5mf2/）
+ - FAB 15 項目: Supplement.pdf S1（英語・ドイツ語の確定文言）。キーは原研究の変数名（hg_1 … mc_23）
+@@ -7,51 +7,62 @@
+   "Please state honestly and spontaneously how you would typically behave or act."
+ - 注意チェック（control question）: Studies/09, 11 の codebook（cq1 = strongly disagree, cq2 = strongly agree）
+ - DG の教示: Studies/03/03_thesis_blinded.pdf 付録 p.44（Runde „Glück und Pech"）と論文 Methods
+-- 入力の確認（dg_correct）: Studies/09 の codebook・preprocessing.R（「Korrekte Eingabe?」で No なら再入力）
+ - 事後評価項目: Studies/11 の codebook（AG11_01〜06）
++- HEXACO-60 の教示と 5 件法: hexaco.org の HEXACO-60 原版（日本語版は若林, 2014）
++
++v0.5 で外した文言（案内はリンク配布時に伝える）: 謝礼・連絡先・Google フォーム、参加者コードの前置きページ、
++属性、自己予測、入力の確認。
+ 
+ 注意
+ - FAB の和訳はすべて「案」。バックトランスレーションを経た確定版に置き換える（研究室で実施）。
+ - 注意チェックで指定する選択肢の語は likert6 の訳語と一字一句同じにする。
+-- {endowment} {currency} {fee} {check_amount} {step} は session config から埋まる。
++- HEXACO の項目と選択肢の語は若林 (2014) の日本語版に合わせて転記する（hex_1〜hex_10 は未転記）。
++- {endowment} {currency} {check_amount} {step} は session config から埋まる。
++  {page} {pages} {stage} {stages} はページ側で埋まる。
+ """
+ 
+ TEXT = dict(
+     title='意思決定と日常行動に関する調査',
++    progress_label='ページ {page} / {pages}',
+ 
+     # ---- 同意 ----
+     consent_title='調査へのご協力のお願い',
+     consent_body=[
+-        'この調査は、意思決定と日常の行動について調べる研究の一部です。所要時間は約 15 分で、短い意思決定課題と質問紙からなります。'
+-        'お手持ちのスマートフォンやパソコンから、都合のよい時間と場所で回答できます。',
+-        '参加された方には、参加謝礼 {fee} {currency} に加えて、意思決定課題の結果に応じた金額を謝礼としてお支払いします（受け取り方法は終了画面でご案内します）。',
+-        '参加は任意です。ただし、いったん始めたら中断せずに最後まで一度にお答えください（約 15 分）。'
+-        '途中でやめる場合はこのページを閉じてください。その場合、入力途中の回答は保存されず、謝礼もお支払いできません。',
++        'この調査は、意思決定と日常の行動について調べる研究の一部です。短い意思決定課題と 2 つの質問紙からなり、'
++        '所要時間は約 10 分です。お手持ちのスマートフォンやパソコンから回答できます。',
++        '参加は任意です。ただし、いったん始めたら中断せずに最後まで一度にお答えください。'
++        '途中でやめる場合はこのページを閉じてください。その場合、入力途中の回答は保存されません。',
+         '回答は参加者コード（ランダムな文字列）のもとに保存され、氏名やメールアドレスと一緒に保存されることはありません。'
+         '個人が特定できない形にしたデータは、研究目的で公開することがあります。',
+-        'お問い合わせ: [研究者名・所属・メールアドレス]',
+     ],
+     consent_check='上記の説明を読み、調査への参加に同意します。',
+-    age_check='私は 18 歳以上です。',
+-    student_check='私は [大学名] に在籍する学生です。',
+-    consent_error='参加するには 3 つの項目すべてにチェックを入れてください。',
+-
+-    # ---- 参加者コード ----
+-    code_title='参加者コード',
+-    code_body='あなたの参加者コードは下の通りです。謝礼の受け取りに必要ですので、メモや画面の保存などで控えてください。',
+-    code_note='最後のページに着くまで、このタブを閉じないでください。もし回線が切れた場合は、同じ URL を開き直すと続きから再開できます。',
++    eligible_check='私は 18 歳以上で、[大学名] に在籍する学生です。',
++    consent_error='参加するには 2 つの項目にチェックを入れてください。',
+ 
+-    # ---- 質問紙 ----
++    # ---- 質問紙（共通）----
+     survey_title='質問紙',
+-    # 原文: "Please state honestly and spontaneously how you would typically behave or act."
+-    survey_intro=[
+-        '次のページから、日常生活でのふるまいや行動に関する文が表示されます。',
++    survey_stage_title='質問紙 {stage}/{stages}',
++    survey_page_note='このアンケートは全 {pages} ページです（いま {page} ページ目）。',
++    required_error='未回答の項目があります。すべての項目にお答えください。',
++    scale_heading='選択肢',
++
++    # ---- 質問紙 1: FAB（原文: "Please state honestly and spontaneously how you would typically behave or act."）----
++    fab_intro=[
++        '以下の文は、日常生活でのふるまいや行動に関するものです。',
+         'それぞれの文について、あなたが普段どのようにふるまい、行動するかを、正直に、直感的にお答えください。'
+         '回答は 6 段階です。正解や不正解はありません。',
+     ],
+-    survey_intro_short='あなたが普段どのようにふるまい、行動するかを、正直に、直感的にお答えください。',
++    fab_intro_short='あなたが普段どのようにふるまい、行動するかを、正直に、直感的にお答えください。',
+     likert6=['全くそう思わない', 'そう思わない', 'あまりそう思わない', 'ややそう思う', 'そう思う', '強くそう思う'],
+-    required_error='未回答の項目があります。すべての項目にお答えください。',
++
++    # ---- 質問紙 2: HEXACO-60 正直さ-謙虚さ（原版の教示を要約。5 件法）----
++    hex_intro=[
++        '以下の文は、あなた自身についての記述です。それぞれの文を読み、あなたにどの程度あてはまるかをお答えください。',
++        '回答は 5 段階です。確信がもてない場合も、すべての文にお答えください。',
++    ],
++    hex_intro_short='それぞれの文が、あなたにどの程度あてはまるかをお答えください。',
++    # 若林 (2014) の日本語版の選択肢の語に合わせて確認する（原版: strongly disagree … strongly agree）
++    likert5=['全くそう思わない', 'そう思わない', 'どちらでもない', 'そう思う', '強くそう思う'],
+ 
+     items=dict(
+         # ---- Help Giving（S1: hg_1, hg_3, hg_7, hg_10, hg_13）----
+@@ -76,7 +87,7 @@
+         # 原文: 'Please tick the option "strongly disagree" for this question. This is a control question.'
+         cq1='この質問では、「全くそう思わない」を選んでください。これは確認のための質問です。',
+         cq2='この質問では、「強くそう思う」を選んでください。これは確認のための質問です。',
+-        # ---- 混ぜる尺度（v0.4 で採用）: HEXACO-60 正直さ-謙虚さ 10 項目。日本語版は若林 (2014) を転記する。
++        # ---- HEXACO-60 正直さ-謙虚さ 10 項目（別の段階として 5 件法で提示）。日本語版は若林 (2014) を転記する。
+         # 対応する HEXACO-60 の項目番号と逆転は codebook.csv と FAB_和訳作業シート.xlsx「HEXACO-HH」を参照 ----
+         hex_1='【HEXACO 正直さ-謙虚さ 項目 1（未転記）】',
+         hex_2='【HEXACO 正直さ-謙虚さ 項目 2（未転記）】',
+@@ -90,20 +101,6 @@
+         hex_10='【HEXACO 正直さ-謙虚さ 項目 10（未転記）】',
+     ),
+ 
+-    # ---- 属性 ----
+-    demog_title='あなたについて',
+-    demog_intro='あなたご自身について教えてください。',
+-    demog_age='年齢（半角数字）',
+-    demog_gender='性別',
+-    gender_options=[[1, '男性'], [2, '女性'], [3, 'その他'], [4, '回答しない']],
+-    demog_grade='学年',
+-    grade_options=[
+-        ['B1', '学部 1 年'], ['B2', '学部 2 年'], ['B3', '学部 3 年'], ['B4', '学部 4 年'],
+-        ['M1', '修士 1 年'], ['M2', '修士 2 年'], ['D', '博士課程'], ['other', 'その他'],
+-    ],
+-    demog_game_exp='これまでに、今回のような「お金を分ける」課題や経済実験に参加したことがありますか。',
+-    game_exp_options=[[True, 'ある'], [False, 'ない']],
+-
+     # ---- 意思決定課題（DG）----
+     # 原研究の教示（Study 03 付録 p.44）: 「あなたは運がよい！ 当たりグループに入りました。…10.70 ユーロをプレゼントします。
+     # 1. 全額を自分のものにする 2. 当たりグループに入らずプレゼントをもらえなかった別の参加者と分ける。お互いに匿名です。
+@@ -120,7 +117,7 @@
+         'くじ引きの結果はまだ分かりませんので、いまは全員が当たりグループになったつもりで決めてください。'
+         '実際に当たりグループになった人の決定は、そのまま実行されます。分けなかった分はその人のものになり、'
+         'はずれグループの人はペアの相手が分けた額を受け取ります。',
+-        'お金は参加謝礼 {fee} {currency} と合わせて、後日謝礼としてお支払いします。決定は 1 回だけです。正解や不正解はありません。',
++        '決定は 1 回だけです。正解や不正解はありません。',
+     ],
+     dg_options=[
+         '{endowment} {currency} を全部自分のものにする。',
+@@ -128,31 +125,22 @@
+         'その人はあなたにとって匿名であり、あなたもその人にとって匿名です。',
+     ],
+     dg_intro_example='例: 当たりグループの人が 200 {currency} を分けると決めた場合、その人は 800 {currency}、はずれグループの相手は 200 {currency} を受け取ります。',
++    dg_reread='課題の説明をもう一度読む',
+ 
+     check_title='確認問題',
++    check_lead='課題の説明を正しく理解できているかの確認です。',
+     check_question='あなたが当たりグループになり、相手に {check_amount} {currency} を分けると決めたとします。あなたの取り分はいくらになりますか。',
+     check_unit='{currency}',
+     check_retry='正しくありません。下の説明をもう一度読んでから、お答えください。',
+ 
+-    predict_title='決める前に',
+-    predict_question='実際に決める前にお聞きします。あなたは、相手に実際にいくら分けると思いますか。',
+-    predict_note='この回答は、お支払いには影響しません。',
+-
+     decision_title='あなたの決定',
+     decision_lead='あなたが当たりグループになったとします。{endowment} {currency} をプレゼントします。',
+     decision_question='{endowment} {currency} のうち、いくらをはずれグループの相手に分けますか。',
+-    decision_hint='0 から {endowment} までの金額（{currency}）を半角数字で入力してください。',
++    decision_hint='0 から {endowment} までの金額（{currency}）を半角数字で入力してください。「次へ」を押すと決定は確定します。',
+     decision_keep='あなたの取り分',
+     decision_other='相手が受け取る額',
+     amount_error='0 から {endowment} までの金額を {step} {currency} 単位で入力してください。',
+ 
+-    # 原研究（Study 09）の「Korrekte Eingabe?」: 入力が正しいか確認し、「いいえ」なら 1 回だけ入力し直せる
+-    confirm_title='入力の確認',
+-    confirm_body='あなたは相手に {give} {currency} を分け、{keep} {currency} を自分のものにします。この入力は正しいですか。',
+-    confirm_options=[[1, 'はい、正しい'], [2, 'いいえ、入力し直す']],
+-    confirm_error='どちらかを選んでください。',
+-    decision_again_lead='もう一度入力してください。今回の入力が最終決定になります。',
+-
+     # ---- 事後評価（原研究 Study 11 の AG11 項目から 4 問 + 自由記述）----
+     post_title='最後に',
+     post_intro='この調査についてお聞きします。それぞれの文に、どの程度そう思うかをお答えください。',
+@@ -167,11 +155,9 @@
+     # ---- 終了 ----
+     end_title='ご協力ありがとうございました',
+     end_body=[
+-        'これで調査は終了です。あなたの参加者コードは下の通りです。',
+-        '謝礼を受け取るには、下のボタンから連絡先フォームを開き、メールアドレスを入力してください（フォームには参加者コードがあらかじめ入っています）。',
+-        'ペアと当たり・はずれのくじ引きは調査の締切後に行います。謝礼の受け取り方法と時期は、入力いただいたメールアドレスにご案内します。',
+-        'このページは閉じていただいて構いません。',
++        'これで調査は終了です。',
++        'あなたの参加者コードは下の通りです。メモや画面の保存などで控えてください。',
+     ],
+     end_code_label='参加者コード',
+-    end_button='連絡先フォームを開く',
++    end_close='このページは閉じていただいて構いません。',
+ )
+diff -ruN '--exclude=.venv' '--exclude=__pycache__' '--exclude=*.sqlite3' '--exclude=*.pdf' '--exclude=*.png' '--exclude=example_output_synthetic' '--exclude=diff_v0.4_to_v0.5.patch' '--exclude=.gitignore' '--exclude=screens_v0.1_ja.pdf' a1-decision-study/analysis/00_setup.R a1-decision-study_v0.5/analysis/00_setup.R
+--- a1-decision-study/analysis/00_setup.R	2026-10-24 12:54:42.000000000 +0900
++++ a1-decision-study_v0.5/analysis/00_setup.R	2026-10-29 10:05:02.675271871 +0900
+@@ -1,4 +1,4 @@
+-# 00_setup.R — 解析スクリプト共通の設定・ヘルパー（v0.3）
++# 00_setup.R — 解析スクリプト共通の設定・ヘルパー（v0.3; v0.5 で HEXACO を 5 件法・別段階に、自己予測・入力確認の変数を廃止）
+ # 各スクリプトの先頭で source("analysis/00_setup.R") する。
+ # 方針（実験計画書「分析計画」「記録・分析ノート・図表」）:
+ #   - 定数（seed、ブートストラップ回数、除外閾値、SESOI）は 1 か所で決め、分析ノートに自動で残す
+@@ -35,7 +35,7 @@
+ )
+ 
+ HG_ITEMS <- c("hg_1", "hg_3", "hg_7", "hg_10", "hg_13")
+-HEX_ITEMS <- sprintf("hex_%d", 1:10)  # HEXACO-60 正直さ-謙虚さ（逆転は codebook の reverse 列で 7 - x 済み）
++HEX_ITEMS <- sprintf("hex_%d", 1:10)  # HEXACO-60 正直さ-謙虚さ（v0.5: 1–5 の 5 件法。逆転は codebook の min/max から (min + max) - x で 01_clean.R が行う）
+ PP_ITEMS <- c("pp_1", "pp_8", "pp_12", "pp_14", "pp_15")
+ MC_ITEMS <- c("mc_1", "mc_3", "mc_18", "mc_20", "mc_23")
+ 
+@@ -118,12 +118,12 @@
+ 
+ LAB <- if (CFG$fig_lang == "ja") list(
+   order = c(`1` = "質問紙→DG", `2` = "DG→質問紙"), hg = "Help Giving（1–6、5 項目の平均）",
+-  give = "相手に分けた額（円）", predict = "自己予測額（円）", count = "人数", rs = "Spearman rs（HG × 分配額）",
+-  all = "全体", actual = "実際", pred = "予測", group = "順序群"
++  give = "相手に分けた額（円）", hh = "正直さ-謙虚さ（1–5、10 項目の平均）", count = "人数", rs = "Spearman rs（HG × 分配額）",
++  all = "全体", group = "順序群", scale_order = c(`1` = "FAB→HEXACO", `2` = "HEXACO→FAB")
+ ) else list(
+   order = c(`1` = "Survey first", `2` = "DG first"), hg = "Help Giving (1-6, mean of 5 items)",
+-  give = "Amount given (yen)", predict = "Predicted amount (yen)", count = "Participants", rs = "Spearman rs (HG x amount given)",
+-  all = "All", actual = "Actual", pred = "Predicted", group = "Order"
++  give = "Amount given (yen)", hh = "Honesty-Humility (1-5, mean of 10 items)", count = "Participants", rs = "Spearman rs (HG x amount given)",
++  all = "All", group = "Order", scale_order = c(`1` = "FAB first", `2` = "HEXACO first")
+ )
+ # 日本語の図のフォント。環境変数 A1_FIG_FONT で変更（Windows: "Yu Gothic" / "Meiryo"、macOS: "Hiragino Sans"）。
+ # 日本語が「…」や □ になるときはロケールが UTF-8 でないかフォントがない（run_analysis.sh は UTF-8 を設定する）
+diff -ruN '--exclude=.venv' '--exclude=__pycache__' '--exclude=*.sqlite3' '--exclude=*.pdf' '--exclude=*.png' '--exclude=example_output_synthetic' '--exclude=diff_v0.4_to_v0.5.patch' '--exclude=.gitignore' '--exclude=screens_v0.1_ja.pdf' a1-decision-study/analysis/01_clean.R a1-decision-study_v0.5/analysis/01_clean.R
+--- a1-decision-study/analysis/01_clean.R	2026-10-24 12:54:43.000000000 +0900
++++ a1-decision-study_v0.5/analysis/01_clean.R	2026-10-29 10:05:02.675870920 +0900
+@@ -10,6 +10,8 @@
+ #   - 入力ファイルの MD5・除外・集計方法を output/analysis_notes.md に自動で残す
+ # v0.4: Page Times（$A1_RAW_DIR/PageTimes*.csv）からページごとの滞在時間を出し、極端に速い回答と中断を検出する（感度分析用のフラグ）。
+ #       HEXACO 正直さ-謙虚さ（hex_1〜10、逆転は codebook）の平均 hh_mean を作る
++# v0.5: 画面の削減に合わせて dg_correct / dg_give_1 / dg_predict / 属性を廃止。HEXACO は 5 件法（逆転 = 6 − x）。質問紙の段階順 scale_order を保持。
++#       ページ名の変更（FabPage*, Hex*）に対応
+ # 入力: $A1_RAW_DIR/altruism_study*.csv（tools/archive_export.py で完了者だけにした CSV。最新のものを使う）
+ #       $A1_RAW_DIR/PageTimes*.csv（管理画面 Data → Page Times。任意だが推奨）
+ #       $A1_DUP_DIR/dup_list_*.csv（tools/pairing.py の重複判定、任意）
+@@ -66,17 +68,20 @@
+     excluded      = n_flags > 0
+   )
+ 
+-# --- 尺度得点（S1 の 15 項目に逆転項目はない。codebook$reverse == 1 の項目があれば 7 - x にする）---
+-rev_items <- codebook %>% filter(reverse == 1) %>% pull(variable)
+-for (v in intersect(rev_items, names(d))) d[[v]] <- 7 - d[[v]]
++# --- 尺度得点（S1 の 15 項目に逆転項目はない。codebook$reverse == 1 の項目は (min + max) - x で逆転: HEXACO 5 件法なら 6 - x）---
++rev_items <- codebook %>% filter(reverse == 1) %>% select(variable, min, max)
++for (i in seq_len(nrow(rev_items))) {
++  v <- rev_items$variable[i]
++  if (v %in% names(d)) d[[v]] <- (rev_items$min[i] + rev_items$max[i]) - d[[v]]
++}
+ d <- d %>%
+   mutate(
+     hg_mean_fab = rowMeans(across(all_of(HG_ITEMS)), na.rm = TRUE),  # 原研究 analysis.Rmd と同じ名前
+     pp_mean_fab = rowMeans(across(all_of(PP_ITEMS)), na.rm = TRUE),
+     mc_mean_fab = rowMeans(across(all_of(MC_ITEMS)), na.rm = TRUE),
+-    dg_binary   = as.integer(dg_give > 0),                            # 原研究の dg_binary
+-    revised     = as.integer(!is.na(dg_correct) & dg_correct == 2)
++    dg_binary   = as.integer(dg_give > 0)                             # 原研究の dg_binary
+   )
++if (!"scale_order" %in% names(d)) d$scale_order <- NA_integer_
+ # HEXACO 正直さ-謙虚さ（探索 H5）。use_hexaco = 0 のセッションでは NA
+ if (all(HEX_ITEMS %in% names(d))) {
+   d <- d %>% mutate(hh_mean = ifelse(!is.na(cfg_use_hexaco) & cfg_use_hexaco == 1, rowMeans(across(all_of(HEX_ITEMS)), na.rm = TRUE), NA_real_))
+@@ -94,8 +99,8 @@
+     mutate(page_sec = epoch_time_completed - lag(epoch_time_completed)) %>%   # 1 ページ目（同意）は前がないので NA
+     ungroup() %>%
+     mutate(page_type = case_when(
+-      grepl("^SurveyPage", page_name) ~ "survey",
+-      grepl("^DGDecision", page_name) ~ "dg_decision",     # 入力し直し（DGDecisionAgain）も含む
++      grepl("^(SurveyPage|FabPage|Hex)", page_name) ~ "survey",   # v0.5: FabPage1A/2A/1B/2B, HexFirstA/HexLastA/...
++      grepl("^DGDecision", page_name) ~ "dg_decision",
+       grepl("^DGIntro", page_name) ~ "dg_intro",
+       grepl("^DGCheck", page_name) ~ "dg_check",
+       TRUE ~ "other"))
+@@ -113,7 +118,7 @@
+            speeder_flag = fast_survey_flag | fast_dg_flag,
+            break_flag = !is.na(max_page_sec) & is.finite(max_page_sec) & max_page_sec >= CFG$break_sec)
+   page_summary <- pt %>% filter(!is.na(page_sec)) %>%
+-    mutate(page_base = sub("[AB]$", "", page_name)) %>%
++    mutate(page_base = sub("^Hex(First|Last)$", "HexPage", sub("[AB]$", "", page_name))) %>%
+     group_by(page_base, page_type) %>%
+     summarise(n = n(), median_sec = median(page_sec), q10_sec = quantile(page_sec, .10), q90_sec = quantile(page_sec, .90),
+               min_sec = min(page_sec), max_sec = max(page_sec), .groups = "drop") %>% arrange(desc(median_sec))
+@@ -155,8 +160,8 @@
+   mutate(pattern = sub("\\+$", "", pattern)) %>% count(pattern, name = "n") %>% arrange(desc(n))
+ 
+ # --- 記述統計表（全体・順序群、除外後と除外前）---
+-desc_vars <- c("dg_give", "dg_give_1", "dg_predict", "hg_mean_fab", "pp_mean_fab", "mc_mean_fab", "hh_mean", "duration_sec",
+-               "survey_sec_per_item", "dg_decision_sec", "age")
++desc_vars <- c("dg_give", "hg_mean_fab", "pp_mean_fab", "mc_mean_fab", "hh_mean", "duration_sec",
++               "survey_sec_per_item", "dg_decision_sec")
+ describe_by <- function(dd, sample_label) {
+   bind_rows(
+     dd %>% mutate(group = "all"),
+@@ -178,7 +183,7 @@
+ write_csv(excl, data_path("exclusion_table.csv"))
+ write_csv(desc, out_path("descriptives.csv"))
+ print(excl); print(overlap)
+-cat(sprintf("median duration (s): %.0f  threshold: %.0f  revised DG entry (dg_correct = 2): %d\n", med, thr, sum(d$revised)))
++cat(sprintf("median duration (s): %.0f  threshold: %.0f\n", med, thr))
+ 
+ note("## 除外（リストワイズ。原研究 preprocessing.R と同じ基準）",
+      sprintf("- 所要時間の閾値: 中央値 %.0f 秒 × %.2f = %.0f 秒", med, CFG$duration_fraction, thr),
+@@ -192,6 +197,6 @@
+ }
+ note("## 尺度得点",
+      "- HG/PP/MC = 各 5 項目の平均（1–6）。逆転項目なし。欠損は na.rm（必須項目なので通常は欠損なし）",
+-     "- hh_mean = HEXACO-60 正直さ-謙虚さ 10 項目の平均（codebook の reverse = 1 の項目は 7 - x で逆転してから）。use_hexaco = 0 のセッションは NA",
+-     "- dg_binary = dg_give > 0。revised = 入力し直し（dg_correct = 2）。dg_give は最終決定、dg_give_1 は 1 回目の入力",
++     "- hh_mean = HEXACO-60 正直さ-謙虚さ 10 項目（1–5）の平均（codebook の reverse = 1 の項目は 6 - x で逆転してから）。use_hexaco = 0 のセッションは NA",
++     "- dg_binary = dg_give > 0。dg_give は 1 回の入力（v0.5 から確認画面・入力し直しなし）。scale_order = 質問紙の段階順（1 = FAB→HEXACO, 2 = HEXACO→FAB）",
+      sprintf("- 出力: %s, %s, %s（sd は標本 SD、n は有効回答数）", data_path("clean.csv"), data_path("exclusion_table.csv"), out_path("descriptives.csv")))
+diff -ruN '--exclude=.venv' '--exclude=__pycache__' '--exclude=*.sqlite3' '--exclude=*.pdf' '--exclude=*.png' '--exclude=example_output_synthetic' '--exclude=diff_v0.4_to_v0.5.patch' '--exclude=.gitignore' '--exclude=screens_v0.1_ja.pdf' a1-decision-study/analysis/02_main.R a1-decision-study_v0.5/analysis/02_main.R
+--- a1-decision-study/analysis/02_main.R	2026-10-24 12:54:44.000000000 +0900
++++ a1-decision-study_v0.5/analysis/02_main.R	2026-10-29 10:07:45.992630013 +0900
+@@ -11,6 +11,7 @@
+ #   - 事前に固定した感度分析 (a)〜(e) を 1 つの表に出す（結論が変わるかを見る）
+ #   - 結果は results.md（人が読む）と results.json・*.csv（機械可読）の両方に出し、表の数値は手で転記しない
+ #   - 図は 04_figures.R に分離（パート C の方針で描く）
++# v0.5: 自己予測と入力確認（感度分析 (b)）を画面ごと廃止したので解析からも外した。HEXACO は 5 件法・別段階（段階順 scale_order を探索的に確認）
+ # 入力: $A1_DATA_DIR/clean.csv
+ # 出力: $A1_OUT_DIR/results.md, results.json, model_coefficients.csv, sensitivity.csv, corr_matrix_r.csv, corr_matrix_p.csv, analysis_notes.md（追記）
+ # 実行: Rscript analysis/02_main.R（01_clean.R の後）
+@@ -143,19 +144,6 @@
+          sprintf("差の検定（Fisher z）: z = %.2f, p = %.3f; HG × 順序の交互作用（Part 1）: b = %.3f, p = %.3f", zt$z, zt$p, b_int, p_int), "")
+ 
+ # =============================================================================
+-# 探索: 自己予測 vs 実際
+-# =============================================================================
+-w <- wilcox.test(d$dg_predict, d$dg_give, paired = TRUE, exact = FALSE, conf.int = TRUE)
+-pr_hg <- spearman_boot(d$dg_predict, d$hg_mean_fab)
+-pr_dg <- spearman_boot(d$dg_predict, d$dg_give)
+-res$prediction <- list(n = sum(complete.cases(d$dg_predict, d$dg_give)), mean_pred = mean(d$dg_predict), mean_actual = mean(d$dg_give),
+-                       hl_estimate = unname(w$estimate), hl_ci = unname(w$conf.int), p = w$p.value, rs_pred_hg = pr_hg, rs_pred_actual = pr_dg)
+-out <- c(out, "## 探索: 自己予測 vs 実際",
+-         sprintf("予測 M = %.0f, 実際 M = %.0f（n = %d）; 差の Hodges–Lehmann 推定値 = %.0f 円, 95%% CI [%.0f, %.0f], Wilcoxon p = %.3f",
+-                 mean(d$dg_predict), mean(d$dg_give), res$prediction$n, w$estimate, w$conf.int[1], w$conf.int[2], w$p.value),
+-         sprintf("予測 × HG: %s", fmt_r(pr_hg)), sprintf("予測 × 実際: %s", fmt_r(pr_dg)), "")
+-
+-# =============================================================================
+ # H5（探索）: HEXACO 正直さ-謙虚さ × DG。先行研究で最も安定して再現される関連（r ≈ .2〜.3）なので、
+ # HG × DG が出なかったときに「手続きの問題か、FAB の翻訳の問題か」を切り分ける比較基準（ベースライン）にする
+ # =============================================================================
+@@ -163,10 +151,22 @@
+   h5 <- spearman_boot(d$hh_mean, d$dg_give)
+   hh_pp <- spearman_boot(d$hh_mean, d$hg_mean_fab)
+   rel_hh <- { x <- d %>% select(all_of(HEX_ITEMS)) %>% filter(complete.cases(.)); c(alpha = psych::alpha(x)$total$raw_alpha, n = nrow(x)) }
+-  res$H5 <- list(rs_hh_dg = h5, rs_hh_hg = hh_pp, alpha_hh = unname(rel_hh["alpha"]), note = "exploratory; HEXACO-60 H-H on the FAB 6-point scale")
+-  out <- c(out, "## H5 探索: HEXACO 正直さ-謙虚さ × 分配額（先行研究 r ≈ .2〜.3 の比較基準。6 件法で提示した点は原版と異なる）",
++  res$H5 <- list(rs_hh_dg = h5, rs_hh_hg = hh_pp, alpha_hh = unname(rel_hh["alpha"]), note = "exploratory; HEXACO-60 H-H, original 5-point scale, separate stage")
++  out <- c(out, "## H5 探索: HEXACO 正直さ-謙虚さ × 分配額（先行研究 r ≈ .2〜.3 の比較基準。原版と同じ 5 件法、FAB とは別の段階で提示）",
+            sprintf("HH × 分配額: %s", fmt_r(h5)), sprintf("HH × HG: %s", fmt_r(hh_pp)),
+            sprintf("HH の alpha = %.2f（n = %d）", rel_hh["alpha"], rel_hh["n"]), "")
++  # 質問紙の段階順（scale_order: 1 = FAB→HEXACO, 2 = HEXACO→FAB）による尺度得点の違い（記述的。順序は参加者ごとにランダム化）
++  if ("scale_order" %in% names(d) && all(c(1, 2) %in% d$scale_order)) {
++    so <- d %>% filter(scale_order %in% c(1, 2)) %>% group_by(scale_order) %>%
++      summarise(n = n(), hg_mean = mean(hg_mean_fab), hg_sd = sd(hg_mean_fab), hh_sd = sd(hh_mean, na.rm = TRUE), hh_mean = mean(hh_mean, na.rm = TRUE), .groups = "drop") %>%
++      select(scale_order, n, hg_mean, hg_sd, hh_mean, hh_sd)
++    w_hg <- wilcox.test(hg_mean_fab ~ scale_order, data = filter(d, scale_order %in% c(1, 2)), exact = FALSE)
++    w_hh <- wilcox.test(hh_mean ~ scale_order, data = filter(d, scale_order %in% c(1, 2)), exact = FALSE)
++    res$scale_order <- list(by_group = so, p_hg = w_hg$p.value, p_hh = w_hh$p.value)
++    out <- c(out, "### 質問紙の段階順（scale_order）による尺度得点の違い（記述的。1 = FAB→HEXACO, 2 = HEXACO→FAB）",
++             md_table(so %>% mutate(across(where(is.numeric), ~ round(.x, 3)))), "",
++             sprintf("Wilcoxon: HG p = %.3f, HH p = %.3f（多重比較の対象外、記述的に扱う）", w_hg$p.value, w_hh$p.value), "")
++  }
+ }
+ 
+ # =============================================================================
+@@ -175,7 +175,6 @@
+ sens <- bind_rows(
+   { s <- h1; tibble(analysis = "main: analysis sample, final dg_give, Spearman", n = s$n, r = s$r, ci95_low = s$ci95[1], ci95_high = s$ci95[2], ci90_low = s$ci90[1], ci90_high = s$ci90[2], p = s$p, verdict = verdict(s$r, s$p, s$ci90)) },
+   { s <- spearman_boot(d_all$hg_mean_fab, d_all$dg_give); tibble(analysis = "(a) all finished (before exclusion)", n = s$n, r = s$r, ci95_low = s$ci95[1], ci95_high = s$ci95[2], ci90_low = s$ci90[1], ci90_high = s$ci90[2], p = s$p, verdict = verdict(s$r, s$p, s$ci90)) },
+-  { s <- spearman_boot(d$hg_mean_fab, d$dg_give_1); tibble(analysis = "(b) first entry dg_give_1", n = s$n, r = s$r, ci95_low = s$ci95[1], ci95_high = s$ci95[2], ci90_low = s$ci90[1], ci90_high = s$ci90[2], p = s$p, verdict = verdict(s$r, s$p, s$ci90)) },
+   { s <- spearman_boot(d$hg_mean_fab, d$dg_give, method = "pearson"); tibble(analysis = "(c) Pearson r", n = s$n, r = s$r, ci95_low = s$ci95[1], ci95_high = s$ci95[2], ci90_low = s$ci90[1], ci90_high = s$ci90[2], p = s$p, verdict = verdict(s$r, s$p, s$ci90)) },
+   { dd <- filter(d, is.na(eval_distract) | eval_distract < CFG$distract_cut); s <- spearman_boot(dd$hg_mean_fab, dd$dg_give)
+     tibble(analysis = sprintf("(d) excluding eval_distract >= %d", CFG$distract_cut), n = s$n, r = s$r, ci95_low = s$ci95[1], ci95_high = s$ci95[2], ci90_low = s$ci90[1], ci90_high = s$ci90[2], p = s$p, verdict = verdict(s$r, s$p, s$ci90)) },
+@@ -187,14 +186,14 @@
+     tibble(analysis = sprintf("(g) excluding interrupted (a page >= %d s)", CFG$break_sec), n = s$n, r = s$r, ci95_low = s$ci95[1], ci95_high = s$ci95[2], ci90_low = s$ci90[1], ci90_high = s$ci90[2], p = s$p, verdict = verdict(s$r, s$p, s$ci90)) }
+ )
+ res$sensitivity <- sens
+-out <- c(out, "## 感度分析（事前に固定。(e) z 得点モデルは H2 の表を参照。(f)(g) は Page Times があるときだけ）",
++out <- c(out, "## 感度分析（事前に固定。(b) 1 回目の入力は v0.5 で入力確認を廃止したため欠番。(e) z 得点モデルは H2 の表を参照。(f)(g) は Page Times があるときだけ）",
+          md_table(sens %>% mutate(across(where(is.numeric), ~ round(.x, 3)))), "",
+          sprintf("主分析と判定が異なる感度分析: %s", { x <- sens$analysis[sens$verdict != sens$verdict[1]]; if (length(x)) paste(x, collapse = "; ") else "なし" }), "")
+ 
+ # =============================================================================
+ # 相関行列（原研究 Fig. 1 / Supplement S2 に対応。Spearman, Holm 補正。探索的）
+ # =============================================================================
+-corr_df <- d %>% transmute(HG = hg_mean_fab, PP = pp_mean_fab, MC = mc_mean_fab, HH = hh_mean, `DG Share` = dg_give, `DG Predict` = dg_predict)
++corr_df <- d %>% transmute(HG = hg_mean_fab, PP = pp_mean_fab, MC = mc_mean_fab, HH = hh_mean, `DG Share` = dg_give)
+ if (all(is.na(corr_df$HH))) corr_df$HH <- NULL
+ ct <- psych::corr.test(corr_df, method = "spearman", adjust = "holm")
+ write_csv(as.data.frame(round(ct$r, 3)) %>% rownames_to_column("var"), out_path("corr_matrix_r.csv"))
+@@ -224,11 +223,11 @@
+ # =============================================================================
+ res$descriptives <- list(dg_mean = mean(d$dg_give), dg_median = median(d$dg_give), zero_pct = 100 * mean(d$dg_give == 0),
+                          equal_pct = 100 * mean(d$dg_give == max(d$cfg_endowment, na.rm = TRUE) / 2),
+-                         revised_n = sum(d$dg_correct == 2, na.rm = TRUE), check_retry_ok_n = sum(d$dg_check_attempts == 2 & d$dg_check_pass == 1, na.rm = TRUE))
++                         check_retry_ok_n = sum(d$dg_check_attempts == 2 & d$dg_check_pass == 1, na.rm = TRUE))
+ out <- c(out, "## 記述統計（分析対象。全体・順序群の表は descriptives.csv）",
+          sprintf("dg_give: M = %.0f, Md = %.0f, 0 円 %.1f%%（原研究 %.1f%%）, 均等 %.1f%%, n = %d",
+                  mean(d$dg_give), median(d$dg_give), 100 * mean(d$dg_give == 0), CFG$original_zero_pct, res$descriptives$equal_pct, nrow(d)),
+-         sprintf("入力し直し (dg_correct = 2): %d 名; 理解確認 2 回目で正答: %d 名", res$descriptives$revised_n, res$descriptives$check_retry_ok_n),
++         sprintf("理解確認 2 回目で正答: %d 名", res$descriptives$check_retry_ok_n),
+          sprintf("事後評価 (1-6): 理解しやすさ M = %.2f, 難しさ M = %.2f, 実生活を反映 M = %.2f, 気が散った M = %.2f",
+                  mean(d$eval_understand, na.rm = TRUE), mean(d$eval_difficult, na.rm = TRUE), mean(d$eval_reflect, na.rm = TRUE), mean(d$eval_distract, na.rm = TRUE)), "")
+ 
+@@ -247,9 +246,8 @@
+      "- H1: Spearman 相関（cor.test, exact = FALSE）。判定は 90% CI と SESOI による 3 段階。原研究の値が 95% CI に含まれるかは参考",
+      sprintf("- H2/H3: 二部モデル。Part 1 glm(binomial, logit)、Part 2 lm(log(dg_give))。予測子 = %s、順序を固定効果。OR の CI は Wald、%% 変化の CI は t 分布", res$predictor_main),
+      "- H4: 群ごとの Spearman + ブートストラップ CI、psych::r.test（独立相関の差）、交互作用は Part 1 のロジスティック",
+-     "- 自己予測: wilcox.test(paired, conf.int) の Hodges–Lehmann 推定値。相関は Spearman + ブートストラップ",
+-     "- H5（探索）: HEXACO 正直さ-謙虚さの平均 × dg_give の Spearman + ブートストラップ。6 件法で提示（原版は 5 件法）",
++     "- H5（探索）: HEXACO 正直さ-謙虚さの平均 × dg_give の Spearman + ブートストラップ。原版と同じ 5 件法、FAB とは別の段階（段階順はランダム化、scale_order で記述的に確認）",
+      "- 感度分析 (f)(g): Page Times のフラグ（01_clean.R）で速い回答・中断を除いた場合",
+-     "- 多重比較: 主検定は H1 のみ。相関行列は Holm 補正（psych::corr.test）。H4・自己予測は探索的",
++     "- 多重比較: 主検定は H1 のみ。相関行列は Holm 補正（psych::corr.test）。H4・H5・段階順は探索的",
+      "- 信頼性: psych::alpha, psych::omega(nfactors = 1)。減衰補正は rs / sqrt(ω_HG)（探索）",
+      sprintf("- 出力: %s", paste(out_path(c("results.md", "results.json", "model_coefficients.csv", "sensitivity.csv", "corr_matrix_r.csv", "corr_matrix_p.csv")), collapse = ", ")))
+diff -ruN '--exclude=.venv' '--exclude=__pycache__' '--exclude=*.sqlite3' '--exclude=*.pdf' '--exclude=*.png' '--exclude=example_output_synthetic' '--exclude=diff_v0.4_to_v0.5.patch' '--exclude=.gitignore' '--exclude=screens_v0.1_ja.pdf' a1-decision-study/analysis/04_figures.R a1-decision-study_v0.5/analysis/04_figures.R
+--- a1-decision-study/analysis/04_figures.R	2026-10-24 12:14:47.000000000 +0900
++++ a1-decision-study_v0.5/analysis/04_figures.R	2026-10-29 10:06:59.469979744 +0900
+@@ -6,7 +6,8 @@
+ #   - PDF（ベクタ）と PNG（300 dpi）を同じ名前で出す。幅は 1 段 89 mm / 2 段 183 mm
+ #   - 図の数値はすべて 02_main.R の出力（results.json, analysis_sample.csv）から取り、手で転記しない
+ # 入力: $A1_DATA_DIR/analysis_sample.csv, $A1_OUT_DIR/results.json
+-# 出力: $A1_OUT_DIR/fig_a_scatter, fig_b_hist, fig_c_order, fig_d_predict, fig_main（.pdf/.png）, fig_captions.md
++# 出力: $A1_OUT_DIR/fig_a_scatter, fig_b_hist, fig_c_order, fig_d_hexaco, fig_main（.pdf/.png）, fig_captions.md
++# v0.5: 自己予測を廃止したので (d) は HEXACO 正直さ-謙虚さ × 分配額（探索 H5 の比較基準）に置き換えた
+ # 実行: Rscript analysis/04_figures.R（02_main.R の後）
+ source("analysis/00_setup.R")
+ set.seed(CFG$seed)  # ジッタの乱数も固定する
+@@ -65,20 +66,25 @@
+   scale_y_continuous(limits = c(min(-0.3, min(d_c$lo) - 0.05), max(0.7, max(d_c$hi) + 0.12))) +
+   labs(x = NULL, y = LAB$rs) + theme_a1()
+ 
+-# ---- (d) 自己予測と実際（同一線つき） ----
+-p_d <- ggplot(d, aes(dg_predict, dg_give)) +
+-  geom_abline(slope = 1, intercept = 0, linetype = "dotted", colour = OI[["grey"]]) +
+-  geom_point(aes(colour = order_f, shape = order_f), position = position_jitter(width = 6, height = 6), alpha = 0.7, size = 1.6) +
+-  scale_colour_manual(values = unname(PAL_ORDER), name = LAB$group) +
+-  scale_shape_manual(values = unname(SHAPE_ORDER), name = LAB$group) +
+-  coord_equal(xlim = c(0, endow), ylim = c(0, endow)) +
+-  scale_x_continuous(breaks = seq(0, endow, by = endow / 4)) + scale_y_continuous(breaks = seq(0, endow, by = endow / 4)) +
+-  labs(x = LAB$predict, y = LAB$give,
+-       title = sprintf("HL diff = %.0f [%.0f, %.0f], n = %d", res$prediction$hl_estimate, res$prediction$hl_ci[[1]], res$prediction$hl_ci[[2]], res$prediction$n)) +
+-  theme_a1() + theme(plot.title.position = "plot")
++# ---- (d) HEXACO 正直さ-謙虚さ × 分配額（探索 H5。HG × DG の比較基準）。HH は 10 項目の平均（1–5、0.1 刻み）なので x に ±0.02 のジッタ ----
++has_hh <- "hh_mean" %in% names(d) && sum(!is.na(d$hh_mean)) >= 10 && !is.null(res$H5)
++if (has_hh) {
++  p_d <- ggplot(filter(d, !is.na(hh_mean)), aes(hh_mean, dg_give)) +
++    geom_smooth(method = "lm", formula = y ~ x, se = TRUE, colour = OI[["black"]], fill = OI[["grey"]], linewidth = 0.5, alpha = 0.25) +
++    geom_point(aes(colour = order_f, shape = order_f), position = position_jitter(width = 0.02, height = 0), alpha = 0.7, size = 1.6) +
++    scale_colour_manual(values = unname(PAL_ORDER), name = LAB$group) +
++    scale_shape_manual(values = unname(SHAPE_ORDER), name = LAB$group) +
++    scale_x_continuous(limits = c(1, 5), breaks = 1:5) +
++    scale_y_continuous(limits = c(0, endow), breaks = seq(0, endow, by = endow / 4)) +
++    labs(x = LAB$hh, y = LAB$give,
++         title = sprintf("rs = %.2f [%.2f, %.2f], n = %d", res$H5$rs_hh_dg$r, res$H5$rs_hh_dg$ci95[[1]], res$H5$rs_hh_dg$ci95[[2]], res$H5$rs_hh_dg$n)) +
++    theme_a1()
++} else {
++  p_d <- ggplot() + annotate("text", x = 0, y = 0, label = "HEXACO not collected", family = FIG_FAMILY) + theme_void()
++}
+ 
+ files <- c(save_fig(p_a, "fig_a_scatter", 89, 75), save_fig(p_b, "fig_b_hist", 89, 60),
+-           save_fig(p_c, "fig_c_order", 89, 70), save_fig(p_d, "fig_d_predict", 89, 85))
++           save_fig(p_c, "fig_c_order", 89, 70), save_fig(p_d, "fig_d_hexaco", 89, 75))
+ if (has_patchwork) {
+   library(patchwork)
+   p_main <- (p_a + p_b) / (p_c + p_d) + plot_annotation(tag_levels = "a") + plot_layout(guides = "collect") & theme(legend.position = "bottom")
+@@ -92,8 +98,8 @@
+   sprintf("**Fig. b** 相手に分けた額の分布（0 円を独立した階級にし、以降は %d 円幅の階級。縦軸はゼロ基準の人数）。0 円は別色（%.1f%%、n = %d）。", binw, res$descriptives$zero_pct, n),
+   sprintf("**Fig. c** HG × 分配額の Spearman rs。全体と順序群ごと。誤差線はパーセンタイル・ブートストラップ 95%% CI（R = %d、参加者単位）。破線は原研究の r = %.2f、灰色の帯は SESOI ±%.2f。",
+           CFG$boot_R, CFG$original_r, CFG$sesoi),
+-  sprintf("**Fig. d** DG 決定前の自己予測額と実際に分けた額（円）。点は参加者 1 人（n = %d）、±6 円のジッタ。点線は予測 = 実際。差（予測 − 実際）の Hodges–Lehmann 推定値 %.0f 円、95%% CI [%.0f, %.0f]。",
+-          res$prediction$n, res$prediction$hl_estimate, res$prediction$hl_ci[[1]], res$prediction$hl_ci[[2]]),
++  if (has_hh) sprintf("**Fig. d** HEXACO-60 正直さ-謙虚さ（10 項目の平均、1–5）と相手に分けた額（円）。探索 H5（HG × DG の比較基準）。点は参加者 1 人（n = %d）、x 方向に ±0.02 のジッタ。線は OLS 回帰直線と 95%% 信頼帯（補助）。Spearman rs = %.2f、ブートストラップ 95%% CI [%.2f, %.2f]。",
++          res$H5$rs_hh_dg$n, res$H5$rs_hh_dg$r, res$H5$rs_hh_dg$ci95[[1]], res$H5$rs_hh_dg$ci95[[2]]) else "**Fig. d** （HEXACO を収集していないセッションでは空）",
+   "", "色: Okabe–Ito（青 #0072B2 = 質問紙→DG、朱 #D55E00 = DG→質問紙）。形でも区別（● / ▲）。"
+ )
+ writeLines(captions, out_path("fig_captions.md"))
+@@ -101,7 +107,7 @@
+ 
+ note("## 図（04_figures.R）",
+      sprintf("- 乱数 seed = %d（ジッタ）。Okabe–Ito パレット。PDF（ベクタ）と PNG（300 dpi）", CFG$seed),
+-     sprintf("- 散布図のジッタ: x ±0.04（HG 平均は 0.2 刻み）、y なし。予測図: ±6 円。分布図の階級: 0 / 1–%d / %d 円幅（左閉区間）", binw - 1, binw),
++     sprintf("- 散布図のジッタ: x ±0.04（HG 平均は 0.2 刻み）、HEXACO 図は x ±0.02（HH 平均は 0.1 刻み）、y なし。分布図の階級: 0 / 1–%d / %d 円幅（左閉区間）", binw - 1, binw),
+      sprintf("- ファイル: %s", paste(basename(files), collapse = ", ")),
+      sprintf("- キャプション案: %s", out_path("fig_captions.md")))
+ note_session()
+diff -ruN '--exclude=.venv' '--exclude=__pycache__' '--exclude=*.sqlite3' '--exclude=*.pdf' '--exclude=*.png' '--exclude=example_output_synthetic' '--exclude=diff_v0.4_to_v0.5.patch' '--exclude=.gitignore' '--exclude=screens_v0.1_ja.pdf' a1-decision-study/analysis/99_synthetic.R a1-decision-study_v0.5/analysis/99_synthetic.R
+--- a1-decision-study/analysis/99_synthetic.R	2026-10-24 12:54:45.000000000 +0900
++++ a1-decision-study_v0.5/analysis/99_synthetic.R	2026-10-29 10:06:59.470952930 +0900
+@@ -1,9 +1,9 @@
+-# 99_synthetic.R — 解析パイプラインの動作確認用の合成データ（v0.3）
++# 99_synthetic.R — 解析パイプラインの動作確認用の合成データ（v0.3; v0.5 の列構成: scale_order, hex_item_order, HEXACO 1–5、自己予測・入力確認・属性なし）
+ # 本物のデータの代わりではない。列名を oTree のエクスポート CSV（altruism_study.csv）に合わせてあるので、
+ #   A1_RAW_DIR=raw/synthetic A1_DATA_DIR=data_synthetic A1_OUT_DIR=output_synthetic で 01 → 02 → 04 を通せる
+ #   （run_analysis.sh synthetic / run_analysis.bat synthetic）。本データの raw/final・data・output には書かない。
+ # 生成モデル（検証のための仮置き。真の値は未知）: HG の潜在変数 → 5 項目（1–6）、渡すか否かは HG に依存するロジット、
+-#   渡す額は log 正規。注意チェック不合格・理解確認不合格・短すぎる所要時間・入力し直しを少数混ぜる。
++#   渡す額は log 正規。注意チェック不合格・理解確認不合格・短すぎる所要時間を少数混ぜる。
+ # 使い方: Rscript analysis/99_synthetic.R [N] [seed]   （既定 N = 130, seed = 1）
+ source("analysis/00_setup.R")
+ args <- commandArgs(trailingOnly = TRUE)
+@@ -23,11 +23,8 @@
+ p_give <- plogis(0.6 + 0.9 * hg)                 # 0 円が 3 割程度
+ gives <- rbinom(N, 1, p_give)
+ amount <- round(pmin(endow, exp(5.4 + 0.25 * hg + rnorm(N, 0, 0.5))))
+-dg_give_1 <- ifelse(gives == 1, amount, 0L)
+-dg_correct <- ifelse(runif(N) < 0.06, 2L, 1L)
+-dg_give_2 <- ifelse(dg_correct == 2, pmin(endow, pmax(0, dg_give_1 + sample(c(-100, 100, 200), N, TRUE))), NA)
+-dg_give <- ifelse(dg_correct == 2, dg_give_2, dg_give_1)
+-dg_predict <- round(pmin(endow, pmax(0, dg_give + rnorm(N, 60, 120))))
++dg_give <- ifelse(gives == 1, amount, 0L)
++scale_order <- rep(c(1L, 2L), length.out = N)[sample(N)]
+ cq1 <- ifelse(runif(N) < 0.05, sample(2:6, N, TRUE), 1L)
+ cq2 <- ifelse(runif(N) < 0.04, sample(1:5, N, TRUE), 6L)
+ check_attempts <- ifelse(runif(N) < 0.15, 2L, 1L)
+@@ -37,35 +34,34 @@
+ t0 <- as.POSIXct("2026-11-05 09:00:00", tz = "UTC") + cumsum(round(runif(N, 120, 3600)))
+ code <- replicate(N, paste(sample(c(letters, 0:9), 8, TRUE), collapse = ""))
+ 
+-fab_order <- replicate(N, paste(sample(c(HG_ITEMS, PP_ITEMS, MC_ITEMS, "cq1", "cq2", sprintf("hex_%d", 1:10))), collapse = ","))
++fab_order <- replicate(N, paste(sample(c(HG_ITEMS, PP_ITEMS, MC_ITEMS, "cq1", "cq2")), collapse = ","))
++hex_order <- replicate(N, paste(sample(sprintf("hex_%d", 1:10)), collapse = ","))
+ d <- tibble(
+   `participant.id_in_session` = seq_len(N), `participant.code` = code, `participant.label` = "", `participant._is_bot` = 0,
+-  `participant._index_in_pages` = 24, `participant._max_page_index` = 24, `participant._current_app_name` = "altruism_study",
++  `participant._index_in_pages` = 17, `participant._max_page_index` = 17, `participant._current_app_name` = "altruism_study",
+   `participant._current_page_name` = "End", `participant.time_started_utc` = format(t0, "%Y-%m-%d %H:%M:%S"), `participant.visited` = 1,
+   `participant.mturk_worker_id` = "", `participant.mturk_assignment_id` = "", `participant.payoff` = 0,
+   `player.id_in_group` = 1, `player.role` = "", `player.payoff` = 0,
+-  `player.task_order` = task_order, `player.lang` = "ja", `player.app_version` = "v0.3-synthetic", `player.git_commit` = "synthetic",
++  `player.task_order` = task_order, `player.scale_order` = scale_order, `player.lang` = "ja", `player.app_version` = "v0.5-synthetic", `player.git_commit` = "synthetic",
+   `player.otree_version` = "5.11.5", `player.rand_seed` = 12345, `player.cfg_endowment` = endow, `player.cfg_dg_step` = 1, `player.cfg_fee` = 300, `player.cfg_use_hexaco` = 0,
+   `player.user_agent` = "synthetic", `player.screen_width` = sample(c(375, 390, 1280), N, TRUE),
+-  `player.consent` = 1, `player.age_confirm` = 1, `player.student_confirm` = 1
++  `player.consent` = 1, `player.eligible_confirm` = 1
+ ) %>%
+   bind_cols(setNames(items, paste0("player.", names(items)))) %>%
+   mutate(
+     `player.cq1` = cq1, `player.cq2` = cq2, `player.cq1_pass` = as.integer(cq1 == 1), `player.cq2_pass` = as.integer(cq2 == 6),
+-    `player.fab_item_order` = fab_order
++    `player.fab_item_order` = fab_order, `player.hex_item_order` = hex_order
+   )
+-hh <- 0.3 * hg + rnorm(N, 0, 0.95)                         # HEXACO H-H（HG と弱く相関）。逆転項目は 2,4,5,7,8,10
++hh <- 0.3 * hg + rnorm(N, 0, 0.95)                         # HEXACO H-H（HG と弱く相関）。5 件法（1–5）。逆転項目は 2,4,5,7,8,10
++lik5 <- function(theta, loading = 0.8, n = length(theta)) pmin(5, pmax(1, round(3 + 0.8 * loading * theta + rnorm(n, 0, 0.8))))
+ hex_rev <- c(2, 4, 5, 7, 8, 10)
+-for (i in 1:10) { v <- lik(hh); if (i %in% hex_rev) v <- 7 - v; d[[sprintf("player.hex_%d", i)]] <- v }
++for (i in 1:10) { v <- lik5(hh); if (i %in% hex_rev) v <- 6 - v; d[[sprintf("player.hex_%d", i)]] <- v }
+ d$`player.cfg_use_hexaco` <- 1
+ d <- d %>% mutate(
+-  `player.age` = sample(18:26, N, TRUE), `player.gender` = sample(1:4, N, TRUE, prob = c(.6, .35, .03, .02)),
+-  `player.grade` = sample(c("B1", "B2", "B3", "B4", "M1", "M2"), N, TRUE), `player.game_exp` = rbinom(N, 1, 0.2),
+   `player.dg_check` = ifelse(check_pass == 1, endow - 300, endow - 200), `player.dg_check_answer1` = ifelse(check_attempts == 1, endow - 300, 300),
+   `player.dg_check_answer2` = ifelse(check_attempts == 2, ifelse(check_pass == 1, endow - 300, endow - 200), NA),
+   `player.dg_check_attempts` = check_attempts, `player.dg_check_pass` = check_pass,
+-  `player.dg_predict` = dg_predict, `player.dg_give` = dg_give, `player.dg_give_1` = dg_give_1, `player.dg_give_2` = dg_give_2,
+-  `player.dg_correct` = dg_correct, `player.dg_share` = as.integer(dg_give > 0),
++  `player.dg_give` = dg_give, `player.dg_share` = as.integer(dg_give > 0),
+   `player.eval_understand` = sample(3:6, N, TRUE), `player.eval_difficult` = sample(1:5, N, TRUE),
+   `player.eval_reflect` = sample(2:6, N, TRUE), `player.eval_distract` = sample(1:6, N, TRUE, prob = c(.4, .25, .15, .1, .06, .04)),
+   `player.comment_open` = "", `player.t_start` = format(t0, "%Y-%m-%dT%H:%M:%S+00:00"),
+@@ -80,17 +76,16 @@
+ write_csv(d, path, na = "")
+ 
+ # --- Page Times（oTree 管理画面 Data → Page Times と同じ列）。所要時間をページに配分し、速い回答者と中断者を少数混ぜる ---
+-pages_A <- c("Consent", "ParticipantCode", "SurveyIntroA", "SurveyPage1A", "SurveyPage2A", "DemographicsA",
+-             "DGIntroA", "DGCheckA", "DGPredictA", "DGDecisionA", "DGConfirmA", "PostSurvey", "End")
+-pages_B <- c("Consent", "ParticipantCode", "DGIntroB", "DGCheckB", "DGPredictB", "DGDecisionB", "DGConfirmB",
+-             "SurveyIntroB", "SurveyPage1B", "SurveyPage2B", "DemographicsB", "PostSurvey", "End")
+-weight <- function(p) switch(sub("[AB]$", "", p), Consent = 4, ParticipantCode = 1, SurveyIntro = 1, SurveyPage1 = 10, SurveyPage2 = 10,
+-                             Demographics = 3, DGIntro = 6, DGCheck = 3, DGPredict = 2, DGDecision = 4, DGConfirm = 1, PostSurvey = 3, End = 0.5)
++# v0.5 のページ構成: 同意 → 質問紙 2 段階（scale_order で HEXACO が FAB の前か後）→ DG 説明・理解確認・決定（task_order で前後）→ 事後評価 → 終了
++survey_pages <- function(sfx, so) if (so == 2) c(paste0("HexFirst", sfx), paste0("FabPage1", sfx), paste0("FabPage2", sfx)) else c(paste0("FabPage1", sfx), paste0("FabPage2", sfx), paste0("HexLast", sfx))
++dg_pages <- function(sfx) paste0(c("DGIntro", "DGCheck", "DGDecision"), sfx)
++weight <- function(p) switch(sub("^Hex(First|Last)$", "HexPage", sub("[AB]$", "", p)), Consent = 4, FabPage1 = 9, FabPage2 = 9, HexPage = 6,
++                             DGIntro = 6, DGCheck = 3, DGDecision = 4, PostSurvey = 3, End = 0.5)
+ speeders <- sample(N, 5); breakers <- sample(setdiff(seq_len(N), speeders), 3)
+ pt <- bind_rows(lapply(seq_len(N), function(i) {
+-  pages <- if (task_order[i] == 1) pages_A else pages_B
++  pages <- if (task_order[i] == 1) c("Consent", survey_pages("A", scale_order[i]), dg_pages("A"), "PostSurvey", "End") else c("Consent", dg_pages("B"), survey_pages("B", scale_order[i]), "PostSurvey", "End")
+   w <- sapply(pages, weight); secs <- duration[i] * w / sum(w)
+-  if (i %in% speeders) secs[grepl("^SurveyPage|^DGDecision", pages)] <- secs[grepl("^SurveyPage|^DGDecision", pages)] * 0.1
++  if (i %in% speeders) secs[grepl("^FabPage|^Hex|^DGDecision", pages)] <- secs[grepl("^FabPage|^Hex|^DGDecision", pages)] * 0.1
+   if (i %in% breakers) secs[grepl("^DGIntro", pages)] <- secs[grepl("^DGIntro", pages)] + 900
+   secs <- pmax(1, round(secs))
+   tibble(session_code = "synth001", participant_id_in_session = i, participant_code = code[i], page_index = seq_along(pages),
+diff -ruN '--exclude=.venv' '--exclude=__pycache__' '--exclude=*.sqlite3' '--exclude=*.pdf' '--exclude=*.png' '--exclude=example_output_synthetic' '--exclude=diff_v0.4_to_v0.5.patch' '--exclude=.gitignore' '--exclude=screens_v0.1_ja.pdf' a1-decision-study/analysis/codebook.csv a1-decision-study_v0.5/analysis/codebook.csv
+--- a1-decision-study/analysis/codebook.csv	2026-10-24 12:54:41.000000000 +0900
++++ a1-decision-study_v0.5/analysis/codebook.csv	2026-10-29 10:02:36.604001835 +0900
+@@ -1,5 +1,6 @@
+ variable,type,values,min,max,step,label_ja,label_en,reverse,source_screen,in_export,analysis_role,original_variable
+-task_order,int,1|2,,,,"順序群 1=質問紙→DG, 2=DG→質問紙",order condition,,creating_session,1,covariate/H4,（Study 15 のみ順序ランダム）
++task_order,int,1|2,,,,"順序群 1=質問紙→DG, 2=DG→質問紙（scale_order と 2×2 でブロックランダム化）",order condition,,creating_session,1,covariate/H4,（Study 15 のみ順序ランダム）
++scale_order,int,0|1|2,,,,"質問紙の段階の順序 1=FAB→HEXACO, 2=HEXACO→FAB, 0=HEXACO なし",questionnaire stage order,,creating_session,1,covariate (exploratory),
+ lang,str,ja|en,,,,表示言語,language,,creating_session,1,,
+ app_version,str,,,,,Git タグ,app version,,creating_session,1,,
+ git_commit,str,,,,,コードの Git コミット（短縮ハッシュ、-dirty 付きは未コミットの変更あり）,git commit of the code,,creating_session,1,provenance,
+@@ -8,63 +9,55 @@
+ cfg_endowment,int,,1,100000,,設定値: DG の元手（円）,config: endowment,,creating_session,1,provenance,
+ cfg_dg_step,int,,1,1000,,設定値: DG の入力の刻み（円）,config: DG input step,,creating_session,1,provenance,
+ cfg_fee,int,,0,100000,,設定値: 参加謝礼（円）。pairing.py が読む,config: participation fee,,creating_session,1,provenance,
+-cfg_use_hexaco,bool,0|1,,,,設定値: HEXACO 項目を混ぜたか,config: HEXACO items included,,creating_session,1,provenance,
+-user_agent,str,,,,,ブラウザの User-Agent（先頭 300 文字、未取得なら空）,browser user agent,,ParticipantCode,1,provenance,
+-screen_width,int,,0,20000,,画面幅（px、未取得なら空）,screen width (px),,ParticipantCode,1,provenance,
++cfg_use_hexaco,bool,0|1,,,,設定値: HEXACO 質問紙を入れたか,config: HEXACO items included,,creating_session,1,provenance,
++user_agent,str,,,,,ブラウザの User-Agent（先頭 300 文字、未取得なら空）,browser user agent,,Consent,1,provenance,
++screen_width,int,,0,20000,,画面幅（px、未取得なら空）,screen width (px),,Consent,1,provenance,
+ consent,bool,0|1,,,,同意,consent,,Consent,1,inclusion,cons
+-age_confirm,bool,0|1,,,,18 歳以上,age >= 18,,Consent,1,inclusion,
+-student_confirm,bool,0|1,,,,在籍確認,student,,Consent,1,inclusion,
+-hg_1,int,,1,6,,FAB Help Giving（S1 hg_1）,FAB HG item hg_1,0,SurveyPage,1,predictor,hg_1
+-hg_3,int,,1,6,,FAB Help Giving（S1 hg_3）,FAB HG item hg_3,0,SurveyPage,1,predictor,hg_3
+-hg_7,int,,1,6,,FAB Help Giving（S1 hg_7）,FAB HG item hg_7,0,SurveyPage,1,predictor,hg_7
+-hg_10,int,,1,6,,FAB Help Giving（S1 hg_10）,FAB HG item hg_10,0,SurveyPage,1,predictor,hg_10
+-hg_13,int,,1,6,,FAB Help Giving（S1 hg_13）,FAB HG item hg_13,0,SurveyPage,1,predictor,hg_13
+-pp_1,int,,1,6,,FAB Peer Punishment（S1 pp_1）,FAB PP item pp_1,0,SurveyPage,1,discriminant,pp_1
+-pp_8,int,,1,6,,FAB Peer Punishment（S1 pp_8）,FAB PP item pp_8,0,SurveyPage,1,discriminant,pp_8
+-pp_12,int,,1,6,,FAB Peer Punishment（S1 pp_12）,FAB PP item pp_12,0,SurveyPage,1,discriminant,pp_12
+-pp_14,int,,1,6,,FAB Peer Punishment（S1 pp_14）,FAB PP item pp_14,0,SurveyPage,1,discriminant,pp_14
+-pp_15,int,,1,6,,FAB Peer Punishment（S1 pp_15）,FAB PP item pp_15,0,SurveyPage,1,discriminant,pp_15
+-mc_1,int,,1,6,,FAB Moral Courage（S1 mc_1）,FAB MC item mc_1,0,SurveyPage,1,discriminant,mc_1
+-mc_3,int,,1,6,,FAB Moral Courage（S1 mc_3）,FAB MC item mc_3,0,SurveyPage,1,discriminant,mc_3
+-mc_18,int,,1,6,,FAB Moral Courage（S1 mc_18）,FAB MC item mc_18,0,SurveyPage,1,discriminant,mc_18
+-mc_20,int,,1,6,,FAB Moral Courage（S1 mc_20）,FAB MC item mc_20,0,SurveyPage,1,discriminant,mc_20
+-mc_23,int,,1,6,,FAB Moral Courage（S1 mc_23）,FAB MC item mc_23,0,SurveyPage,1,discriminant,mc_23
+-cq1,int,,1,6,,注意チェック1（正答 1 = 全くそう思わない）,control question 1 (correct = 1),,SurveyPage,1,exclusion,cq1
+-cq2,int,,1,6,,注意チェック2（正答 6 = 強くそう思う）,control question 2 (correct = 6),,SurveyPage,1,exclusion,cq2
+-cq1_pass,bool,0|1,,,,注意チェック1 合格,cq1 pass,,SurveyPage,1,exclusion,
+-cq2_pass,bool,0|1,,,,注意チェック2 合格,cq2 pass,,SurveyPage,1,exclusion,
+-fab_item_order,str,,,,,項目の提示順（カンマ区切り）,item order,,creating_session,1,record,
+-hex_1,int,,1,6,,HEXACO-60 正直さ-謙虚さ 項目 6（Sincerity）,HEXACO-60 H-H item 6 (Sincerity),0,SurveyPage,1,exploratory H5,
+-hex_2,int,,1,6,,HEXACO-60 正直さ-謙虚さ 項目 12（Fairness、逆転）,"HEXACO-60 H-H item 12 (Fairness, reversed)",1,SurveyPage,1,exploratory H5,
+-hex_3,int,,1,6,,HEXACO-60 正直さ-謙虚さ 項目 18（Greed Avoidance）,HEXACO-60 H-H item 18 (Greed Avoidance),0,SurveyPage,1,exploratory H5,
+-hex_4,int,,1,6,,HEXACO-60 正直さ-謙虚さ 項目 24（Modesty、逆転）,"HEXACO-60 H-H item 24 (Modesty, reversed)",1,SurveyPage,1,exploratory H5,
+-hex_5,int,,1,6,,HEXACO-60 正直さ-謙虚さ 項目 30（Sincerity、逆転）,"HEXACO-60 H-H item 30 (Sincerity, reversed)",1,SurveyPage,1,exploratory H5,
+-hex_6,int,,1,6,,HEXACO-60 正直さ-謙虚さ 項目 36（Fairness）,HEXACO-60 H-H item 36 (Fairness),0,SurveyPage,1,exploratory H5,
+-hex_7,int,,1,6,,HEXACO-60 正直さ-謙虚さ 項目 42（Greed Avoidance、逆転）,"HEXACO-60 H-H item 42 (Greed Avoidance, reversed)",1,SurveyPage,1,exploratory H5,
+-hex_8,int,,1,6,,HEXACO-60 正直さ-謙虚さ 項目 48（Modesty、逆転）,"HEXACO-60 H-H item 48 (Modesty, reversed)",1,SurveyPage,1,exploratory H5,
+-hex_9,int,,1,6,,HEXACO-60 正直さ-謙虚さ 項目 54（Sincerity）,HEXACO-60 H-H item 54 (Sincerity),0,SurveyPage,1,exploratory H5,
+-hex_10,int,,1,6,,HEXACO-60 正直さ-謙虚さ 項目 60（Fairness、逆転）,"HEXACO-60 H-H item 60 (Fairness, reversed)",1,SurveyPage,1,exploratory H5,
+-age,int,,18,99,,年齢,age,,Demographics,1,control,age
+-gender,int,1|2|3|4,,,,性別 1男 2女 3その他 4回答しない,gender,,Demographics,1,control,gender (f/m/nb)
+-grade,str,B1|B2|B3|B4|M1|M2|D|other,,,,学年,year,,Demographics,1,control,edu
+-game_exp,bool,0|1,,,,経済ゲーム経験,prior game experience,,Demographics,1,control,
++eligible_confirm,bool,0|1,,,,参加資格（18 歳以上かつ対象大学の学生）,eligible (18+ and student),,Consent,1,inclusion,
++hg_1,int,,1,6,,FAB Help Giving（S1 hg_1）,FAB HG item hg_1,0,FabPage,1,predictor,hg_1
++hg_3,int,,1,6,,FAB Help Giving（S1 hg_3）,FAB HG item hg_3,0,FabPage,1,predictor,hg_3
++hg_7,int,,1,6,,FAB Help Giving（S1 hg_7）,FAB HG item hg_7,0,FabPage,1,predictor,hg_7
++hg_10,int,,1,6,,FAB Help Giving（S1 hg_10）,FAB HG item hg_10,0,FabPage,1,predictor,hg_10
++hg_13,int,,1,6,,FAB Help Giving（S1 hg_13）,FAB HG item hg_13,0,FabPage,1,predictor,hg_13
++pp_1,int,,1,6,,FAB Peer Punishment（S1 pp_1）,FAB PP item pp_1,0,FabPage,1,discriminant,pp_1
++pp_8,int,,1,6,,FAB Peer Punishment（S1 pp_8）,FAB PP item pp_8,0,FabPage,1,discriminant,pp_8
++pp_12,int,,1,6,,FAB Peer Punishment（S1 pp_12）,FAB PP item pp_12,0,FabPage,1,discriminant,pp_12
++pp_14,int,,1,6,,FAB Peer Punishment（S1 pp_14）,FAB PP item pp_14,0,FabPage,1,discriminant,pp_14
++pp_15,int,,1,6,,FAB Peer Punishment（S1 pp_15）,FAB PP item pp_15,0,FabPage,1,discriminant,pp_15
++mc_1,int,,1,6,,FAB Moral Courage（S1 mc_1）,FAB MC item mc_1,0,FabPage,1,discriminant,mc_1
++mc_3,int,,1,6,,FAB Moral Courage（S1 mc_3）,FAB MC item mc_3,0,FabPage,1,discriminant,mc_3
++mc_18,int,,1,6,,FAB Moral Courage（S1 mc_18）,FAB MC item mc_18,0,FabPage,1,discriminant,mc_18
++mc_20,int,,1,6,,FAB Moral Courage（S1 mc_20）,FAB MC item mc_20,0,FabPage,1,discriminant,mc_20
++mc_23,int,,1,6,,FAB Moral Courage（S1 mc_23）,FAB MC item mc_23,0,FabPage,1,discriminant,mc_23
++cq1,int,,1,6,,注意チェック1（正答 1 = 全くそう思わない）,control question 1 (correct = 1),,FabPage,1,exclusion,cq1
++cq2,int,,1,6,,注意チェック2（正答 6 = 強くそう思う）,control question 2 (correct = 6),,FabPage,1,exclusion,cq2
++cq1_pass,bool,0|1,,,,注意チェック1 合格,cq1 pass,,FabPage,1,exclusion,
++cq2_pass,bool,0|1,,,,注意チェック2 合格,cq2 pass,,FabPage,1,exclusion,
++fab_item_order,str,,,,,FAB + 注意チェック 17 項目の提示順（カンマ区切り）,FAB item order (incl. control questions),,creating_session,1,record,
++hex_item_order,str,,,,,HEXACO 10 項目の提示順（カンマ区切り、HEXACO なしなら空）,HEXACO item order,,creating_session,1,record,
++hex_1,int,,1,5,,HEXACO-60 正直さ-謙虚さ（5 件法） 項目 6（Sincerity）,HEXACO-60 H-H item 6 (Sincerity),0,HexPage,1,exploratory H5,
++hex_2,int,,1,5,,HEXACO-60 正直さ-謙虚さ（5 件法） 項目 12（Fairness、逆転）,"HEXACO-60 H-H item 12 (Fairness, reversed)",1,HexPage,1,exploratory H5,
++hex_3,int,,1,5,,HEXACO-60 正直さ-謙虚さ（5 件法） 項目 18（Greed Avoidance）,HEXACO-60 H-H item 18 (Greed Avoidance),0,HexPage,1,exploratory H5,
++hex_4,int,,1,5,,HEXACO-60 正直さ-謙虚さ（5 件法） 項目 24（Modesty、逆転）,"HEXACO-60 H-H item 24 (Modesty, reversed)",1,HexPage,1,exploratory H5,
++hex_5,int,,1,5,,HEXACO-60 正直さ-謙虚さ（5 件法） 項目 30（Sincerity、逆転）,"HEXACO-60 H-H item 30 (Sincerity, reversed)",1,HexPage,1,exploratory H5,
++hex_6,int,,1,5,,HEXACO-60 正直さ-謙虚さ（5 件法） 項目 36（Fairness）,HEXACO-60 H-H item 36 (Fairness),0,HexPage,1,exploratory H5,
++hex_7,int,,1,5,,HEXACO-60 正直さ-謙虚さ（5 件法） 項目 42（Greed Avoidance、逆転）,"HEXACO-60 H-H item 42 (Greed Avoidance, reversed)",1,HexPage,1,exploratory H5,
++hex_8,int,,1,5,,HEXACO-60 正直さ-謙虚さ（5 件法） 項目 48（Modesty、逆転）,"HEXACO-60 H-H item 48 (Modesty, reversed)",1,HexPage,1,exploratory H5,
++hex_9,int,,1,5,,HEXACO-60 正直さ-謙虚さ（5 件法） 項目 54（Sincerity）,HEXACO-60 H-H item 54 (Sincerity),0,HexPage,1,exploratory H5,
++hex_10,int,,1,5,,HEXACO-60 正直さ-謙虚さ（5 件法） 項目 60（Fairness、逆転）,"HEXACO-60 H-H item 60 (Fairness, reversed)",1,HexPage,1,exploratory H5,
+ dg_check,int,,0,100000,,理解確認の最終回答（円）,comprehension answer (last),,DGCheck,1,exclusion,
+ dg_check_answer1,int,,0,100000,,理解確認 1 回目の回答,comprehension answer 1,,DGCheck,1,exclusion,
+ dg_check_answer2,int,,0,100000,,理解確認 2 回目の回答,comprehension answer 2,,DGCheck,1,exclusion,
+ dg_check_attempts,int,,0,2,,理解確認の試行回数,comprehension attempts,,DGCheck,1,exclusion,
+ dg_check_pass,bool,0|1,,,,理解確認 合格（最終回答が正答）,comprehension pass,,DGCheck,1,exclusion,
+-dg_predict,int,,0,1000,,自己予測額（円）,predicted giving,,DGPredict,1,secondary,
+-dg_give,int,,0,1000,,相手に分ける額（円、最終決定）,amount given (final),,DGDecision/DGDecisionAgain,1,outcome H1,dg_give
+-dg_give_1,int,,0,1000,,1 回目の入力,first entry,,DGDecision,1,record,dg_give (Study 09: 1 回目)
+-dg_give_2,int,,0,1000,,2 回目の入力（入力し直したときのみ）,revised entry,,DGDecisionAgain,1,record,dg_give_2
+-dg_correct,int,1|2,,,,入力の確認 1=正しい 2=入力し直す,entry confirmed,,DGConfirm,1,record,dg_correct
++dg_give,int,,0,1000,,相手に分ける額（円）,amount given,,DGDecision,1,outcome H1,dg_give
+ dg_share,bool,0|1,,,,送金有無（dg_give > 0）,gave anything,,DGDecision,1,outcome H2,dg_binary
+ eval_understand,int,,1,6,,事後評価: 課題は理解しやすかった,post: easy to understand,,PostSurvey,1,manipulation check,AG11_05
+ eval_difficult,int,,1,6,,事後評価: 決定は難しかった,post: difficult to decide,,PostSurvey,1,manipulation check,AG11_02
+ eval_reflect,int,,1,6,,事後評価: 実生活の決定を反映,post: reflects real life,,PostSurvey,1,manipulation check,AG11_04
+ eval_distract,int,,1,6,,事後評価: 気が散っていた,post: distracted,,PostSurvey,1,exclusion (exploratory),AG11_06
+ comment_open,str,,,,,自由記述（任意）,open comment,,PostSurvey,1,record,AG12_01
+-t_start,str,,,,,開始時刻 ISO8601 UTC,start time,,ParticipantCode,1,duration,STARTED
++t_start,str,,,,,開始時刻 ISO8601 UTC,start time,,Consent,1,duration,STARTED
+ t_end,str,,,,,終了時刻 ISO8601 UTC,end time,,End,1,duration,
+ duration_sec,int,,0,86400,,所要時間（秒）,duration (s),,End,1,exclusion,TIME_SUM
+ finished,bool,0|1,,,,最終ページ到達,finished,,End,1,payment,FINISHED
+diff -ruN '--exclude=.venv' '--exclude=__pycache__' '--exclude=*.sqlite3' '--exclude=*.pdf' '--exclude=*.png' '--exclude=example_output_synthetic' '--exclude=diff_v0.4_to_v0.5.patch' '--exclude=.gitignore' '--exclude=screens_v0.1_ja.pdf' a1-decision-study/docs/compare_v0.4_v0.5.md a1-decision-study_v0.5/docs/compare_v0.4_v0.5.md
+--- a1-decision-study/docs/compare_v0.4_v0.5.md	1970-01-01 09:00:00.000000000 +0900
++++ a1-decision-study_v0.5/docs/compare_v0.4_v0.5.md	2026-10-29 10:19:57.856653951 +0900
+@@ -0,0 +1,81 @@
++# v0.4 → v0.5 の比較（修正前 `a1-decision-study/` と修正後 `a1-decision-study_v0.5/`）
++
++作成: 2026-10-29。画面の並列比較は `compare_screens_v0.4_v0.5_ja.pdf`、v0.5 の全画面は `screens_v0.5_ja.pdf` / `screens_v0.5_en.pdf`、
++ソースの差分は `diff_v0.4_to_v0.5.patch`（`diff -ruN` の出力。`patch -p1` で v0.4 に当てると v0.5 になる）。
++
++## 1. 参加者が通るページ
++
++| | v0.4 | v0.5 |
++| --- | --- | --- |
++| ページ数 | 13（入力し直しを含めて 14） | **9** |
++| 順序群 1（質問紙→DG） | 同意 → 参加者コード → 質問紙の教示 → 質問紙 1 → 質問紙 2 → 属性 → DG 説明 → 理解確認 → 自己予測 → 決定 → 入力確認 →（入力し直し）→ 事後評価 → 終了 | 同意 → 質問紙 1/2 → 質問紙 1/2（2 ページ目）→ 質問紙 2/2 → DG 説明 → 理解確認 → 決定 → 事後評価 → 終了 |
++| 順序群 2（DG→質問紙） | 同意 → 参加者コード → DG 説明 → … → 入力確認 → 質問紙の教示 → 質問紙 1 → 質問紙 2 → 属性 → 事後評価 → 終了 | 同意 → DG 説明 → 理解確認 → 決定 → 質問紙 1/2 → 1/2（2 ページ目）→ 2/2 → 事後評価 → 終了 |
++| 質問紙 | FAB 15 + 注意チェック 2 + HEXACO 10 = 27 項目を一体でランダム順、2 ページ、全部 6 件法 | **2 段階**: FAB 15 + 注意チェック 2（6 件法、2 ページ）と HEXACO 10（**5 件法**、1 ページ）。段階の順序（`scale_order`）も参加者ごとにランダム |
++| ランダム化 | task_order を 2 人ずつブロック | task_order × scale_order の 4 通りを 4 人ずつブロック（各セルがほぼ同数） |
++| 所要時間の目安（同意文） | 約 15 分 | 約 10 分 |
++
++削除した画面: 参加者コード（開始時）、質問紙の教示ページ（各段階の 1 ページ目の上部に統合）、属性（年齢・性別・学年・経済ゲーム経験）、
++自己予測、入力の確認と入力し直し。削除した案内: 参加謝礼の額と受け取り方法、連絡先（お問い合わせ）、Google フォームへの誘導。
++これらはリンクを配布するときに参加者に伝える。
++
++## 2. 文言の変更（日本語版。英語版も同じ構成）
++
++| 画面 | v0.4 | v0.5 |
++| --- | --- | --- |
++| 同意 第 1 段落 | 「…所要時間は約 15 分で、短い意思決定課題と質問紙からなります。…」 | 「…短い意思決定課題と 2 つの質問紙からなり、所要時間は約 10 分です。…」 |
++| 同意 第 2 段落 | 「参加された方には、参加謝礼 {fee} 円に加えて、…謝礼としてお支払いします（受け取り方法は終了画面でご案内します）。」 | **削除** |
++| 同意 第 3 段落 | 「…入力途中の回答は保存されず、謝礼もお支払いできません。」 | 「…入力途中の回答は保存されません。」 |
++| 同意 第 5 段落 | 「お問い合わせ: [研究者名・所属・メールアドレス]」 | **削除** |
++| 同意 チェック | 3 つ（同意／18 歳以上／[大学名] の学生） | 2 つ（同意／「私は 18 歳以上で、[大学名] に在籍する学生です」） |
++| 参加者コード（開始時） | 「謝礼の受け取りに必要ですので…控えてください」「同じ URL を開き直すと続きから再開できます」 | **画面ごと削除** |
++| 質問紙の教示 | 独立したページ「次のページから、…」 | 各段階の 1 ページ目の上部に枠で表示（「以下の文は、…」）。2 ページ目は短い教示だけ |
++| HEXACO の教示・選択肢 | FAB と同じ教示、6 件法 | 「以下の文は、あなた自身についての記述です。…どの程度あてはまるか…」、5 件法（全くそう思わない／そう思わない／どちらでもない／そう思う／強くそう思う。若林 2014 の語に合わせて要確認） |
++| 画面の見出し | 「質問紙 (1/2)」 | 「質問紙 1/2」+「このアンケートは全 2 ページです（いま 1 ページ目）」 |
++| DG 説明 第 5 段落 | 「お金は参加謝礼 {fee} 円と合わせて、後日謝礼としてお支払いします。決定は 1 回だけです。正解や不正解はありません。」 | 「決定は 1 回だけです。正解や不正解はありません。」 |
++| 理解確認 | 再回答のときだけ説明を表示 | 「課題の説明を正しく理解できているかの確認です。」を追加。説明は「課題の説明をもう一度読む」の折りたたみでいつでも読め、再回答時は開いた状態 |
++| 決定のヒント | 「0 から {endowment} までの金額（円）を半角数字で入力してください。」 | 同 + 「「次へ」を押すと決定は確定します。」（入力確認の画面をなくしたため） |
++| 自己予測・入力確認・入力し直し・属性 | あり | **削除**（文言も削除） |
++| 終了 | 「謝礼を受け取るには、下のボタンから連絡先フォームを開き…」「ペアと当たり・はずれのくじ引きは…メールアドレスにご案内します」+ ボタン | 「これで調査は終了です。」「あなたの参加者コードは下の通りです。メモや画面の保存などで控えてください。」+ コード +「このページは閉じていただいて構いません。」 |
++| 全ページ | — | 進捗「ページ k / 9」とバー |
++
++## 3. 参加者の手間を減らす変更（v0.5 で新規）
++
++- 進捗表示（各ページの上部。参加者ごとに実際に通るページ数で計算）。
++- 未回答・誤りがあるときは、最初の該当項目まで自動でスクロールして赤枠で示す（回答済みの選択は残る）。
++- 選択肢は行全体（番号 + 語）をタップで選べる。選んだ項目は薄い青で塗り、カードに ✓ を付ける。
++- 教示ページを各段階の 1 ページ目に統合（ページが 2 つ減る）。選択肢の意味を 1 ページ目に一覧表示。
++- 理解確認と決定の入力欄を大きくし、自動フォーカス（スマホの数値キーボード、`inputmode=numeric` は v0.4 から）。
++- 「次へ」の二重送信を防ぐ（送信後にボタンを無効化）。
++- 同意のチェックを 3 → 2 に。
++
++## 4. データの列（analysis/codebook.csv: 71 → 64 変数）
++
++削除: `age_confirm`, `student_confirm`, `age`, `gender`, `grade`, `game_exp`, `dg_predict`, `dg_give_1`, `dg_give_2`, `dg_correct`
++追加: `scale_order`（1 = FAB→HEXACO, 2 = HEXACO→FAB, 0 = HEXACO なし）, `eligible_confirm`, `hex_item_order`
++変更: `hex_1〜hex_10` の範囲 1–6 → **1–5**（逆転は 6 − x）、`fab_item_order` は 17 項目（HEXACO を含まない）、
++`user_agent` / `screen_width` / `t_start` の取得画面は Consent、`dg_give` は 1 回の入力（確認なし）。
++
++## 5. 解析（analysis/）
++
++- `01_clean.R`: 逆転をコードブックの min/max から `(min + max) − x` で計算（HEXACO 5 件法に対応）。`revised`・`dg_predict`・`age` の記述統計を削除。
++  Page Times のページ名を v0.5 の名前（`FabPage1A` など、`HexFirstA`/`HexLastA` → `HexPage`）に対応。
++- `02_main.R`: 自己予測の分析を削除。感度分析 (b)（1 回目の入力）は欠番。H5 の注記を「5 件法・別段階」に。
++  質問紙の段階順（`scale_order`）による HG・HH の違いを記述的に表示（Wilcoxon、多重比較の対象外）。相関行列から DG Predict を削除。
++- `04_figures.R`: 図 d を自己予測から HEXACO × 分配額（探索 H5）に置き換え（`fig_d_hexaco`）。
++- `99_synthetic.R`: v0.5 の列構成と Page Times のページ名で合成データを作る。
++- 合成データ N = 130 で 01 → 02 → 04 が最後まで通ることを確認（R 4.3.3、`docs/example_output_synthetic/`）。
++
++## 6. 実験計画書との対応で直す点
++
++- 材料: HEXACO は原版と同じ 5 件法で、FAB とは別の段階として提示。段階の順序は参加者ごとにランダム（2 × 2 ブロック）。
++- 手続き: 画面の一覧（9 ページ）。参加者コードは終了画面のみ。謝礼と連絡先の案内は実験の外（リンク配布時）。
++- 分析計画: 探索的分析から「自己予測」を削除。感度分析 (b) を削除（欠番）。属性による統制・記述はなし。
++- 倫理・謝礼: 参加者の識別は終了画面の参加者コード（参加者が申告）。謝礼の案内文（配布時）を作る。
++
++## 7. 開発の便利機能
++
++- `tools/ensure_room.py` + `run_dev.bat`: Room `demo` にセッションを自動で作り、開くたびに新しい参加者で始まる
++  **使い回しリンク**（`/join/<code>`）をブラウザで開く。固定リンク `/room/demo`（本実験と同じ形。同じブラウザは続きから）も表示。
++- `run_dev.bat` は `%LOCALAPPDATA%\a1-decision-study_v0.5` にコピーして起動するので、v0.4 の環境とは別。
++- `tools/browser_walk.py`: 4 人分を通して全種類の画面を撮り、`--pdf` で 1 つの PDF にまとめる。
++- `tools/compare_screens.py`: v0.4 と v0.5 のスクリーンショットを左右に並べた PDF を作る。
+diff -ruN '--exclude=.venv' '--exclude=__pycache__' '--exclude=*.sqlite3' '--exclude=*.pdf' '--exclude=*.png' '--exclude=example_output_synthetic' '--exclude=diff_v0.4_to_v0.5.patch' '--exclude=.gitignore' '--exclude=screens_v0.1_ja.pdf' a1-decision-study/run_dev.bat a1-decision-study_v0.5/run_dev.bat
+--- a1-decision-study/run_dev.bat	2026-10-26 05:26:50.000000000 +0900
++++ a1-decision-study_v0.5/run_dev.bat	2026-10-29 10:01:59.028618664 +0900
+@@ -1,106 +1,114 @@
+-@echo off
+-rem ============================================================
+-rem  A-1 decision study : start the oTree dev server (Windows)
+-rem  Double-click this file. See README.md section "動かし方".
+-rem
+-rem  1. copies the project to %LOCALAPPDATA%\a1-decision-study
+-rem     (runtime copy outside OneDrive; .venv and db.sqlite3 stay there)
+-rem  2. finds Python 3.10-3.12 (A1_PYTHON / py launcher / conda env "a1" / python on PATH), creates a venv, installs requirements
+-rem  3. starts otree devserver and opens http://localhost:8000/demo
+-rem ============================================================
+-setlocal
+-set "SRC=%~dp0"
+-set "DST=%LOCALAPPDATA%\a1-decision-study"
+-set "PORT=8000"
+-if not "%~1"=="" set "PORT=%~1"
+-
+-rem  ---- find a Python interpreter: 3.11 preferred, 3.12 or 3.10 also work; 3.13 does not (v0.4) ----
+-rem   order: A1_PYTHON (full path to python.exe)  >  py -3.11 / -3.12 / -3.10 (py launcher)
+-rem          >  conda env "a1" (conda create -n a1 python=3.11 -y)  >  "python" on PATH if it is 3.10-3.12
+-set "PYEXE="
+-if defined A1_PYTHON if exist "%A1_PYTHON%" set "PYEXE=%A1_PYTHON%"
+-if not defined PYEXE call :try_py 3.11
+-if not defined PYEXE call :try_py 3.12
+-if not defined PYEXE call :try_py 3.10
+-if not defined PYEXE if exist "%USERPROFILE%\miniconda3\envs\a1\python.exe" set "PYEXE=%USERPROFILE%\miniconda3\envs\a1\python.exe"
+-if not defined PYEXE if exist "%USERPROFILE%\anaconda3\envs\a1\python.exe" set "PYEXE=%USERPROFILE%\anaconda3\envs\a1\python.exe"
+-if not defined PYEXE call :try_path_python
+-if not defined PYEXE (
+-  echo [ERROR] No usable Python was found. oTree 5 needs Python 3.10, 3.11 or 3.12 ^(3.13 does not work^).
+-  echo.
+-  echo   Option A: install Python 3.11 from https://www.python.org/downloads/windows/
+-  echo             and tick "Add python.exe to PATH" and "py launcher" in the installer. Then run this file again.
+-  echo   Option B: if you use Miniconda/Anaconda, open "Anaconda Prompt" and run
+-  echo             conda create -n a1 python=3.11 -y
+-  echo             then run this file again ^(the env "a1" is found automatically^).
+-  echo   Option C: set A1_PYTHON to the full path of a python.exe ^(3.10-3.12^) before running this file.
+-  echo.
+-  pause
+-  exit /b 1
+-)
+-echo Using Python: %PYEXE%
+-goto :found_python
+-
+-:try_py
+-py -%1 --version >nul 2>&1
+-if not errorlevel 1 set "PYEXE=py -%1"
+-goto :eof
+-
+-:try_path_python
+-set "PYVER="
+-for /f "tokens=2" %%v in ('python --version 2^>^&1') do set "PYVER=%%v"
+-if not defined PYVER goto :eof
+-if "%PYVER:~0,4%"=="3.10" set "PYEXE=python"
+-if "%PYVER:~0,4%"=="3.11" set "PYEXE=python"
+-if "%PYVER:~0,4%"=="3.12" set "PYEXE=python"
+-if defined PYEXE echo Found python %PYVER% on PATH
+-goto :eof
+-
+-:found_python
+-rem  v0.3: record the git commit of the source folder (unknown when not under git)
+-set "A1_GIT_COMMIT="
+-for /f "delims=" %%i in ('git -C "%SRC%." rev-parse --short=12 HEAD 2^>nul') do set "A1_GIT_COMMIT=%%i"
+-
+-echo [1/3] Syncing project to %DST% ...
+-robocopy "%SRC%." "%DST%" /MIR /NFL /NDL /NJH /NJS /XD .venv __pycache__ __temp_bots _static_root .git shots docs /XF db.sqlite3 .env >nul
+-if errorlevel 8 (
+-  echo [ERROR] robocopy failed.
+-  pause
+-  exit /b 1
+-)
+-cd /d "%DST%"
+-
+-echo [2/3] Preparing Python environment (first time: 2-3 minutes, please wait) ...
+-if not exist ".venv\Scripts\python.exe" (
+-  if "%PYEXE:~0,3%"=="py " ( %PYEXE% -m venv .venv ) else if "%PYEXE%"=="python" ( python -m venv .venv ) else ( "%PYEXE%" -m venv .venv )
+-)
+-if not exist ".venv\Scripts\python.exe" (
+-  echo [ERROR] Could not create the virtual environment with %PYEXE%
+-  pause
+-  exit /b 1
+-)
+-".venv\Scripts\python.exe" -m pip install --quiet --upgrade pip
+-".venv\Scripts\python.exe" -m pip install --quiet -r requirements.txt
+-if errorlevel 1 (
+-  echo [ERROR] pip install failed. Check your network / proxy settings.
+-  pause
+-  exit /b 1
+-)
+-
+-echo [3/3] Starting oTree dev server on port %PORT% ...
+-set "OTREE_ADMIN_PASSWORD=admin"
+-rem  devserver re-launches itself as "otree devserver_inner" by name, so the venv must be on PATH (WinError 2 otherwise)
+-set "PATH=%DST%\.venv\Scripts;%PATH%"
+-rem  open the browser only once the server answers (up to 5 minutes), instead of a fixed 6-second wait (v0.4)
+-start "" /min powershell -NoProfile -ExecutionPolicy Bypass -Command "for($i=0;$i -lt 150;$i++){ try { $null = Invoke-WebRequest -UseBasicParsing -TimeoutSec 2 http://127.0.0.1:%PORT%/; Start-Process 'http://localhost:%PORT%/demo'; break } catch { Start-Sleep -Seconds 2 } }"
+-echo.
+-echo   The browser opens http://localhost:%PORT%/demo automatically when the server is ready
+-echo   (if it shows "connection refused", wait for the line "Open your browser to ..." below, then reload;
+-echo    http://127.0.0.1:%PORT%/demo also works).  Choose "A-1 Japanese version".
+-echo   Admin: http://localhost:%PORT%/   user admin / password admin  (local only)
+-echo   Press Ctrl+C in this window to stop the server.
+-echo.
+-".venv\Scripts\otree.exe" devserver %PORT%
+-echo.
+-echo [server stopped] If it stopped right away, read the error above.
+-pause
++@echo off
++rem ============================================================
++rem  A-1 decision study v0.5 : start the oTree dev server (Windows)
++rem  Double-click this file. See README.md section "動かし方".
++rem
++rem  1. copies the project to %LOCALAPPDATA%\a1-decision-study_v0.5
++rem     (runtime copy outside OneDrive; .venv and db.sqlite3 stay there; v0.4 uses a different folder)
++rem  2. finds Python 3.10-3.12 (A1_PYTHON / py launcher / conda env "a1" / python on PATH), creates a venv, installs requirements
++rem  3. starts otree devserver; tools\ensure_room.py then creates a session in room "demo" and opens the REUSABLE link
++rem     http://localhost:8000/join/<code>  (a new participant every time you open it; up to 100 times per server start)
++rem     The fixed link http://localhost:8000/room/demo also works (same browser resumes the same run).
++rem  Options:  run_dev.bat [port] [a1_ja|a1_en]      e.g.  run_dev.bat 8001 a1_en
++rem ============================================================
++setlocal
++set "SRC=%~dp0"
++set "DST=%LOCALAPPDATA%\a1-decision-study_v0.5"
++set "PORT=8000"
++if not "%~1"=="" set "PORT=%~1"
++set "CONFIG=a1_ja"
++if not "%~2"=="" set "CONFIG=%~2"
++
++rem  ---- find a Python interpreter: 3.11 preferred, 3.12 or 3.10 also work; 3.13 does not (v0.4) ----
++rem   order: A1_PYTHON (full path to python.exe)  >  py -3.11 / -3.12 / -3.10 (py launcher)
++rem          >  conda env "a1" (conda create -n a1 python=3.11 -y)  >  "python" on PATH if it is 3.10-3.12
++set "PYEXE="
++if defined A1_PYTHON if exist "%A1_PYTHON%" set "PYEXE=%A1_PYTHON%"
++if not defined PYEXE call :try_py 3.11
++if not defined PYEXE call :try_py 3.12
++if not defined PYEXE call :try_py 3.10
++if not defined PYEXE if exist "%USERPROFILE%\miniconda3\envs\a1\python.exe" set "PYEXE=%USERPROFILE%\miniconda3\envs\a1\python.exe"
++if not defined PYEXE if exist "%USERPROFILE%\anaconda3\envs\a1\python.exe" set "PYEXE=%USERPROFILE%\anaconda3\envs\a1\python.exe"
++if not defined PYEXE call :try_path_python
++if not defined PYEXE (
++  echo [ERROR] No usable Python was found. oTree 5 needs Python 3.10, 3.11 or 3.12 ^(3.13 does not work^).
++  echo.
++  echo   Option A: install Python 3.11 from https://www.python.org/downloads/windows/
++  echo             and tick "Add python.exe to PATH" and "py launcher" in the installer. Then run this file again.
++  echo   Option B: if you use Miniconda/Anaconda, open "Anaconda Prompt" and run
++  echo             conda create -n a1 python=3.11 -y
++  echo             then run this file again ^(the env "a1" is found automatically^).
++  echo   Option C: set A1_PYTHON to the full path of a python.exe ^(3.10-3.12^) before running this file.
++  echo.
++  pause
++  exit /b 1
++)
++echo Using Python: %PYEXE%
++goto :found_python
++
++:try_py
++py -%1 --version >nul 2>&1
++if not errorlevel 1 set "PYEXE=py -%1"
++goto :eof
++
++:try_path_python
++set "PYVER="
++for /f "tokens=2" %%v in ('python --version 2^>^&1') do set "PYVER=%%v"
++if not defined PYVER goto :eof
++if "%PYVER:~0,4%"=="3.10" set "PYEXE=python"
++if "%PYVER:~0,4%"=="3.11" set "PYEXE=python"
++if "%PYVER:~0,4%"=="3.12" set "PYEXE=python"
++if defined PYEXE echo Found python %PYVER% on PATH
++goto :eof
++
++:found_python
++rem  v0.3: record the git commit of the source folder (unknown when not under git)
++set "A1_GIT_COMMIT="
++for /f "delims=" %%i in ('git -C "%SRC%." rev-parse --short=12 HEAD 2^>nul') do set "A1_GIT_COMMIT=%%i"
++
++echo [1/3] Syncing project to %DST% ...
++robocopy "%SRC%." "%DST%" /MIR /NFL /NDL /NJH /NJS /XD .venv __pycache__ __temp_bots _static_root .git shots docs /XF db.sqlite3 .env __demo_links.txt >nul
++if errorlevel 8 (
++  echo [ERROR] robocopy failed.
++  pause
++  exit /b 1
++)
++cd /d "%DST%"
++
++echo [2/3] Preparing Python environment (first time: 2-3 minutes, please wait) ...
++if not exist ".venv\Scripts\python.exe" (
++  if "%PYEXE:~0,3%"=="py " ( %PYEXE% -m venv .venv ) else if "%PYEXE%"=="python" ( python -m venv .venv ) else ( "%PYEXE%" -m venv .venv )
++)
++if not exist ".venv\Scripts\python.exe" (
++  echo [ERROR] Could not create the virtual environment with %PYEXE%
++  pause
++  exit /b 1
++)
++".venv\Scripts\python.exe" -m pip install --quiet --upgrade pip
++".venv\Scripts\python.exe" -m pip install --quiet -r requirements.txt
++if errorlevel 1 (
++  echo [ERROR] pip install failed. Check your network / proxy settings.
++  pause
++  exit /b 1
++)
++
++echo [3/3] Starting oTree dev server on port %PORT% ...
++set "OTREE_ADMIN_PASSWORD=admin"
++rem  devserver re-launches itself as "otree devserver_inner" by name, so the venv must be on PATH (WinError 2 otherwise)
++set "PATH=%DST%\.venv\Scripts;%PATH%"
++rem  v0.5: once the server answers (up to 5 minutes), create a session in room "demo" and open the reusable link.
++rem        The links are also written to %DST%\__demo_links.txt
++start "" /min ".venv\Scripts\python.exe" tools\ensure_room.py --port %PORT% --config %CONFIG% --open --wait 300 --log __demo_links.txt
++echo.
++echo   When the server is ready, the browser opens the REUSABLE demo link (config %CONFIG%):
++echo     every time you open that link you start again as a new participant (no need to go back to /demo).
++echo   Fixed link (same form as the real study):  http://localhost:%PORT%/room/demo
++echo     same browser = continue the same run; private window / phone / other browser = new participant.
++echo   All links:  %DST%\__demo_links.txt      Demo page: http://localhost:%PORT%/demo
++echo   Admin: http://localhost:%PORT%/   user admin / password admin  (local only)
++echo   Press Ctrl+C in this window to stop the server.
++echo.
++".venv\Scripts\otree.exe" devserver %PORT%
++echo.
++echo [server stopped] If it stopped right away, read the error above.
++pause
+diff -ruN '--exclude=.venv' '--exclude=__pycache__' '--exclude=*.sqlite3' '--exclude=*.pdf' '--exclude=*.png' '--exclude=example_output_synthetic' '--exclude=diff_v0.4_to_v0.5.patch' '--exclude=.gitignore' '--exclude=screens_v0.1_ja.pdf' a1-decision-study/run_tests.bat a1-decision-study_v0.5/run_tests.bat
+--- a1-decision-study/run_tests.bat	2026-10-26 05:26:50.000000000 +0900
++++ a1-decision-study_v0.5/run_tests.bat	2026-10-29 10:02:06.324618903 +0900
+@@ -1,30 +1,36 @@
+-@echo off
+-rem  A-1 decision study : run the bot tests (7 cases x N participants) and export CSVs
+-rem  Usage: run_tests.bat [N]   (default N=10). Run run_dev.bat once first so the venv exists.
+-setlocal
+-set "DST=%LOCALAPPDATA%\a1-decision-study"
+-set "N=14"
+-if not "%~1"=="" set "N=%~1"
+-if not exist "%DST%\.venv\Scripts\otree.exe" (
+-  echo [ERROR] Run run_dev.bat first to create the environment.
+-  pause
+-  exit /b 1
+-)
+-set "A1_GIT_COMMIT="
+-for /f "delims=" %%i in ('git -C "%~dp0." rev-parse --short=12 HEAD 2^>nul') do set "A1_GIT_COMMIT=%%i"
+-robocopy "%~dp0." "%DST%" /MIR /NFL /NDL /NJH /NJS /XD .venv __pycache__ __temp_bots _static_root .git shots docs /XF db.sqlite3 .env >nul
+-cd /d "%DST%"
+-set "OTREE_ADMIN_PASSWORD=admin"
+-set "PATH=%DST%\.venv\Scripts;%PATH%"
+-if exist __temp_bots rmdir /s /q __temp_bots
+-".venv\Scripts\otree.exe" test a1_ja %N% --export __temp_bots
+-if errorlevel 1 (
+-  echo [FAIL] bot test failed - read the message above.
+-  pause
+-  exit /b 1
+-)
+-".venv\Scripts\python.exe" tools\export_check.py __temp_bots\altruism_study.csv
+-".venv\Scripts\python.exe" tools\run_log.py __temp_bots\altruism_study.csv --purpose bot-test --log __temp_bots\run_log_bots.csv
+-echo.
+-echo   Exported CSV: %DST%\__temp_bots\altruism_study.csv
+-pause
++@echo off
++rem  A-1 decision study v0.5 : run the bot tests (6 cases x N participants) and export CSVs
++rem  Usage: run_tests.bat [N]   (default N=24 = 6 cases x 4 order cells). Run run_dev.bat once first so the venv exists.
++setlocal
++set "DST=%LOCALAPPDATA%\a1-decision-study_v0.5"
++set "N=24"
++if not "%~1"=="" set "N=%~1"
++if not exist "%DST%\.venv\Scripts\otree.exe" (
++  echo [ERROR] Run run_dev.bat first to create the environment.
++  pause
++  exit /b 1
++)
++set "A1_GIT_COMMIT="
++for /f "delims=" %%i in ('git -C "%~dp0." rev-parse --short=12 HEAD 2^>nul') do set "A1_GIT_COMMIT=%%i"
++robocopy "%~dp0." "%DST%" /MIR /NFL /NDL /NJH /NJS /XD .venv __pycache__ __temp_bots _static_root .git shots docs /XF db.sqlite3 .env __demo_links.txt >nul
++cd /d "%DST%"
++set "OTREE_ADMIN_PASSWORD=admin"
++set "PATH=%DST%\.venv\Scripts;%PATH%"
++if exist __temp_bots rmdir /s /q __temp_bots
++".venv\Scripts\otree.exe" test a1_ja %N% --export __temp_bots
++if errorlevel 1 (
++  echo [FAIL] bot test failed - read the message above.
++  pause
++  exit /b 1
++)
++".venv\Scripts\otree.exe" test a1_en %N%
++if errorlevel 1 (
++  echo [FAIL] bot test ^(a1_en^) failed - read the message above.
++  pause
++  exit /b 1
++)
++".venv\Scripts\python.exe" tools\export_check.py __temp_bots\altruism_study.csv
++".venv\Scripts\python.exe" tools\run_log.py __temp_bots\altruism_study.csv --purpose bot-test --log __temp_bots\run_log_bots.csv
++echo.
++echo   Exported CSV: %DST%\__temp_bots\altruism_study.csv
++pause
+diff -ruN '--exclude=.venv' '--exclude=__pycache__' '--exclude=*.sqlite3' '--exclude=*.pdf' '--exclude=*.png' '--exclude=example_output_synthetic' '--exclude=diff_v0.4_to_v0.5.patch' '--exclude=.gitignore' '--exclude=screens_v0.1_ja.pdf' a1-decision-study/settings.py a1-decision-study_v0.5/settings.py
+--- a1-decision-study/settings.py	2026-10-24 12:54:33.000000000 +0900
++++ a1-decision-study_v0.5/settings.py	2026-10-29 09:53:17.104601593 +0900
+@@ -1,27 +1,24 @@
+ """oTree settings for the A-1 replication (Binder et al., 2026 → HG × Dictator Game).
+ 
+ 設計書: https://claude.ai/code/artifact/5f9cc974-cbb4-4fd0-840b-7836e6283d47 §9
+-環境変数（本番）: OTREE_PRODUCTION, OTREE_AUTH_LEVEL, OTREE_ADMIN_PASSWORD, OTREE_SECRET_KEY, DATABASE_URL
++環境変数（本番）: OTREE_PRODUCTION, OTREE_AUTH_LEVEL, OTREE_ADMIN_PASSWORD, OTREE_SECRET_KEY, OTREE_REST_KEY, DATABASE_URL
+ """
+ from os import environ
+ 
+-# 共通の設定。言語・金額・連絡先フォームはセッション作成画面でも変更できる。
++# 共通の設定。言語・金額はセッション作成画面でも変更できる。
+ _COMMON = dict(
+     app_sequence=['altruism_study'],
+     num_demo_participants=4,
+     endowment=1000,              # DG の元手（円）
+     dg_step=1,                   # DG の入力の刻み（円）。原研究は 0〜10.70 の任意の額を数値で入力（刻みなし）なので既定 1。
+                                  # 100 にすると 100 円単位に制限される（入力欄の step と検証に反映）
+-    participation_fee_yen=300,   # 参加謝礼（円）
+-    use_hexaco=True,             # 混ぜる尺度（HEXACO-60 正直さ-謙虚さ 10 項目）を入れる（v0.4 で採用。FAB と同じ 6 件法で提示）
+-    # Google フォーム（参加者コード + メールアドレス）の事前入力 URL。
+-    # 「entry.NNNN=」の後ろに参加者コードが付く。フォーム作成後に差し替える。
+-    contact_form_url='https://docs.google.com/forms/d/e/REPLACE_ME/viewform?usp=pp_url&entry.0000000=',
++    participation_fee_yen=300,   # 参加謝礼（円）。v0.5 から画面には出さない（リンク配布時に案内）。データに cfg_fee として記録し、pairing.py が使う
++    use_hexaco=True,             # HEXACO-60 正直さ-謙虚さ 10 項目を 2 つ目の質問紙として入れる（v0.5: 原版と同じ 5 件法、FAB とは別の段階）
+     # 順序割り当てと項目順の乱数シード。0 = セッションコードから決定的に導く（既定）。
+     # 整数を入れるとその値を使う。どちらでも各回答の rand_seed 列に記録される（v0.3）
+     rand_seed=0,
+-    app_version='v0.4-pilot',
+-    doc='A-1 追試: FAB 質問紙と独裁者ゲーム（一回完結・順序ランダム化・役割不確定法）',
++    app_version='v0.5-pilot',
++    doc='A-1 追試: FAB・HEXACO 質問紙と独裁者ゲーム（一回完結・順序ランダム化・役割不確定法）',
+ )
+ 
+ SESSION_CONFIGS = [
+@@ -33,7 +30,7 @@
+ SESSION_CONFIG_DEFAULTS = dict(real_world_currency_per_point=1.00, participation_fee=0.00, doc="")
+ 
+ # participant に保持する一時値（CSV には出ないので、分析に使う値は Player にも書く）
+-PARTICIPANT_FIELDS = ['item_order', 'survey_error']
++PARTICIPANT_FIELDS = ['fab_order', 'hex_order', 'survey_error']
+ SESSION_FIELDS = []
+ 
+ # oTree 自身の定型文（「次へ」ボタン、エラー文など）の言語。日本語版は 'ja'
+@@ -41,17 +38,22 @@
+ REAL_WORLD_CURRENCY_CODE = 'JPY'
+ USE_POINTS = False
+ 
+-# 募集用の固定 URL（/room/pilot, /room/main）。participant_label_file は使わない（誰でも参加できる）
++# 募集用の固定 URL（/room/<name>）。participant_label_file は使わない（誰でも参加できる）
++#  demo  : 開発・デモ用。run_dev.bat がセッションを自動で用意し、何度でも使える URL を開く（v0.5）
++#  pilot : 予備実験、main: 本実験
+ ROOMS = [
++    dict(name='demo', display_name='A-1 デモ（開発用・使い回し）'),
+     dict(name='pilot', display_name='A-1 予備実験'),
+     dict(name='main', display_name='A-1 本実験'),
+ ]
++# run_dev.bat / tools/ensure_room.py が demo ルームに作るセッションの人数（この回数まで同じ URL で参加できる。足りなくなると次回起動時に作り直す）
++DEMO_ROOM_PARTICIPANTS = 100
+ 
+ ADMIN_USERNAME = 'admin'
+ ADMIN_PASSWORD = environ.get('OTREE_ADMIN_PASSWORD')
+ 
+ DEMO_PAGE_INTRO_HTML = """
+-A-1 追試（FAB 質問紙 × 独裁者ゲーム）の試作版 v0.4（HEXACO 採用、来歴の記録、seed 付きランダム化）。
++A-1 追試（FAB・HEXACO 質問紙 × 独裁者ゲーム）の試作版 v0.5（画面を最低限に、質問紙を 2 段階に、進捗表示、使い回せるデモ URL）。
+ """
+ 
+ SECRET_KEY = environ.get('OTREE_SECRET_KEY', 'dev-only-change-me')
+diff -ruN '--exclude=.venv' '--exclude=__pycache__' '--exclude=*.sqlite3' '--exclude=*.pdf' '--exclude=*.png' '--exclude=example_output_synthetic' '--exclude=diff_v0.4_to_v0.5.patch' '--exclude=.gitignore' '--exclude=screens_v0.1_ja.pdf' a1-decision-study/tools/browser_walk.py a1-decision-study_v0.5/tools/browser_walk.py
+--- a1-decision-study/tools/browser_walk.py	2026-10-18 20:07:41.000000000 +0900
++++ a1-decision-study_v0.5/tools/browser_walk.py	2026-10-29 10:10:40.535019456 +0900
+@@ -1,125 +1,151 @@
+-"""Playwright で日本語版を最初から最後まで通し、スマホ幅（375px）でスクリーンショットを撮る（設計書 §10.2 の補助）。
++"""Playwright で最初から最後まで通し、スマホ幅（375px）でスクリーンショットを撮る（設計書 §10.2 の補助）v0.5。
+ 
+ 使い方: 別ターミナルで `otree devserver 8010` を起動したうえで
+-  python tools/browser_walk.py shots a1_ja
+-要: pip install playwright && playwright install chromium
++  python tools/browser_walk.py shots a1_ja [--base http://localhost:8010] [--participants 4] [--pdf docs/screens_v0.5_ja.pdf]
++要: pip install playwright pillow && playwright install chromium
++
++デモページ（/demo/<config>）の参加者リンクを順に開く。順序群（task_order）と質問紙の段階順（scale_order）は
++参加者ごとに違うので、既定で 4 人分を通し、画面の種類ごとに最初に出てきたものを撮る（全種類が揃う）。
++--pdf を付けると撮った PNG を 1 つの PDF にまとめる（ページ順）。
+ """
+-import re, sys, os
++import argparse
++import os
++import re
++import sys
++
+ from playwright.sync_api import sync_playwright
+ 
+-BASE = 'http://localhost:8010'
+-OUT = sys.argv[1] if len(sys.argv) > 1 else 'shots'
+-CONFIG = sys.argv[2] if len(sys.argv) > 2 else 'a1_ja'
++ap = argparse.ArgumentParser()
++ap.add_argument('out', nargs='?', default='shots')
++ap.add_argument('config', nargs='?', default='a1_ja')
++ap.add_argument('--base', default='http://localhost:8010')
++ap.add_argument('--participants', type=int, default=4)
++ap.add_argument('--pdf', default=None)
++ap.add_argument('--next', default=None, help='「次へ」ボタンの文言（既定: ja → 次へ, en → Next）')
++args = ap.parse_args()
++OUT, CONFIG, BASE = args.out, args.config, args.base
++NEXT = args.next or ('次へ' if CONFIG.endswith('ja') else 'Next')
+ os.makedirs(OUT, exist_ok=True)
+ 
+-with sync_playwright() as p:
+-    b = p.chromium.launch()
+-    ctx = b.new_context(viewport={'width': 375, 'height': 812}, device_scale_factor=2, is_mobile=True, locale='ja-JP')
+-    page = ctx.new_page()
+-    page.goto(f'{BASE}/demo/{CONFIG}')
+-    page.wait_for_load_state('networkidle')
+-    links = page.locator('a[href*="InitializeParticipant"]')
+-    hrefs = [links.nth(i).get_attribute('href') for i in range(links.count())]
+-    print('participant links:', len(hrefs))
+-    page.goto(BASE + hrefs[0] if hrefs[0].startswith('/') else hrefs[0])
+-    page.wait_for_load_state('networkidle')
++shot_files = []
++seen_types = set()
++
++
++def shot(page, name, suffix=''):
++    path = f'{OUT}/{len(shot_files):02d}_{name}{suffix}.png'
++    page.screenshot(path=path, full_page=True)
++    shot_files.append(path)
++    print('   shot', path)
+ 
+-    seen = {}
+-    for step in range(50):
++
++def page_type(name):
++    """画面の種類（A/B と First/Last を無視）。同じ種類は 1 回だけ撮る。"""
++    return re.sub(r'(First|Last)?[AB]$', '', name)
++
++
++def walk(page, href, take_shots):
++    page.goto(BASE + href if href.startswith('/') else href)
++    page.wait_for_load_state('networkidle')
++    seq = []
++    for step in range(40):
+         url = page.url
+         m = re.search(r'/study/(\w+)/\d+', url)
+         name = m.group(1) if m else 'unknown'
+-        seen[name] = seen.get(name, 0) + 1
+-        tag = f'{step:02d}_{name}'
++        ptype = page_type(name)
++        first = take_shots and ptype not in seen_types
++        if first:
++            seen_types.add(ptype)
++        seq.append(name)
+         print(step, name, url)
+         if name == 'Consent':
+-            page.screenshot(path=f'{OUT}/{tag}.png', full_page=True)
+-            page.click('text=次へ')  # 未チェック → エラー
+-            page.wait_for_load_state('networkidle')
+-            page.screenshot(path=f'{OUT}/{tag}_error.png', full_page=True)
++            if first:
++                shot(page, name)
++                page.click('button.otree-btn-next')  # 未チェック → エラー
++                page.wait_for_load_state('networkidle')
++                shot(page, name, '_error')
+             for cb in page.locator('input[type=checkbox]').all():
+                 cb.check()
+-            page.click('text=次へ')
+-        elif name == 'ParticipantCode':
+-            page.screenshot(path=f'{OUT}/{tag}.png', full_page=True)
+-            page.click('text=次へ')
+-        elif name in ('SurveyIntroA', 'SurveyIntroB', 'DGIntroA', 'DGIntroB'):
+-            page.screenshot(path=f'{OUT}/{tag}.png', full_page=True)
+-            page.click('text=次へ')
+-        elif name.startswith('SurveyPage'):
++            page.click('button.otree-btn-next')
++        elif name.startswith('FabPage') or name.startswith('Hex'):
+             radios = page.locator('input[type=radio]')
+             names = sorted(set(radios.nth(i).get_attribute('name') for i in range(radios.count())))
+-            if seen[name] == 1:
+-                page.screenshot(path=f'{OUT}/{tag}.png', full_page=True)
+-                # 1 項目だけ未回答で送信 → エラー表示を確認
++            value = '3'
++            if first:
++                shot(page, name)
++                # 1 項目だけ未回答で送信 → エラー表示と自動スクロールを確認
+                 for n in names[1:]:
+-                    page.check(f'input[name="{n}"][value="4"]')
+-                page.click('text=次へ')
++                    page.check(f'input[name="{n}"][value="{value}"]')
++                page.click('button.otree-btn-next')
+                 page.wait_for_load_state('networkidle')
+-                page.screenshot(path=f'{OUT}/{tag}_error.png', full_page=True)
+-                # 再表示後も選択が残っているか
+-                kept = sum(1 for n in names[1:] if page.is_checked(f'input[name="{n}"][value="4"]'))
++                shot(page, name, '_error')
++                kept = sum(1 for n in names[1:] if page.is_checked(f'input[name="{n}"][value="{value}"]'))
+                 print('   kept after error:', kept, '/', len(names) - 1)
+                 page.check(f'input[name="{names[0]}"][value="2"]')
+-                page.click('text=次へ')
+             else:
+                 for n in names:
+-                    page.check(f'input[name="{n}"][value="3"]')
+-                page.click('text=次へ')
+-        elif name.startswith('Demographics'):
+-            page.screenshot(path=f'{OUT}/{tag}.png', full_page=True)
+-            page.fill('input[name=age]', '21')
+-            page.check('input[name=gender][value="2"]')
+-            page.select_option('select[name=grade]', 'B3')
+-            page.check('input[name=game_exp][value="False"]')
+-            page.click('text=次へ')
++                    page.check(f'input[name="{n}"][value="{value}"]')
++            page.click('button.otree-btn-next')
++        elif name.startswith('DGIntro'):
++            if first:
++                shot(page, name)
++            page.click('button.otree-btn-next')
+         elif name.startswith('DGCheck'):
+-            if seen[name] == 1:
+-                page.screenshot(path=f'{OUT}/{tag}.png', full_page=True)
++            if first:
++                shot(page, name)
+                 page.fill('input[name=dg_check]', '300')  # 誤答
+-                page.click('text=次へ')
++                page.click('button.otree-btn-next')
+                 page.wait_for_load_state('networkidle')
+-                page.screenshot(path=f'{OUT}/{tag}_retry.png', full_page=True)
+-                page.fill('input[name=dg_check]', '700')
+-                page.click('text=次へ')
+-            else:
+-                page.fill('input[name=dg_check]', '700')
+-                page.click('text=次へ')
+-        elif name.startswith('DGPredict'):
+-            page.screenshot(path=f'{OUT}/{tag}.png', full_page=True)
+-            page.fill('input[name=dg_predict]', '400')
+-            page.click('text=次へ')
+-        elif name.startswith('DGDecisionAgain'):
+-            # 入力確認で「いいえ」を選んだ後の再入力画面（v0.2）
+-            page.fill('input[name=dg_give]', '350')
+-            page.wait_for_timeout(200)
+-            page.screenshot(path=f'{OUT}/{tag}.png', full_page=True)
+-            page.click('text=次へ')
++                shot(page, name, '_retry')
++            page.fill('input[name=dg_check]', '700')
++            page.click('button.otree-btn-next')
+         elif name.startswith('DGDecision'):
+             page.fill('input[name=dg_give]', '300')
+             page.wait_for_timeout(200)
+-            page.screenshot(path=f'{OUT}/{tag}.png', full_page=True)
+-            page.click('text=次へ')
+-        elif name.startswith('DGConfirm'):
+-            # 1 回目は「いいえ」で再入力画面も撮る（v0.2）
+-            page.screenshot(path=f'{OUT}/{tag}.png', full_page=True)
+-            page.check('input[name=dg_correct][value="2"]')
+-            page.click('text=次へ')
++            if first:
++                shot(page, name)
++            page.click('button.otree-btn-next')
+         elif name == 'PostSurvey':
+-            page.screenshot(path=f'{OUT}/{tag}.png', full_page=True)
++            if first:
++                shot(page, name)
+             radios = page.locator('input[type=radio]')
+             names = sorted(set(radios.nth(i).get_attribute('name') for i in range(radios.count())))
+             for n in names:
+                 page.check(f'input[name="{n}"][value="5"]')
+-            page.fill('textarea[name=comment_open]', 'テスト')
+-            page.click('text=次へ')
++            page.fill('textarea[name=comment_open]', 'テスト' if CONFIG.endswith('ja') else 'test')
++            page.click('button.otree-btn-next')
+         elif name == 'End':
+-            page.screenshot(path=f'{OUT}/{tag}.png', full_page=True)
+-            print('   contact link:', page.locator('a.btn').get_attribute('href'))
++            if first:
++                shot(page, name)
+             break
+         else:
+-            page.screenshot(path=f'{OUT}/{tag}.png', full_page=True)
+-            print('unknown page, stopping'); break
++            shot(page, name, '_unknown')
++            print('unknown page, stopping')
++            break
+         page.wait_for_load_state('networkidle')
++    return seq
++
++
++with sync_playwright() as p:
++    b = p.chromium.launch()
++    ctx = b.new_context(viewport={'width': 375, 'height': 812}, device_scale_factor=2, is_mobile=True,
++                        locale='ja-JP' if CONFIG.endswith('ja') else 'en-US')
++    page = ctx.new_page()
++    page.goto(f'{BASE}/demo/{CONFIG}')
++    page.wait_for_load_state('networkidle')
++    links = page.locator('a[href*="InitializeParticipant"]')
++    hrefs = [links.nth(i).get_attribute('href') for i in range(links.count())]
++    print('participant links:', len(hrefs))
++    for i, href in enumerate(hrefs[:args.participants]):
++        print(f'--- participant {i + 1}')
++        seq = walk(page, href, take_shots=True)
++        print('   sequence:', ' > '.join(seq), f'({len(seq)} pages)')
+     b.close()
++
++if args.pdf and shot_files:
++    from PIL import Image
++
++    imgs = [Image.open(f).convert('RGB') for f in shot_files]
++    os.makedirs(os.path.dirname(args.pdf) or '.', exist_ok=True)
++    imgs[0].save(args.pdf, save_all=True, append_images=imgs[1:], resolution=144)
++    print('pdf:', args.pdf, len(imgs), 'pages')
+ print('done')
+diff -ruN '--exclude=.venv' '--exclude=__pycache__' '--exclude=*.sqlite3' '--exclude=*.pdf' '--exclude=*.png' '--exclude=example_output_synthetic' '--exclude=diff_v0.4_to_v0.5.patch' '--exclude=.gitignore' '--exclude=screens_v0.1_ja.pdf' a1-decision-study/tools/compare_screens.py a1-decision-study_v0.5/tools/compare_screens.py
+--- a1-decision-study/tools/compare_screens.py	1970-01-01 09:00:00.000000000 +0900
++++ a1-decision-study_v0.5/tools/compare_screens.py	2026-10-29 10:16:14.897678588 +0900
+@@ -0,0 +1,126 @@
++"""v0.4 と v0.5 のスクリーンショットを左右に並べた比較 PDF を作る（研究室内の確認用）。"""
++import glob
++import os
++import sys
++
++from PIL import Image, ImageDraw, ImageFont
++
++OLD = sys.argv[1]   # v0.4 shots dir
++NEW = sys.argv[2]   # v0.5 shots dir
++OUT = sys.argv[3]   # output pdf
++
++FONT = '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc'
++if not os.path.exists(FONT):
++    FONT = glob.glob('/usr/share/fonts/opentype/noto/NotoSansCJK*.ttc')[0]
++f_title = ImageFont.truetype(FONT, 34)
++f_sub = ImageFont.truetype(FONT, 24)
++f_note = ImageFont.truetype(FONT, 22)
++
++W, H = 1700, 1900          # 1 ページのキャンバス（横長）
++COL_W, COL_H = 760, 1660   # 画面の表示領域
++TOP = 200
++
++
++def find(d, pat):
++    m = sorted(glob.glob(os.path.join(d, pat)))
++    return m[0] if m else None
++
++
++def place(canvas, path, x, note):
++    draw = ImageDraw.Draw(canvas)
++    if path is None:
++        draw.rounded_rectangle([x, TOP, x + COL_W, TOP + 300], radius=16, outline='#999', width=3, fill='#f3f4f6')
++        lines = note.split('\n')
++        for i, ln in enumerate(lines):
++            draw.text((x + 30, TOP + 40 + i * 40), ln, fill='#333', font=f_sub)
++        return
++    im = Image.open(path).convert('RGB')
++    scale = COL_W / im.width
++    nh = int(im.height * scale)
++    im = im.resize((COL_W, nh))
++    cropped = False
++    if nh > COL_H:
++        im = im.crop((0, 0, COL_W, COL_H))
++        cropped = True
++    canvas.paste(im, (x, TOP))
++    draw.rectangle([x, TOP, x + COL_W, TOP + im.height], outline='#bbb', width=2)
++    if cropped:
++        draw.rectangle([x, TOP + COL_H - 44, x + COL_W, TOP + COL_H], fill='#fff3cd')
++        draw.text((x + 16, TOP + COL_H - 40), '…（下に続く。全体は screens_v0.5_ja.pdf / screens_v0.2_ja.pdf を参照）', fill='#664d03', font=f_note)
++
++
++ROWS = [
++    ('1. 同意', find(OLD, '*_Consent.png'), find(NEW, '*_Consent.png'),
++     '謝礼・連絡先の段落と「お問い合わせ」を削除。チェックは 2 つ（同意／18 歳以上かつ在籍）。所要時間 約 10 分。来歴の hidden 項目をここに移動'),
++    ('2. 参加者コード（開始時）', find(OLD, '*_ParticipantCode.png'), None,
++     'v0.5: 削除\nコードは終了画面にだけ表示'),
++    ('3. 質問紙の教示ページ', find(OLD, '*_SurveyIntroA.png'), None,
++     'v0.5: 削除\n各段階の 1 ページ目の上部に教示と選択肢の説明を統合'),
++    ('4. 質問紙 1 ページ目（FAB + 注意チェック）', find(OLD, '*_SurveyPage1A.png'), find(NEW, '*_FabPage1A.png'),
++     'v0.4 は FAB・注意チェック・HEXACO を一体で 27 項目（2 ページ）。v0.5 は FAB + 注意チェックの 17 項目を 2 ページ。進捗表示、行全体をタップ、回答済みの印'),
++    ('5. 質問紙 1 ページ目（未回答エラー）', find(OLD, '*_SurveyPage1A_error.png'), find(NEW, '*_FabPage1A_error.png'),
++     'v0.5: 未回答の項目まで自動スクロールし、回答済みの選択は残る（v0.4 と同じ）'),
++    ('6. 質問紙 2 ページ目', find(OLD, '*_SurveyPage2A.png'), find(NEW, '*_FabPage2A.png'),
++     'v0.5: 2 ページ目は短い教示だけ'),
++    ('7. HEXACO 正直さ-謙虚さ（質問紙 2/2）', None, find(NEW, '*_Hex*A.png'),
++     'v0.4: FAB と混ぜて 6 件法\nv0.5: 別の段階として 1 ページ、原版と同じ 5 件法。FAB との前後は参加者ごとにランダム'),
++    ('8. 属性（年齢・性別・学年・経験）', find(OLD, '*_DemographicsA.png'), None,
++     'v0.5: 削除'),
++    ('9. 意思決定課題の説明', find(OLD, '*_DGIntroA.png'), find(NEW, '*_DGIntroA.png'),
++     '「参加謝礼 {fee} 円と合わせて後日お支払い」の文を削除（謝礼の案内はリンク配布時）'),
++    ('10. 理解確認', find(OLD, '*_DGCheckA.png'), find(NEW, '*_DGCheckA.png'),
++     'v0.5: 説明を折りたたみでいつでも読み直せる。入力欄を大きく、自動フォーカス'),
++    ('11. 理解確認（再回答）', find(OLD, '*_DGCheckA_retry.png'), find(NEW, '*_DGCheckA_retry.png'),
++     'v0.5: 再回答時は説明を開いた状態で表示（v0.4 と同じ）'),
++    ('12. 自己予測（決める前に）', find(OLD, '*_DGPredictA.png'), None,
++     'v0.5: 削除'),
++    ('13. 決定', find(OLD, '*_DGDecisionA.png'), find(NEW, '*_DGDecisionA.png'),
++     'v0.5: 「次へ」で確定することを明記、自動フォーカス。取り分の即時表示は同じ'),
++    ('14. 入力の確認', find(OLD, '*_DGConfirmA.png'), None,
++     'v0.5: 削除（入力は 1 回で確定）'),
++    ('15. 入力し直し', find(OLD, '*_DGDecisionAgainA.png'), None,
++     'v0.5: 削除'),
++    ('16. 事後評価', find(OLD, '*_PostSurvey.png'), find(NEW, '*_PostSurvey.png'),
++     '項目は同じ。行全体をタップ、回答済みの印、自由記述欄を 3 行に'),
++    ('17. 終了', find(OLD, '*_End.png'), find(NEW, '*_End.png'),
++     'v0.5: 連絡先フォームのボタンと謝礼の説明を削除。参加者コードだけ表示'),
++]
++
++pages = []
++for title, old, new, note in ROWS:
++    c = Image.new('RGB', (W, H), 'white')
++    d = ImageDraw.Draw(c)
++    d.text((40, 30), title, fill='#111', font=f_title)
++    d.text((40, 90), note, fill='#444', font=f_note)
++    d.text((60, TOP - 40), 'v0.4（修正前）', fill='#555', font=f_sub)
++    d.text((60 + COL_W + 80, TOP - 40), 'v0.5（修正後）', fill='#0b5ed7', font=f_sub)
++    place(c, old, 60, 'v0.4: この画面はない')
++    place(c, new, 60 + COL_W + 80, note if new is None else '')
++    pages.append(c)
++
++cover = Image.new('RGB', (W, H), 'white')
++d = ImageDraw.Draw(cover)
++d.text((60, 80), 'A-1 実験プログラム 画面の比較: v0.4 → v0.5', fill='#111', font=ImageFont.truetype(FONT, 44))
++lines = [
++    '左 = v0.4（修正前、a1-decision-study/）、右 = v0.5（修正後、a1-decision-study_v0.5/）。日本語版、スマホ幅 375px。',
++    '長い画面は上部だけを表示（全体は docs/screens_v0.5_ja.pdf と a1-decision-study/docs/screens_v0.2_ja.pdf）。',
++    '',
++    '参加者が通るページ数: v0.4 = 13（入力し直しを含めて 14）→ v0.5 = 9',
++    '  v0.4: 同意 → コード → 質問紙教示 → 質問紙 1 → 質問紙 2 → 属性 → DG 説明 → 理解確認 → 自己予測',
++    '        → 決定 → 入力確認 →(入力し直し)→ 事後評価 → 終了',
++    '  v0.5: 同意 → 質問紙 1/2（2 ページ）+ 質問紙 2/2（1 ページ。FAB と HEXACO の順はランダム）',
++    '        → DG 説明 → 理解確認 → 決定 → 事後評価 → 終了（順序群 2 では DG が質問紙の前）',
++    '',
++    '主な変更: 謝礼・連絡先の案内の削除、参加者コードは終了画面のみ、属性・自己予測・入力確認の削除、',
++    '  FAB と HEXACO の 2 段階化（HEXACO は 5 件法、段階順ランダム）、進捗表示、未回答項目への自動スクロール、',
++    '  選択肢の行全体をタップ、回答済みの印、教示ページの統合、理解確認で説明を読み直せる折りたたみ、',
++    '  使い回せるデモ用リンク（run_dev.bat）。',
++    '',
++    '文言とコードの差分一覧: docs/compare_v0.4_v0.5.md',
++]
++for i, ln in enumerate(lines):
++    d.text((60, 180 + i * 46), ln, fill='#333', font=f_sub)
++pages.insert(0, cover)
++os.makedirs(os.path.dirname(OUT) or '.', exist_ok=True)
++pages[0].save(OUT, save_all=True, append_images=pages[1:], resolution=120)
++print('wrote', OUT, len(pages), 'pages')
+diff -ruN '--exclude=.venv' '--exclude=__pycache__' '--exclude=*.sqlite3' '--exclude=*.pdf' '--exclude=*.png' '--exclude=example_output_synthetic' '--exclude=diff_v0.4_to_v0.5.patch' '--exclude=.gitignore' '--exclude=screens_v0.1_ja.pdf' a1-decision-study/tools/ensure_room.py a1-decision-study_v0.5/tools/ensure_room.py
+--- a1-decision-study/tools/ensure_room.py	1970-01-01 09:00:00.000000000 +0900
++++ a1-decision-study_v0.5/tools/ensure_room.py	2026-10-29 10:01:20.852617416 +0900
+@@ -0,0 +1,122 @@
++"""何度でも使えるデモ用リンクを用意する（v0.5）。
++
++oTree の Room（settings.py の ROOMS、既定 'demo'）にセッションを作り、2 種類のリンクを表示する:
++
++  (1) 使い回しリンク  http://localhost:<port>/join/<code>
++      開くたびに新しい参加者として最初から始まる。デモ・動作確認はこれを使う。
++      セッションの人数（settings.DEMO_ROOM_PARTICIPANTS、既定 100）だけ使える。
++  (2) 固定リンク      http://localhost:<port>/room/demo
++      本実験と同じ URL の形。同じブラウザで開き直すと続きから再開する（別のブラウザ・シークレットウィンドウ・
++      スマホからは新しい参加者）。サーバーを再起動して新しいセッションを作ると、同じブラウザでも最初からになる。
++
++使い方（run_dev.bat が自動で呼ぶ。手動なら devserver を起動したうえで）:
++  python tools/ensure_room.py --port 8000 --open            # 新しいセッションを作って (1) をブラウザで開く
++  python tools/ensure_room.py --port 8000 --reuse           # Room に既にセッションがあればそれを使う
++  python tools/ensure_room.py --port 8000 --config a1_en    # 英語版
++
++REST API を使う。本番（OTREE_AUTH_LEVEL を設定）では環境変数 OTREE_REST_KEY が必要。
++"""
++import argparse
++import json
++import os
++import sys
++import time
++import urllib.error
++import urllib.request
++import webbrowser
++
++ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
++
++
++def default_participants():
++    try:
++        sys.path.insert(0, ROOT)
++        import settings  # noqa: E402
++
++        return int(getattr(settings, 'DEMO_ROOM_PARTICIPANTS', 100))
++    except Exception:
++        return 100
++
++
++def api(base, path, payload=None):
++    headers = {'Content-Type': 'application/json'}
++    key = os.environ.get('OTREE_REST_KEY')
++    if key:
++        headers['otree-rest-key'] = key
++    data = json.dumps(payload).encode() if payload is not None else None
++    req = urllib.request.Request(base + path, data=data, headers=headers, method='POST' if data else 'GET')
++    with urllib.request.urlopen(req, timeout=10) as r:
++        return json.loads(r.read().decode() or 'null')
++
++
++def wait_for_server(base, seconds):
++    t0 = time.time()
++    while time.time() - t0 < seconds:
++        try:
++            api(base, '/api/otree_version')
++            return True
++        except Exception:
++            time.sleep(2)
++    return False
++
++
++def localhost(url, port):
++    # REST は 127.0.0.1 で返すので、表示・ブラウザ用に localhost に揃える
++    return url.replace(f'127.0.0.1:{port}', f'localhost:{port}')
++
++
++def main():
++    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
++    ap.add_argument('--port', type=int, default=8000)
++    ap.add_argument('--room', default='demo')
++    ap.add_argument('--config', default='a1_ja', help='session config name (a1_ja / a1_en)')
++    ap.add_argument('--participants', type=int, default=None, help='既定は settings.DEMO_ROOM_PARTICIPANTS')
++    ap.add_argument('--reuse', action='store_true', help='Room に既にセッションがあればそれを使う（既定: 毎回新しく作る）')
++    ap.add_argument('--open', action='store_true', help='使い回しリンクをブラウザで開く')
++    ap.add_argument('--wait', type=int, default=300, help='サーバーの起動を待つ秒数')
++    ap.add_argument('--log', default=None, help='リンクを書き出すテキストファイル')
++    args = ap.parse_args()
++
++    base = f'http://127.0.0.1:{args.port}'
++    if not wait_for_server(base, args.wait):
++        print(f'[ensure_room] server did not answer on port {args.port} within {args.wait} s', file=sys.stderr)
++        sys.exit(1)
++
++    n = args.participants or default_participants()
++    session = None
++    if args.reuse:
++        rooms = {r['name']: r for r in api(base, '/api/rooms')}
++        code = rooms.get(args.room, {}).get('session_code')
++        if code:
++            for s in api(base, '/api/sessions'):
++                if s['code'] == code:
++                    session = s
++                    break
++    if session is None:
++        session = api(base, '/api/sessions', dict(session_config_name=args.config, num_participants=n, room_name=args.room))
++        session['config_name'] = args.config
++        session['num_participants'] = n
++        made = 'created'
++    else:
++        made = 'reused'
++
++    join = localhost(session['session_wide_url'], args.port)
++    room = localhost(session.get('room_url', f'{base}/room/{args.room}'), args.port)
++    admin = localhost(session['admin_url'], args.port)
++    lines = [
++        f"[ensure_room] {made} session {session['code']} ({session.get('config_name')}, {session.get('num_participants')} participants) in room '{args.room}'",
++        f'  (1) reusable link  (new participant every time it is opened): {join}',
++        f'  (2) fixed link     (same URL as the real study; same browser resumes):   {room}',
++        f'  admin (links / data):                                                 {admin}',
++    ]
++    text = '\n'.join(lines)
++    print(text)
++    if args.log:
++        with open(args.log, 'w', encoding='utf-8') as f:
++            f.write(text + '\n')
++    if args.open:
++        webbrowser.open(join)
++
++
++if __name__ == '__main__':
++    main()
+diff -ruN '--exclude=.venv' '--exclude=__pycache__' '--exclude=*.sqlite3' '--exclude=*.pdf' '--exclude=*.png' '--exclude=example_output_synthetic' '--exclude=diff_v0.4_to_v0.5.patch' '--exclude=.gitignore' '--exclude=screens_v0.1_ja.pdf' a1-decision-study/tools/pairing.py a1-decision-study_v0.5/tools/pairing.py
+--- a1-decision-study/tools/pairing.py	2026-10-24 12:54:46.000000000 +0900
++++ a1-decision-study_v0.5/tools/pairing.py	2026-10-29 10:22:16.935989168 +0900
+@@ -13,7 +13,7 @@
+ 
+ 入力:
+   --data      oTree 管理画面からエクスポートした CSV（altruism_study.csv または all_apps_wide.csv）
+-  --contacts  Google フォーム（参加者コード + メールアドレス）の CSV。列名は自動判定
++  --contacts  参加者コード + メールアドレスの CSV（v0.5 からは実験の外で集める: 参加者が終了画面のコードを申告する）。列名は自動判定
+               （「コード」/ "code" を含む列、「メール」/ "mail" を含む列）。--code-col/--email-col で指定も可
+   --seed      乱数シード（必須。summary.txt に記録される）
+   --already-paid  支払い済みの参加者コードを含む CSV（週次バッチ運用のとき。code 列を読む）

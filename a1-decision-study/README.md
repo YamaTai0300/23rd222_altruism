@@ -1,4 +1,4 @@
-# a1-decision-study — A-1 追試（FAB 質問紙 × 独裁者ゲーム）の oTree 実装（v0.4・日本語版）
+# a1-decision-study_v0.5 — A-1 追試（FAB・HEXACO 質問紙 × 独裁者ゲーム）の oTree 実装（v0.5・日本語版）
 
 Binder, Schultze, Chen & Windmann (2026, *Sci Rep* 16:11600) の「Help Giving → 独裁者ゲーム」を
 日本の大学生で再現する一回完結のオンライン実験。設計はこの文書に従う:
@@ -7,21 +7,32 @@ Binder, Schultze, Chen & Windmann (2026, *Sci Rep* 16:11600) の「Help Giving �
 - 実験計画書 A-1: https://claude.ai/code/artifact/7d6d3bf2-110f-4096-87f7-f1ae9ec69219
 - 再現要素一覧（Excel）: `../A-1_再現要素一覧.xlsx`
 - 原研究の公開資料（OSF T5MF2）からの抜粋と対応表: `docs/osf_sources.md`、変更履歴: `CHANGELOG.md`
+- 修正前の v0.4 は `../a1-decision-study/` にそのまま残してある。v0.4 → v0.5 の比較: `docs/compare_v0.4_v0.5.md`（文言・変数・解析）、
+  `docs/compare_screens_v0.4_v0.5_ja.pdf`（画面の並列比較）、`docs/diff_v0.4_to_v0.5.patch`（ソースの差分）
 
-参加者は各自のスマホ・PC から募集期間中の好きな時刻に 1 人で参加する（完全非同期、約 15 分）。
+参加者は各自のスマホ・PC から募集期間中の好きな時刻に 1 人で参加する（完全非同期、約 10 分）。
 WaitPage やグループは使わない。DG の相手とのペアは締切後に `tools/pairing.py` でオフラインに組む。
 
-## 状態（2026-10-24, v0.4）
+## 状態（2026-10-29, v0.5）
 
 v0.2 で OSF T5MF2 の原資料（補足資料 S1、codebook、前処理・解析スクリプト、卒論付録の教示原文）に合わせて改訂し、
 v0.3 で実験計画書の「記録・分析ノート・図表」と改訂した「分析計画」（判定基準・感度分析・不確実性の明示）を実装、
-v0.4 で HEXACO の採用、完了者だけの保存、設定値の CSV からの読み取り、Page Times による速い回答の検出を加えた。
+v0.4 で HEXACO の採用、完了者だけの保存、設定値の CSV からの読み取り、Page Times による速い回答の検出を加え、
+v0.5 でデモを見て画面を必要最低限（9 ページ）にし、質問紙を FAB / HEXACO の 2 段階にし、参加者の手間を減らし、使い回せるデモ URL を付けた。
 変更点の一覧は `CHANGELOG.md`。
 
 できていること
 
-- **HEXACO 正直さ-謙虚さ（v0.4）**: `use_hexaco=True` が既定。HEXACO-60 の 10 項目（英語は `texts/en.py`、hexaco.org と要照合）を
-  FAB と一体でランダム提示（6 件法）。逆転項目は `codebook.csv` の `reverse` 列、平均 `hh_mean` は `01_clean.R`、探索 H5 は `02_main.R`
+- **最低限の画面（v0.5）**: 同意 → 質問紙 1/2（FAB + 注意チェック、2 ページ）→ 質問紙 2/2（HEXACO、1 ページ）→ DG 説明 → 理解確認 → 決定
+  → 事後評価 → 終了（順序群 2 は DG が質問紙の前）。謝礼・連絡先の案内、参加者コードの前置き、属性、自己予測、入力確認は外した
+  （案内はリンク配布時に伝える）。参加者コードは終了画面にだけ出す
+- **質問紙の 2 段階（v0.5）**: FAB は 6 件法、HEXACO 正直さ-謙虚さ 10 項目は原版と同じ 5 件法で別の段階。段階の順序 `scale_order` を
+  `task_order` と 2 × 2 でブロックランダム化（4 人ごとに 4 通り）。各段階内はランダム順（`fab_item_order`, `hex_item_order`）
+- **参加者の手間（v0.5）**: 進捗「ページ k / 9」、未回答項目への自動スクロール、行全体をタップ、回答済みの印、教示は各段階の 1 ページ目に統合、
+  理解確認で説明を折りたたみから読み直せる、二重送信の防止
+- **使い回せるデモ URL（v0.5）**: `run_dev.bat` が Room `demo` にセッションを作り、開くたびに新しい参加者で始まるリンクを開く（下の「動かし方」）
+- **HEXACO 正直さ-謙虚さ（v0.4）**: `use_hexaco=True` が既定。HEXACO-60 の 10 項目（英語は `texts/en.py`、hexaco.org と要照合）。
+  逆転項目は `codebook.csv` の `reverse` 列（解析で 6 − x）、平均 `hh_mean` は `01_clean.R`、探索 H5 は `02_main.R`
 - **完了者だけを保存（v0.4）**: `tools/archive_export.py` が管理画面のエクスポートから `finished == 1` の行だけを `raw/<purpose>/` に保存し、
   Page Times も同じ参加者に絞って SHA-256 を記録する。未完了の行は保存しない（同意文にも明記）
 - **設定値の読み取り（v0.4）**: `cfg_fee` を各回答に記録し、`tools/pairing.py` は元手と参加謝礼を CSV の `cfg_endowment`・`cfg_fee` から読む
@@ -35,18 +46,17 @@ v0.4 で HEXACO の採用、完了者だけの保存、設定値の CSV から�
   結果は `results.md`（人が読む）と `results.json`・CSV（機械可読）、分析ノート `analysis_notes.md`（入力の MD5・除外・検定・版・seed を自動記録）。
   合成データ（`analysis/99_synthetic.R`）で最後まで通ることを確認済み。出力先は本データと分けてある
 
-- 全 26 ページ（同意 → コード → 質問紙 2 ページ → 属性 → DG 説明 → 理解確認 → 自己予測 → DG 決定 → 入力確認
-  →（入力し直し）→ 事後評価 → 終了）を順序 2 群（質問紙→DG / DG→質問紙）で実装。順序はセッション作成時にブロックランダム化
+- ページクラス 17（参加者が通るのは 9）を順序 2 群（質問紙→DG / DG→質問紙）× 段階順 2 群で実装。割り当てはセッション作成時にブロックランダム化
 - FAB 15 項目は Supplement S1 の確定文言（英語は原文、日本語は訳案）。変数名は原研究と同じ `hg_1 … mc_23`
 - 注意チェック 2 項目（`cq1` = 全くそう思わない, `cq2` = 強くそう思う。原研究の control question と同じ文言・正答）を
   FAB と一体でランダム順に提示し、順序を `fab_item_order` に記録
-- DG は原研究と同じく 0〜元手の任意の額を数値入力（刻みは `dg_step`）。入力後に確認画面（原研究 Study 09 の `dg_correct`）、
-  「いいえ」なら 1 回だけ入力し直せる（`dg_give_1`, `dg_give_2`, 最終 `dg_give`）
-- 未回答チェック（回答済みの選択を保持したまま未回答項目を赤枠で表示）、理解確認の 1 回だけの再回答、
-  DG 決定画面の取り分の即時表示、終了画面から連絡先フォームへ参加者コード付きで誘導
+- DG は原研究と同じく 0〜元手の任意の額を数値入力（刻みは `dg_step`）。入力は 1 回で確定（v0.5 で確認画面を廃止。原研究 Study 09 の
+  `dg_correct` は使わない）
+- 未回答チェック（回答済みの選択を保持したまま未回答項目を赤枠で表示し、そこまでスクロール）、理解確認の 1 回だけの再回答、
+  DG 決定画面の取り分の即時表示、終了画面に参加者コード
 - 事後評価 4 項目（原研究 Study 11 の評価項目）と自由記述
 - 所要時間・完了・アプリ内除外フラグ（注意チェック・理解確認）の記録
-- ボットテスト 7 ケース（`otree test a1_ja` / `a1_en`）が `dg_step` = 1 と 100 の両方で通る
+- ボットテスト 6 ケース（`otree test a1_ja` / `a1_en`）が `dg_step` = 1 と 100、`use_hexaco` = True / False で通る
 - `tools/pairing.py`（ペアリング・役割抽選・支払額）、`tools/export_check.py`（CSV とコードブックの突合）、
   `analysis/`（コードブック、除外・主分析・原データとの比較の R スクリプト）
 
@@ -54,21 +64,22 @@ v0.4 で HEXACO の採用、完了者だけの保存、設定値の CSV から�
 
 1. **FAB の和訳の確定**: `altruism_study/texts/ja.py` の 15 項目はすべて訳案。バックトランスレーション
    （和訳 → 別の人が英訳 → S1 の原文と比較 → 修正）を経た確定版に置き換える。英語原文は `en.py` と `docs/osf_sources.md`
-2. **連絡先フォーム**: Google フォーム（参加者コード + メールアドレス）を作り、事前入力 URL を
-   `settings.py` の `contact_form_url` に入れる（`entry.NNNN=` の後ろにコードが付く）
-3. **同意文の固有情報**: `consent_body` の [研究者名・所属・メールアドレス]、`student_check` の [大学名]
+2. **リンク配布時の案内文**: 謝礼（参加謝礼の額、DG の結果に応じた額、種類・送付方法・時期）、連絡先、終了画面の参加者コードをどう申告するかを、
+   実験の外（募集メール・掲示）で伝える。画面には出さない（v0.5）。文面を計画書「倫理・謝礼」に入れる
+3. **同意文の固有情報**: `eligible_check` の [大学名]
 4. **決めること（CHANGELOG「確認が必要な点」）**: DG の刻み（既定 1 円）、注意チェックの正答（両端）、
-   所要時間の除外閾値（中央値の 1/4）、事後評価を入れるか、混ぜる尺度（HEXACO）を使うか
-5. `docs/screens_v0.2_ja.pdf`（v0.2 の全 18 画面、スマホ幅）を見て文言・レイアウトを確認する（v0.4 で同意文・DG 説明・終了画面の
-   謝礼に関する文言を変えたので撮り直す）
-8. **HEXACO 日本語版 10 項目の転記**: `texts/ja.py` の `hex_1〜hex_10` は未転記。若林 (2014) の日本語版から
+   所要時間の除外閾値（中央値の 1/4）、事後評価の 4 項目を残すか
+5. `docs/screens_v0.5_ja.pdf`（v0.5 の全画面、スマホ幅）と `docs/compare_screens_v0.4_v0.5_ja.pdf` を見て文言・レイアウトを確認する。
+   実機（iOS / Android）での通し確認
+8. **HEXACO 日本語版 10 項目の転記**: `texts/ja.py` の `hex_1〜hex_10` と 5 件法の選択肢の語 `likert5` は未転記。若林 (2014) の日本語版から
    `../FAB_和訳作業シート.xlsx`「HEXACO-HH」の対応表（HEXACO-60 の項目番号・逆転）に沿って転記する。英語原文も hexaco.org と照合する
-9. **謝礼の種類・支払い方法**: 未決。画面の文言は方法を指定しない形にしてある（「謝礼としてお支払い」「受け取り方法はメールで案内」）。
-   決まったら実験計画書と文言（`consent_body`, `dg_intro_body`, `end_body`）に入れる
+9. **謝礼の種類・支払い方法**: 未決。決まったら実験計画書と配布時の案内文に入れる（画面の文言には入れない）
 6. **R の解析環境**: R 4.2 以上と `install.packages(c("tidyverse", "psych", "GPArotation", "lavaan", "boot", "jsonlite", "digest", "patchwork"))`
    を入れ、`run_analysis.bat synthetic` が最後まで通ることを確認する（下の「解析」）
-7. **事前登録**: 実験計画書の判定基準（SESOI r = .10 の 3 段階）・感度分析 (a)〜(e)・停止規則を AsPredicted / OSF に転記し、
+7. **事前登録**: 実験計画書の判定基準（SESOI r = .10 の 3 段階）・感度分析 (a)(c)〜(g)・停止規則を AsPredicted / OSF に転記し、
    `analysis/` のスクリプトをデータ収集前に凍結する
+10. **実験計画書の同期**: 材料（HEXACO 5 件法・別段階・段階順ランダム）、手続き（9 ページ）、分析計画（自己予測と感度分析 (b) の削除）、
+   倫理・謝礼（案内文）を v0.5 に合わせる
 
 ## 動かし方（ローカル）
 
@@ -80,16 +91,20 @@ v0.4 で HEXACO の採用、完了者だけの保存、設定値の CSV から�
    miniconda3 / anaconda3 の `envs\a1` を自動で見つける）→ PATH 上の `python` が 3.10〜3.12 の場合。
    見つからないと黒い窓にエラーと 3 つの対処が表示され、キーを押すと閉じる。
 2. `run_dev.bat` をダブルクリック。初回は 2〜3 分かかる（仮想環境の作成とパッケージの取得）。
-3. ブラウザで http://localhost:8000/demo が開く → 「A-1 日本語版（予備実験）」→ 参加者リンクのどれかを開く。
-   スマホ表示を見るにはブラウザの開発者ツール（F12）→ デバイスツールバーで幅 375 にする。
+3. サーバーが起動すると、`tools/ensure_room.py` が Room `demo` にセッション（100 人分）を作り、**使い回しリンク**
+   `http://localhost:8000/join/<code>` をブラウザで開く。このリンクは**開くたびに新しい参加者として最初から始まる**ので、
+   /demo に戻って参加者リンクを選び直す必要がない（100 回まで。足りなくなったら `run_dev.bat` を再実行）。
+   固定リンク `http://localhost:8000/room/demo`（本実験と同じ URL の形）も使える。こちらは同じブラウザで開き直すと続きから再開し、
+   シークレットウィンドウ・スマホ・別のブラウザからは新しい参加者になる。リンクは `%LOCALAPPDATA%\a1-decision-study_v0.5\__demo_links.txt` にも書かれる。
+   スマホ表示を見るにはブラウザの開発者ツール（F12）→ デバイスツールバーで幅 375 にする。英語版は `run_dev.bat 8000 a1_en`。
 4. 止めるときは黒い窓で Ctrl+C。
 
-`run_dev.bat` は、このフォルダー（OneDrive 配下）の中身を `%LOCALAPPDATA%\a1-decision-study` にコピーしてから
-起動する。OneDrive の同期と `db.sqlite3` の書き込みがぶつかるのを避けるため。**コードの編集はこのフォルダーで行い、
-編集後に `run_dev.bat` をもう一度実行する**（コピー先を直接編集すると次回上書きされる）。ポートが使用中なら
-`run_dev.bat 8001` のように引数で変えられる。
+`run_dev.bat` は、このフォルダー（OneDrive 配下）の中身を `%LOCALAPPDATA%\a1-decision-study_v0.5` にコピーしてから
+起動する（v0.4 の `%LOCALAPPDATA%\a1-decision-study` とは別なので両方を見比べられる）。OneDrive の同期と `db.sqlite3` の書き込みが
+ぶつかるのを避けるため。**コードの編集はこのフォルダーで行い、編集後に `run_dev.bat` をもう一度実行する**（コピー先を直接編集すると
+次回上書きされる）。ポートが使用中なら `run_dev.bat 8001` のように引数で変えられる。
 
-ボットテストと CSV 出力は `run_tests.bat`（引数で人数、既定 14 = 7 ケース × 2）。結果は `%LOCALAPPDATA%\a1-decision-study\__temp_bots\`。
+ボットテストと CSV 出力は `run_tests.bat`（引数で人数、既定 24 = 6 ケース × 4 通りの順序）。結果は `%LOCALAPPDATA%\a1-decision-study_v0.5\__temp_bots\`。
 
 ### 手動で行う場合（PowerShell / macOS / Linux）
 
@@ -99,14 +114,17 @@ py -3.11 -m venv .venv            # macOS/Linux: python3.11 -m venv .venv
 pip install -r requirements.txt
 $env:OTREE_ADMIN_PASSWORD = "admin"  # macOS/Linux: export OTREE_ADMIN_PASSWORD=admin
 otree devserver                   # http://localhost:8000 → Demo → 「A-1 日本語版（予備実験）」
-otree test a1_ja 14               # ボット 14 名 × 7 ケース
+python tools/ensure_room.py --port 8000 --open   # 別のターミナルで: 使い回しリンクを作ってブラウザで開く
+otree test a1_ja 24               # ボット 24 名 × 6 ケース
 otree test a1_ja 40 --export __temp_bots   # CSV を書き出す
 python tools/export_check.py __temp_bots/altruism_study.csv
+python tools/browser_walk.py shots a1_ja --base http://localhost:8000 --pdf docs/screens_v0.5_ja.pdf   # 全画面のスクリーンショット
 ```
 
 ### 画面だけ先に見たいとき
 
-`docs/screens_v0.2_ja.pdf` に、v0.2 のスマホ幅の全 18 画面（エラー表示・再回答・入力し直し・事後評価を含む）が入っている。v0.1 は `screens_v0.1_ja.pdf`。
+`docs/screens_v0.5_ja.pdf` に v0.5 のスマホ幅の全画面（エラー表示・再回答・4 通りの順序を含む）、`docs/screens_v0.5_en.pdf` に英語版、
+`docs/compare_screens_v0.4_v0.5_ja.pdf` に v0.4 との並列比較が入っている。v0.1〜v0.2 の画面は `../a1-decision-study/docs/`。
 
 ### つまずきやすい点
 
@@ -120,23 +138,27 @@ python tools/export_check.py __temp_bots/altruism_study.csv
 ## 構成
 
 ```
-settings.py                  SESSION_CONFIGS（a1_ja / a1_en）、ROOMS（pilot / main）、言語・通貨
+settings.py                  SESSION_CONFIGS（a1_ja / a1_en）、ROOMS（demo / pilot / main）、DEMO_ROOM_PARTICIPANTS、言語・通貨
 altruism_study/
-  __init__.py                定数 C、Player モデル、ページ、page_sequence、creating_session
+  __init__.py                定数 C、Player モデル、ページ、page_sequence、creating_session、進捗の計算
   texts/ja.py, en.py         すべての表示文言（テンプレートには文言を書かない）。FAB 項目は S1 の原文／訳案
-  *.html                     画面テンプレート 12 種（順序群で共用）
-  tests.py                   ボットテスト 7 ケース
-_templates/global/Page.html  全ページ共通（スタイルシートの読み込み）
+  *.html                     画面テンプレート 7 種（Consent, SurveyPage, DGIntro, DGCheck, DGDecision, PostSurvey, End。順序群・段階で共用）
+  tests.py                   ボットテスト 6 ケース
+_templates/global/Page.html  全ページ共通（スタイルシートの読み込み、自動スクロール・回答済みの印・二重送信防止の JS）
+_templates/global/progress.html  進捗表示（各テンプレートが include）
 _static/study/style.css
+tools/ensure_room.py         Room demo にセッションを作り、使い回しリンク／固定リンクを表示・ブラウザで開く（run_dev.bat が呼ぶ）（v0.5）
 tools/pairing.py             締切後: ペアリング・役割抽選・支払額 CSV（--seed 必須）
 tools/export_check.py        エクスポート CSV を analysis/codebook.csv と突合
 tools/archive_export.py      エクスポートから完了者だけを raw/<purpose>/ に保存し、Page Times を絞り、SHA-256 を記録（v0.4）
 tools/run_log.py             エクスポート CSV からセッションの要約を docs/run_log.csv に追記（v0.3）
-tools/browser_walk.py        Playwright で通し確認（任意）
-run_dev.bat / run_tests.bat  Windows 用の起動・テスト（OneDrive 外にコピーして実行）
+tools/browser_walk.py        Playwright で 4 人分を通し、全種類の画面を撮って PDF にまとめる
+tools/compare_screens.py     v0.4 と v0.5 のスクリーンショットを左右に並べた比較 PDF を作る（v0.5）
+run_dev.bat / run_tests.bat  Windows 用の起動・テスト（OneDrive 外 %LOCALAPPDATA%\a1-decision-study_v0.5 にコピーして実行）
 run_analysis.bat / .sh       解析パイプライン 01 → 02 → 04 を順に実行（synthetic / original モードあり）（v0.3）
 docs/osf_sources.md          OSF T5MF2 から取得した原資料の抜粋（教示文・注意チェック・除外基準・変数名）
-docs/screens_v0.2_ja.pdf     v0.2 の全画面のスクリーンショット（v0.1 は screens_v0.1_ja.pdf）
+docs/screens_v0.5_ja.pdf     v0.5 の全画面のスクリーンショット（英語版は screens_v0.5_en.pdf）
+docs/compare_v0.4_v0.5.md    v0.4 → v0.5 の比較（文言・変数・解析・手続き）。画面は compare_screens_v0.4_v0.5_ja.pdf、ソースは diff_v0.4_to_v0.5.patch
 docs/run_log.csv             run ログ（セッションごとの設定・版・人数。tools/run_log.py が書く）（v0.3）
 docs/example_output_synthetic/  合成データで作った出力の例（results.md, analysis_notes.md, fig_main.png など。本物のデータではない）
 analysis/codebook.csv        変数定義（名前・型・範囲・画面・役割・原研究の対応変数）
@@ -158,8 +180,7 @@ CHANGELOG.md                 変更履歴（v0.1 → v0.2 → v0.3 の対応表�
 | `endowment` | 1000 | DG の元手（円）。理解確認の正答は `endowment - 300` |
 | `dg_step` | 1 | DG の入力の刻み（円）。原研究は任意の額（刻みなし）。100 にすると 100 円単位 |
 | `participation_fee_yen` | 300 | 参加謝礼（文言と pairing.py に使う） |
-| `use_hexaco` | True | HEXACO-60 正直さ-謙虚さ 10 項目を質問紙に混ぜる（v0.4 で採用。日本語訳は未転記） |
-| `contact_form_url` | 要差し替え | 連絡先フォームの事前入力 URL |
+| `use_hexaco` | True | HEXACO-60 正直さ-謙虚さ 10 項目を 2 つ目の質問紙として入れる（5 件法。日本語訳は未転記）。False なら FAB だけ（scale_order = 0） |
 | `rand_seed` | 0 | 順序割り当て・項目順の乱数シード。0 = セッションコードから決定的に導く。各回答の `rand_seed` 列に記録される |
 | `app_version` | v0.4-pilot | データに記録する版（Git タグと合わせる） |
 
@@ -168,7 +189,8 @@ CHANGELOG.md                 変更履歴（v0.1 → v0.2 → v0.3 の対応表�
 ## 設計書との差分
 
 - `order` は oTree の予約語のため、順序群の変数名は **`task_order`** にした（1 = 質問紙→DG, 2 = DG→質問紙）。
-  コードブック・R スクリプトも `task_order`
+  コードブック・R スクリプトも `task_order`。質問紙の段階順は `scale_order`（1 = FAB→HEXACO, 2 = HEXACO→FAB）
+- v0.5 で設計書・計画書から外した画面: 参加者コード（開始時）、属性、自己予測、入力確認。謝礼・連絡先の案内も画面にはない（`docs/compare_v0.4_v0.5.md`）
 - FAB・注意チェック・属性の各フィールドは `blank=True` にし、必須チェックは `error_message` で行う。
   こうすると未回答があっても回答済みの値を保存でき、再表示時に選択が消えない（設計書 §7 の意図どおり）
 - ページのテンプレートは先頭で `{{ extends "global/Page.html" }}` を宣言する（oTree 5 では
@@ -207,10 +229,12 @@ run_analysis.bat original      analysis\03_compare_original.R（OSF の公開デ
 
 - 本番は `.env`（`.env.example` をコピー）で `OTREE_PRODUCTION=1`、`OTREE_AUTH_LEVEL=STUDY`、
   `OTREE_ADMIN_PASSWORD`、`OTREE_SECRET_KEY` を設定し、`otree resetdb` → `otree prodserver`
-- 募集 URL は Rooms → `pilot` / `main` にセッションをつないで表示される URL。参加者枠は累計の上限
+- 募集 URL は Rooms → `pilot` / `main` にセッションをつないで表示される URL（`/room/pilot`, `/room/main`）。参加者枠は累計の上限。
+  `demo` ルームは開発用（`tools/ensure_room.py` が本番でも使える: `OTREE_REST_KEY` を設定して `--room pilot --config a1_ja --participants 150`）
 - 本実験中は `otree resetdb` を実行しない（全データが消える）。毎日 CSV をエクスポートして保管し、
   `python tools/run_log.py raw/main/altruism_study_<date>.csv --purpose main` で run ログを更新する
 - 起動前に環境変数 `A1_GIT_COMMIT` にコードのコミットを入れる（`run_dev.bat` は `git rev-parse` で自動設定。Git 管理していなければ
   `unknown` になるので、`app_version` を版ごとに必ず変える）
 - 締切後: `python tools/pairing.py --data raw/final/altruism_study_<date>.csv --contacts raw/contacts_<date>.csv --seed <整数>`
-  → `payout/pairs_<date>.csv` の `payout_yen` を支払う（元手・参加謝礼は CSV の記録値から読む。支払いの方法・送付手順は未決、計画書に記載予定）
+  → `payout/pairs_<date>.csv` の `payout_yen` を支払う（元手・参加謝礼は CSV の記録値から読む。支払いの方法・送付手順は未決、計画書に記載予定）。
+  `--contacts` の CSV は v0.5 では実験の外で集める（参加者が申告した参加者コード + 連絡先）

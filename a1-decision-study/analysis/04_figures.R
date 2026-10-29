@@ -6,7 +6,8 @@
 #   - PDF（ベクタ）と PNG（300 dpi）を同じ名前で出す。幅は 1 段 89 mm / 2 段 183 mm
 #   - 図の数値はすべて 02_main.R の出力（results.json, analysis_sample.csv）から取り、手で転記しない
 # 入力: $A1_DATA_DIR/analysis_sample.csv, $A1_OUT_DIR/results.json
-# 出力: $A1_OUT_DIR/fig_a_scatter, fig_b_hist, fig_c_order, fig_d_predict, fig_main（.pdf/.png）, fig_captions.md
+# 出力: $A1_OUT_DIR/fig_a_scatter, fig_b_hist, fig_c_order, fig_d_hexaco, fig_main（.pdf/.png）, fig_captions.md
+# v0.5: 自己予測を廃止したので (d) は HEXACO 正直さ-謙虚さ × 分配額（探索 H5 の比較基準）に置き換えた
 # 実行: Rscript analysis/04_figures.R（02_main.R の後）
 source("analysis/00_setup.R")
 set.seed(CFG$seed)  # ジッタの乱数も固定する
@@ -65,20 +66,25 @@ p_c <- ggplot(d_c, aes(group, r)) +
   scale_y_continuous(limits = c(min(-0.3, min(d_c$lo) - 0.05), max(0.7, max(d_c$hi) + 0.12))) +
   labs(x = NULL, y = LAB$rs) + theme_a1()
 
-# ---- (d) 自己予測と実際（同一線つき） ----
-p_d <- ggplot(d, aes(dg_predict, dg_give)) +
-  geom_abline(slope = 1, intercept = 0, linetype = "dotted", colour = OI[["grey"]]) +
-  geom_point(aes(colour = order_f, shape = order_f), position = position_jitter(width = 6, height = 6), alpha = 0.7, size = 1.6) +
-  scale_colour_manual(values = unname(PAL_ORDER), name = LAB$group) +
-  scale_shape_manual(values = unname(SHAPE_ORDER), name = LAB$group) +
-  coord_equal(xlim = c(0, endow), ylim = c(0, endow)) +
-  scale_x_continuous(breaks = seq(0, endow, by = endow / 4)) + scale_y_continuous(breaks = seq(0, endow, by = endow / 4)) +
-  labs(x = LAB$predict, y = LAB$give,
-       title = sprintf("HL diff = %.0f [%.0f, %.0f], n = %d", res$prediction$hl_estimate, res$prediction$hl_ci[[1]], res$prediction$hl_ci[[2]], res$prediction$n)) +
-  theme_a1() + theme(plot.title.position = "plot")
+# ---- (d) HEXACO 正直さ-謙虚さ × 分配額（探索 H5。HG × DG の比較基準）。HH は 10 項目の平均（1–5、0.1 刻み）なので x に ±0.02 のジッタ ----
+has_hh <- "hh_mean" %in% names(d) && sum(!is.na(d$hh_mean)) >= 10 && !is.null(res$H5)
+if (has_hh) {
+  p_d <- ggplot(filter(d, !is.na(hh_mean)), aes(hh_mean, dg_give)) +
+    geom_smooth(method = "lm", formula = y ~ x, se = TRUE, colour = OI[["black"]], fill = OI[["grey"]], linewidth = 0.5, alpha = 0.25) +
+    geom_point(aes(colour = order_f, shape = order_f), position = position_jitter(width = 0.02, height = 0), alpha = 0.7, size = 1.6) +
+    scale_colour_manual(values = unname(PAL_ORDER), name = LAB$group) +
+    scale_shape_manual(values = unname(SHAPE_ORDER), name = LAB$group) +
+    scale_x_continuous(limits = c(1, 5), breaks = 1:5) +
+    scale_y_continuous(limits = c(0, endow), breaks = seq(0, endow, by = endow / 4)) +
+    labs(x = LAB$hh, y = LAB$give,
+         title = sprintf("rs = %.2f [%.2f, %.2f], n = %d", res$H5$rs_hh_dg$r, res$H5$rs_hh_dg$ci95[[1]], res$H5$rs_hh_dg$ci95[[2]], res$H5$rs_hh_dg$n)) +
+    theme_a1()
+} else {
+  p_d <- ggplot() + annotate("text", x = 0, y = 0, label = "HEXACO not collected", family = FIG_FAMILY) + theme_void()
+}
 
 files <- c(save_fig(p_a, "fig_a_scatter", 89, 75), save_fig(p_b, "fig_b_hist", 89, 60),
-           save_fig(p_c, "fig_c_order", 89, 70), save_fig(p_d, "fig_d_predict", 89, 85))
+           save_fig(p_c, "fig_c_order", 89, 70), save_fig(p_d, "fig_d_hexaco", 89, 75))
 if (has_patchwork) {
   library(patchwork)
   p_main <- (p_a + p_b) / (p_c + p_d) + plot_annotation(tag_levels = "a") + plot_layout(guides = "collect") & theme(legend.position = "bottom")
@@ -92,8 +98,8 @@ captions <- c(
   sprintf("**Fig. b** 相手に分けた額の分布（0 円を独立した階級にし、以降は %d 円幅の階級。縦軸はゼロ基準の人数）。0 円は別色（%.1f%%、n = %d）。", binw, res$descriptives$zero_pct, n),
   sprintf("**Fig. c** HG × 分配額の Spearman rs。全体と順序群ごと。誤差線はパーセンタイル・ブートストラップ 95%% CI（R = %d、参加者単位）。破線は原研究の r = %.2f、灰色の帯は SESOI ±%.2f。",
           CFG$boot_R, CFG$original_r, CFG$sesoi),
-  sprintf("**Fig. d** DG 決定前の自己予測額と実際に分けた額（円）。点は参加者 1 人（n = %d）、±6 円のジッタ。点線は予測 = 実際。差（予測 − 実際）の Hodges–Lehmann 推定値 %.0f 円、95%% CI [%.0f, %.0f]。",
-          res$prediction$n, res$prediction$hl_estimate, res$prediction$hl_ci[[1]], res$prediction$hl_ci[[2]]),
+  if (has_hh) sprintf("**Fig. d** HEXACO-60 正直さ-謙虚さ（10 項目の平均、1–5）と相手に分けた額（円）。探索 H5（HG × DG の比較基準）。点は参加者 1 人（n = %d）、x 方向に ±0.02 のジッタ。線は OLS 回帰直線と 95%% 信頼帯（補助）。Spearman rs = %.2f、ブートストラップ 95%% CI [%.2f, %.2f]。",
+          res$H5$rs_hh_dg$n, res$H5$rs_hh_dg$r, res$H5$rs_hh_dg$ci95[[1]], res$H5$rs_hh_dg$ci95[[2]]) else "**Fig. d** （HEXACO を収集していないセッションでは空）",
   "", "色: Okabe–Ito（青 #0072B2 = 質問紙→DG、朱 #D55E00 = DG→質問紙）。形でも区別（● / ▲）。"
 )
 writeLines(captions, out_path("fig_captions.md"))
@@ -101,7 +107,7 @@ cat(captions, sep = "\n")
 
 note("## 図（04_figures.R）",
      sprintf("- 乱数 seed = %d（ジッタ）。Okabe–Ito パレット。PDF（ベクタ）と PNG（300 dpi）", CFG$seed),
-     sprintf("- 散布図のジッタ: x ±0.04（HG 平均は 0.2 刻み）、y なし。予測図: ±6 円。分布図の階級: 0 / 1–%d / %d 円幅（左閉区間）", binw - 1, binw),
+     sprintf("- 散布図のジッタ: x ±0.04（HG 平均は 0.2 刻み）、HEXACO 図は x ±0.02（HH 平均は 0.1 刻み）、y なし。分布図の階級: 0 / 1–%d / %d 円幅（左閉区間）", binw - 1, binw),
      sprintf("- ファイル: %s", paste(basename(files), collapse = ", ")),
      sprintf("- キャプション案: %s", out_path("fig_captions.md")))
 note_session()

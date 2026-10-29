@@ -13,7 +13,7 @@
 
 入力:
   --data      oTree 管理画面からエクスポートした CSV（altruism_study.csv または all_apps_wide.csv）
-  --contacts  Google フォーム（参加者コード + メールアドレス）の CSV。列名は自動判定
+  --contacts  参加者コード + メールアドレスの CSV（v0.5 からは実験の外で集める: 参加者が終了画面のコードを申告する）。列名は自動判定
               （「コード」/ "code" を含む列、「メール」/ "mail" を含む列）。--code-col/--email-col で指定も可
   --seed      乱数シード（必須。summary.txt に記録される）
   --already-paid  支払い済みの参加者コードを含む CSV（週次バッチ運用のとき。code 列を読む）

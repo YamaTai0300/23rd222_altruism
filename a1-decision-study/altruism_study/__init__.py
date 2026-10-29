@@ -1,12 +1,16 @@
-"""A-1 追試: FAB 質問紙 × 独裁者ゲーム（一回完結・順序ランダム化・役割不確定法）v0.4
+"""A-1 追試: FAB 質問紙 × HEXACO × 独裁者ゲーム（一回完結・順序ランダム化・役割不確定法）v0.5
 
 設計書: https://claude.ai/code/artifact/5f9cc974-cbb4-4fd0-840b-7836e6283d47
 原資料: https://osf.io/t5mf2/（Binder et al., 2026 の補足資料。CHANGELOG.md に対応表）
 - 全画面を 1 つのアプリ（1 ラウンド）に置き、順序の分岐は is_displayed で行う（§4）
 - WaitPage・グループは使わない。各参加者は自分のペースで最後まで進む（FR-25）
 - 文言は texts/ から引く。テンプレートに文言を書かない（§8）
-- 変数名は原研究の整形済みデータ（Studies/XX/XX_data.csv）に合わせる: hg_1 … mc_23, cq1, cq2, dg_give, dg_correct
-- v0.4: HEXACO 正直さ-謙虚さ 10 項目を既定で混ぜる（codebook に逆転フラグ）。cfg_fee を記録。文言から支払い方法の指定を外した
+- 変数名は原研究の整形済みデータ（Studies/XX/XX_data.csv）に合わせる: hg_1 … mc_23, cq1, cq2, dg_give
+- v0.5: 画面を実験に必要な最低限にした（同意 → 質問紙 2 段階 → DG 説明・理解確認・決定 → 事後評価 → 終了。順序群で前後が入れ替わる）。
+  謝礼・連絡先の案内、参加者コードの前置きページ、属性、自己予測、入力確認を外した（案内はリンク配布時に伝える）。
+  質問紙を FAB（+注意チェック、6 件法、2 ページ）と HEXACO（5 件法、1 ページ）の 2 段階にし、段階の順序 scale_order も
+  参加者ごとにランダム化（task_order と 2×2 でブロック）。各ページに進捗を表示
+- v0.4: HEXACO 正直さ-謙虚さ 10 項目を採用。cfg_fee を記録
 - v0.3: 各回答に来歴（app_version, git_commit, otree_version, 設定値, 乱数シード, ブラウザ, 画面幅）を記録し、
   順序割り当てと項目順のランダム化を seed 付きで再現できるようにした（実験計画書「記録・分析ノート・図表」）
 """
@@ -49,7 +53,8 @@ GIT_COMMIT = _git_commit()
 
 doc = """
 Binder et al. (2026) の Help Giving → 独裁者ゲームの関連を日本の大学生で再現する一回完結のオンライン実験。
-質問紙（FAB 15 項目 + 注意チェック 2）と意思決定課題（DG, 元手は session config）の順序を参加者ごとにランダム化する。
+質問紙（FAB 15 項目 + 注意チェック 2、HEXACO 正直さ-謙虚さ 10 項目）と意思決定課題（DG, 元手は session config）の
+順序、および 2 つの質問紙の順序を参加者ごとにランダム化する。
 """
 
 
@@ -65,11 +70,13 @@ class C(BaseConstants):
     # 注意チェック（原研究の control question）。cq1 = strongly disagree (1), cq2 = strongly agree (6)
     CQ_FIELDS = ['cq1', 'cq2']
     CQ_EXPECTED = dict(cq1=1, cq2=6)
+    # HEXACO-60 正直さ-謙虚さ 10 項目（v0.5: 原版と同じ 5 件法で、FAB とは別の段階として提示）
     HEX_FIELDS = [f'hex_{i}' for i in range(1, 11)]
     EVAL_FIELDS = ['eval_understand', 'eval_difficult', 'eval_reflect', 'eval_distract']
-    LIKERT = [1, 2, 3, 4, 5, 6]
+    LIKERT6 = [1, 2, 3, 4, 5, 6]
+    LIKERT5 = [1, 2, 3, 4, 5]
     CHECK_GIVE = 300  # 理解確認「300 円を分けると取り分は？」
-    SURVEY_PAGES = 2
+    FAB_PAGES = 2     # FAB + 注意チェック 17 項目を 2 ページに分ける
 
 
 # ---------------------------------------------------------------------------
@@ -79,10 +86,10 @@ def now_iso():
     return datetime.now(timezone.utc).isoformat(timespec='seconds')
 
 
-def likert_field():
+def likert_field(choices=C.LIKERT6):
     # blank=True にして必須チェックは error_message で行う。
     # こうすると未回答があっても回答済みの値を保存でき、再表示時に選択が消えない。
-    return models.IntegerField(choices=C.LIKERT, blank=True)
+    return models.IntegerField(choices=choices, blank=True)
 
 
 def endowment(player):
@@ -93,30 +100,55 @@ def step(player):
     return player.session.config['dg_step']
 
 
-def amount_error(player, value):
-    """DG の金額入力（dg_give, dg_predict）の検証: 0〜endowment、dg_step の倍数。"""
+def use_hexaco(player):
+    return bool(player.session.config['use_hexaco'])
+
+
+def dg_give_error_message(player, value):
+    """DG の金額入力の検証: 0〜endowment、dg_step の倍数。"""
     if value is None or value < 0 or value > endowment(player) or value % step(player) != 0:
         return texts(player)['amount_error']
 
 
-def dg_give_error_message(player, value):
-    return amount_error(player, value)
-
-
-def dg_predict_error_message(player, value):
-    return amount_error(player, value)
-
-
-def survey_fields(player, page_no):
-    """質問紙の page_no（1 or 2）に表示するフィールド名。順序は creating_session で確定済み。"""
-    items = list(player.participant.item_order)
+def fab_fields(player, page_no):
+    """FAB 段階の page_no（1 or 2）に表示するフィールド名。順序は creating_session で確定済み。"""
+    items = list(player.participant.fab_order)
     half = (len(items) + 1) // 2
     return items[:half] if page_no == 1 else items[half:]
 
 
-def likert_items(player, fields, labels_src, highlight):
+def hex_fields(player):
+    return list(player.participant.hex_order)
+
+
+def visible_pages(player):
+    """この参加者が実際に通るページの page_sequence 上の位置（1 始まり）。進捗表示に使う。"""
+    out = []
+    for i, pg in enumerate(page_sequence, start=1):
+        pred = pg.__dict__.get('is_displayed')  # 自分で定義した staticmethod だけを評価（基底の既定は常に表示）
+        if pred is None or pred(player):
+            out.append(i)
+    return out
+
+
+def progress(player):
+    """進捗（現在のページ番号 / この参加者が通るページ数）。oTree の _index_in_pages は page_sequence 上の 1 始まりの位置。"""
+    idx = player.participant._index_in_pages or 1
+    vis = visible_pages(player)
+    pos = vis.index(idx) + 1 if idx in vis else len(vis)
+    return dict(page=pos, pages=len(vis), percent=int(round(100 * pos / max(len(vis), 1))))
+
+
+def ctx(player, **extra):
+    """全ページ共通のテンプレート変数（文言 T と進捗）。"""
     T = texts(player)
-    labels = T['likert6']
+    pr = progress(player)
+    d = dict(T=T, progress=pr, progress_text=fill(T['progress_label'], page=pr['page'], pages=pr['pages']))
+    d.update(extra)
+    return d
+
+
+def likert_items(player, fields, labels_src, scale_labels, choices, highlight):
     items = []
     for f in fields:
         val = player.field_maybe_none(f)
@@ -125,18 +157,46 @@ def likert_items(player, fields, labels_src, highlight):
                 name=f,
                 text=labels_src[f],
                 missing=highlight and val is None,
-                options=[dict(v=v, label=labels[v - 1], checked=(val == v)) for v in C.LIKERT],
+                options=[dict(v=v, label=scale_labels[v - 1], checked=(val == v)) for v in choices],
             )
         )
     return items
 
 
-def survey_vars(player, page_no):
+def stage_numbers(player):
+    """FAB と HEXACO の段階番号（1 or 2）。HEXACO を使わないときは FAB だけ（段階数 1）。"""
+    if not use_hexaco(player):
+        return dict(fab=1, hex=None, stages=1)
+    so = player.scale_order
+    return dict(fab=1 if so == 1 else 2, hex=2 if so == 1 else 1, stages=2)
+
+
+def survey_vars(player, kind, page_no):
+    """質問紙ページ（kind = 'fab' / 'hex'）のテンプレート変数。
+    段階の最初のページには教示文と選択肢の説明を出し、2 ページ目以降は短い教示だけにする（v0.5）。"""
     T = texts(player)
     highlight = bool(player.participant.survey_error)
     player.participant.survey_error = False
-    items = likert_items(player, survey_fields(player, page_no), T['items'], highlight)
-    return dict(T=T, items=items, page_no=page_no, num_pages=C.SURVEY_PAGES)
+    st = stage_numbers(player)
+    if kind == 'fab':
+        fields, labels, choices = fab_fields(player, page_no), T['likert6'], C.LIKERT6
+        intro, intro_short, num_pages, stage = T['fab_intro'], T['fab_intro_short'], C.FAB_PAGES, st['fab']
+    else:
+        fields, labels, choices = hex_fields(player), T['likert5'], C.LIKERT5
+        intro, intro_short, num_pages, stage = T['hex_intro'], T['hex_intro_short'], 1, st['hex']
+    items = likert_items(player, fields, T['items'], labels, choices, highlight)
+    title = fill(T['survey_stage_title'], stage=stage, stages=st['stages']) if st['stages'] > 1 else T['survey_title']
+    page_note = fill(T['survey_page_note'], page=page_no, pages=num_pages) if num_pages > 1 else ''
+    return ctx(
+        player,
+        items=items,
+        stage_title=title,
+        page_note=page_note,
+        first_page=(page_no == 1),
+        intro=intro,
+        intro_short=intro_short,
+        scale_labels=[dict(v=v, label=labels[v - 1]) for v in choices],
+    )
 
 
 def survey_error_message(player, values):
@@ -181,14 +241,17 @@ def creating_session(subsession: Subsession):
     players = subsession.get_players()
     seed = session_seed(session)
     rng = random.Random(seed)
-    # 順序のブロックランダム化（2 人ずつ 1,2 をシャッフル）→ 各群がほぼ同数になる
-    orders = []
-    for _ in range(0, len(players), 2):
-        block = [1, 2]
+    hexaco = bool(cfg['use_hexaco'])
+    # 2×2 のブロックランダム化（4 人ずつ、task_order × scale_order の 4 通りをシャッフル）→ 各セルがほぼ同数になる。
+    # task_order: 1 = 質問紙→DG, 2 = DG→質問紙。scale_order: 1 = FAB→HEXACO, 2 = HEXACO→FAB（HEXACO を使わないときは 0）
+    combos = []
+    for _ in range(0, len(players), 4):
+        block = [(1, 1), (1, 2), (2, 1), (2, 2)]
         rng.shuffle(block)
-        orders.extend(block)
-    for p, o in zip(players, orders):
-        p.task_order = o
+        combos.extend(block)
+    for p, (to, so) in zip(players, combos):
+        p.task_order = to
+        p.scale_order = so if hexaco else 0
         p.lang = cfg['lang']
         p.app_version = cfg['app_version']
         # 来歴（実験計画書「記録・分析ノート・図表」）: 条件の違いを後から機械的に確認できるようにする
@@ -198,9 +261,9 @@ def creating_session(subsession: Subsession):
         p.cfg_endowment = cfg['endowment']
         p.cfg_dg_step = cfg['dg_step']
         p.cfg_fee = cfg['participation_fee_yen']
-        p.cfg_use_hexaco = bool(cfg['use_hexaco'])
-        # 原研究と同じく FAB 項目は常にランダム順。注意チェックと混ぜる尺度も一体でシャッフルする
-        items = C.FAB_FIELDS + C.CQ_FIELDS + (C.HEX_FIELDS if cfg['use_hexaco'] else [])
+        p.cfg_use_hexaco = hexaco
+        # 原研究と同じく FAB 項目は常にランダム順。注意チェックは FAB と一体でシャッフルする
+        items = C.FAB_FIELDS + C.CQ_FIELDS
         rng.shuffle(items)
         # 注意チェックをページの先頭・末尾に置かない（各ページ内で中央寄りに動かす）
         half = (len(items) + 1) // 2
@@ -211,9 +274,14 @@ def creating_session(subsession: Subsession):
                     page.remove(cq)
                     page.insert(len(page) // 2, cq)
         items = pages[0] + pages[1]
-        p.participant.item_order = items
-        p.participant.survey_error = False
+        p.participant.fab_order = items
         p.fab_item_order = ','.join(items)
+        # HEXACO は別の段階として、段階内でランダム順
+        hex_items = list(C.HEX_FIELDS)
+        rng.shuffle(hex_items)
+        p.participant.hex_order = hex_items if hexaco else []
+        p.hex_item_order = ','.join(hex_items) if hexaco else ''
+        p.participant.survey_error = False
 
 
 class Group(BaseGroup):
@@ -222,7 +290,8 @@ class Group(BaseGroup):
 
 class Player(BasePlayer):
     # 割り当て・メタ
-    task_order = models.IntegerField()  # 1 = 質問紙→DG, 2 = DG→質問紙（oTree では order が予約語）
+    task_order = models.IntegerField()   # 1 = 質問紙→DG, 2 = DG→質問紙（oTree では order が予約語）
+    scale_order = models.IntegerField()  # 1 = FAB→HEXACO, 2 = HEXACO→FAB, 0 = HEXACO なし（v0.5）
     lang = models.StringField()
     app_version = models.StringField()
     # 来歴（v0.3）: どのコード・設定・乱数で集めた回答かを各行に残す
@@ -231,14 +300,13 @@ class Player(BasePlayer):
     rand_seed = models.IntegerField(blank=True)
     cfg_endowment = models.IntegerField(blank=True)
     cfg_dg_step = models.IntegerField(blank=True)
-    cfg_fee = models.IntegerField(blank=True)  # 参加謝礼。tools/pairing.py はこの列と cfg_endowment から支払額を計算する
+    cfg_fee = models.IntegerField(blank=True)  # 参加謝礼（画面には出さない）。tools/pairing.py はこの列と cfg_endowment から支払額を計算する
     cfg_use_hexaco = models.BooleanField(blank=True)
     user_agent = models.LongStringField(blank=True)
     screen_width = models.IntegerField(blank=True)
-    # 同意
+    # 同意（v0.5: 同意 + 参加資格の 2 項目）
     consent = models.BooleanField(widget=widgets.CheckboxInput, blank=True)
-    age_confirm = models.BooleanField(widget=widgets.CheckboxInput, blank=True)
-    student_confirm = models.BooleanField(widget=widgets.CheckboxInput, blank=True)
+    eligible_confirm = models.BooleanField(widget=widgets.CheckboxInput, blank=True)  # 18 歳以上かつ対象大学の学生
     # FAB（原研究の変数名。1〜6、逆転項目なし）
     hg_1 = likert_field()
     hg_3 = likert_field()
@@ -261,33 +329,25 @@ class Player(BasePlayer):
     cq1_pass = models.BooleanField(blank=True)
     cq2_pass = models.BooleanField(blank=True)
     fab_item_order = models.LongStringField(blank=True)
-    # 混ぜる尺度（任意）
-    hex_1 = likert_field()
-    hex_2 = likert_field()
-    hex_3 = likert_field()
-    hex_4 = likert_field()
-    hex_5 = likert_field()
-    hex_6 = likert_field()
-    hex_7 = likert_field()
-    hex_8 = likert_field()
-    hex_9 = likert_field()
-    hex_10 = likert_field()
-    # 属性
-    age = models.IntegerField(min=18, max=99, blank=True)
-    gender = models.IntegerField(choices=[1, 2, 3, 4], blank=True)
-    grade = models.StringField(choices=['B1', 'B2', 'B3', 'B4', 'M1', 'M2', 'D', 'other'], blank=True)
-    game_exp = models.BooleanField(blank=True)
+    # HEXACO-60 正直さ-謙虚さ（1〜5。逆転は codebook の reverse 列、解析側で 6 − x）
+    hex_1 = likert_field(C.LIKERT5)
+    hex_2 = likert_field(C.LIKERT5)
+    hex_3 = likert_field(C.LIKERT5)
+    hex_4 = likert_field(C.LIKERT5)
+    hex_5 = likert_field(C.LIKERT5)
+    hex_6 = likert_field(C.LIKERT5)
+    hex_7 = likert_field(C.LIKERT5)
+    hex_8 = likert_field(C.LIKERT5)
+    hex_9 = likert_field(C.LIKERT5)
+    hex_10 = likert_field(C.LIKERT5)
+    hex_item_order = models.LongStringField(blank=True)
     # DG
     dg_check = models.IntegerField(min=0, max=100000)
     dg_check_answer1 = models.IntegerField(blank=True)
     dg_check_answer2 = models.IntegerField(blank=True)
     dg_check_attempts = models.IntegerField(initial=0)
     dg_check_pass = models.BooleanField(blank=True)
-    dg_predict = models.IntegerField(min=0)
-    dg_give = models.IntegerField(min=0)        # 最終決定（dg_correct = 2 なら 2 回目の入力）
-    dg_give_1 = models.IntegerField(blank=True)  # 1 回目の入力
-    dg_give_2 = models.IntegerField(blank=True)  # 2 回目の入力（入力し直したときだけ）
-    dg_correct = models.IntegerField(choices=[1, 2], blank=True)  # 1 = 入力は正しい, 2 = 入力し直す（原研究 Study 09）
+    dg_give = models.IntegerField(min=0)  # 分配額（v0.5: 入力は 1 回、確認画面なし）
     dg_share = models.BooleanField(blank=True)
     # 事後評価（原研究 Study 11 の AG11 項目）
     eval_understand = likert_field()
@@ -308,27 +368,18 @@ class Player(BasePlayer):
 # ページ（共通部分）
 # ---------------------------------------------------------------------------
 class Consent(Page):
+    # ブラウザの種類と画面幅を hidden input（JS で埋める）から受け取る。未取得でも進める（blank=True）
     form_model = 'player'
-    form_fields = ['consent', 'age_confirm', 'student_confirm']
+    form_fields = ['consent', 'eligible_confirm', 'user_agent', 'screen_width']
 
     @staticmethod
     def vars_for_template(player: Player):
-        return dict(T=texts(player))
+        return ctx(player)
 
     @staticmethod
     def error_message(player: Player, values):
-        if not (values['consent'] and values['age_confirm'] and values['student_confirm']):
+        if not (values['consent'] and values['eligible_confirm']):
             return texts(player)['consent_error']
-
-
-class ParticipantCode(Page):
-    # ブラウザの種類と画面幅を hidden input（JS で埋める）から受け取る。未取得でも進める（blank=True）
-    form_model = 'player'
-    form_fields = ['user_agent', 'screen_width']
-
-    @staticmethod
-    def vars_for_template(player: Player):
-        return dict(T=texts(player), code=player.participant.code)
 
     @staticmethod
     def before_next_page(player: Player, timeout_happened):
@@ -337,14 +388,6 @@ class ParticipantCode(Page):
         ua = player.field_maybe_none('user_agent')
         if ua:
             player.user_agent = ua[:300]
-
-
-class SurveyIntroBase(Page):
-    template_name = 'altruism_study/SurveyIntro.html'
-
-    @staticmethod
-    def vars_for_template(player: Player):
-        return dict(T=texts(player))
 
 
 class SurveyPageBase(Page):
@@ -363,27 +406,34 @@ class SurveyPageBase(Page):
                 setattr(player, f'{cq}_pass', v == C.CQ_EXPECTED[cq])
 
 
-class DemographicsBase(Page):
-    form_model = 'player'
-    form_fields = ['age', 'gender', 'grade', 'game_exp']
-    template_name = 'altruism_study/Demographics.html'
+class FabPage1Base(SurveyPageBase):
+    @staticmethod
+    def get_form_fields(player: Player):
+        return fab_fields(player, 1)
 
     @staticmethod
     def vars_for_template(player: Player):
-        T = texts(player)
-        g = player.field_maybe_none('gender')
-        gr = player.field_maybe_none('grade')
-        ge = player.field_maybe_none('game_exp')
-        return dict(
-            T=T,
-            gender_options=[dict(v=v, label=lbl, checked=(g == v)) for v, lbl in T['gender_options']],
-            grade_options=[dict(v=v, label=lbl, checked=(gr == v)) for v, lbl in T['grade_options']],
-            game_exp_options=[dict(v=v, label=lbl, checked=(ge == v)) for v, lbl in T['game_exp_options']],
-        )
+        return survey_vars(player, 'fab', 1)
+
+
+class FabPage2Base(SurveyPageBase):
+    @staticmethod
+    def get_form_fields(player: Player):
+        return fab_fields(player, 2)
 
     @staticmethod
-    def error_message(player: Player, values):
-        return survey_error_message(player, values)
+    def vars_for_template(player: Player):
+        return survey_vars(player, 'fab', 2)
+
+
+class HexPageBase(SurveyPageBase):
+    @staticmethod
+    def get_form_fields(player: Player):
+        return hex_fields(player)
+
+    @staticmethod
+    def vars_for_template(player: Player):
+        return survey_vars(player, 'hex', 1)
 
 
 class DGIntroBase(Page):
@@ -392,7 +442,7 @@ class DGIntroBase(Page):
     @staticmethod
     def vars_for_template(player: Player):
         T = texts(player)
-        return dict(T=T, intro_blocks=intro_blocks(T))
+        return ctx(player, intro_blocks=intro_blocks(T))
 
 
 class DGCheckBase(Page):
@@ -403,7 +453,8 @@ class DGCheckBase(Page):
     @staticmethod
     def vars_for_template(player: Player):
         T = texts(player)
-        return dict(T=T, intro_blocks=intro_blocks(T), retry=player.dg_check_attempts >= 1)
+        # 説明は折りたたみで常に読み直せるようにし、再回答のときは開いた状態にする（v0.5）
+        return ctx(player, intro_blocks=intro_blocks(T), retry=player.dg_check_attempts >= 1)
 
     @staticmethod
     def error_message(player: Player, values):
@@ -424,29 +475,6 @@ class DGCheckBase(Page):
         player.dg_check_pass = last == correct
 
 
-def amount_vars(player, field):
-    cfg = player.session.config
-    return dict(
-        T=texts(player),
-        field=field,
-        value=player.field_maybe_none(field),
-        has_value=player.field_maybe_none(field) is not None,
-        endowment=cfg['endowment'],
-        step=cfg['dg_step'],
-        unit=cfg['currency_label'],
-    )
-
-
-class DGPredictBase(Page):
-    form_model = 'player'
-    form_fields = ['dg_predict']
-    template_name = 'altruism_study/DGPredict.html'
-
-    @staticmethod
-    def vars_for_template(player: Player):
-        return amount_vars(player, 'dg_predict')
-
-
 class DGDecisionBase(Page):
     """DG の決定。原研究と同じく 0〜元手の任意の額を数値で入力する（刻みは session config の dg_step）。"""
     form_model = 'player'
@@ -455,65 +483,23 @@ class DGDecisionBase(Page):
 
     @staticmethod
     def vars_for_template(player: Player):
-        v = amount_vars(player, 'dg_give')
-        v['again'] = False
-        return v
-
-    @staticmethod
-    def js_vars(player: Player):
         cfg = player.session.config
-        return dict(endowment=cfg['endowment'], unit=cfg['currency_label'])
-
-    @staticmethod
-    def before_next_page(player: Player, timeout_happened):
-        player.dg_give_1 = player.dg_give
-        player.dg_share = player.dg_give > 0
-
-
-class DGConfirmBase(Page):
-    """入力の確認（原研究 Study 09 の dg_correct「Korrekte Eingabe?」）。「いいえ」なら 1 回だけ入力し直せる。"""
-    form_model = 'player'
-    form_fields = ['dg_correct']
-    template_name = 'altruism_study/DGConfirm.html'
-
-    @staticmethod
-    def vars_for_template(player: Player):
-        T = texts(player)
-        give = player.dg_give
-        keep = endowment(player) - give
-        sel = player.field_maybe_none('dg_correct')
-        return dict(
-            T=T,
-            body=fill(T['confirm_body'], give=f'{give:,}', keep=f'{keep:,}'),
-            options=[dict(v=v, label=lbl, checked=(sel == v)) for v, lbl in T['confirm_options']],
+        return ctx(
+            player,
+            value=player.field_maybe_none('dg_give'),
+            has_value=player.field_maybe_none('dg_give') is not None,
+            endowment=cfg['endowment'],
+            step=cfg['dg_step'],
+            unit=cfg['currency_label'],
         )
 
     @staticmethod
-    def error_message(player: Player, values):
-        if values['dg_correct'] is None:
-            return texts(player)['confirm_error']
-
-
-class DGDecisionAgainBase(Page):
-    """dg_correct = 2（入力し直す）のときだけ表示。ここでの入力が最終決定（dg_give）になる。"""
-    form_model = 'player'
-    form_fields = ['dg_give']
-    template_name = 'altruism_study/DGDecision.html'
-
-    @staticmethod
-    def vars_for_template(player: Player):
-        v = amount_vars(player, 'dg_give')
-        v['again'] = True
-        return v
-
-    @staticmethod
     def js_vars(player: Player):
         cfg = player.session.config
         return dict(endowment=cfg['endowment'], unit=cfg['currency_label'])
 
     @staticmethod
     def before_next_page(player: Player, timeout_happened):
-        player.dg_give_2 = player.dg_give
         player.dg_share = player.dg_give > 0
 
 
@@ -526,8 +512,8 @@ class PostSurvey(Page):
         T = texts(player)
         highlight = bool(player.participant.survey_error)
         player.participant.survey_error = False
-        items = likert_items(player, C.EVAL_FIELDS, T['post_items'], highlight)
-        return dict(T=T, items=items, comment_text=player.field_maybe_none('comment_open') or '')
+        items = likert_items(player, C.EVAL_FIELDS, T['post_items'], T['likert6'], C.LIKERT6, highlight)
+        return ctx(player, items=items, comment_text=player.field_maybe_none('comment_open') or '')
 
     @staticmethod
     def error_message(player: Player, values):
@@ -552,149 +538,90 @@ class End(Page):
             player.excluded_in_app = bool(reasons)
             player.exclude_reason_in_app = ','.join(reasons)
             player.finished = True
-        return dict(
-            T=texts(player),
-            code=player.participant.code,
-            contact_url=player.session.config['contact_form_url'] + player.participant.code,
-        )
+        return ctx(player, code=player.participant.code)
 
 
 # ---------------------------------------------------------------------------
-# 順序群ごとのページ（A = order 1: 質問紙→DG, B = order 2: DG→質問紙）
+# 順序群ごとのページ（A = task_order 1: 質問紙→DG, B = task_order 2: DG→質問紙）
+# HEXACO の段階は scale_order で FAB の前（First）か後（Last）に出る
 # ---------------------------------------------------------------------------
-def shown_if_order(n, revise=False):
+def shown_if(task_order, scale_order=None):
     def is_displayed(player: Player):
-        if player.task_order != n:
+        if player.task_order != task_order:
             return False
-        if revise:
-            return player.field_maybe_none('dg_correct') == 2
+        if scale_order is not None:
+            return use_hexaco(player) and player.scale_order == scale_order
         return True
 
     return staticmethod(is_displayed)
 
 
-class SurveyIntroA(SurveyIntroBase):
-    is_displayed = shown_if_order(1)
+# --- task_order 1: 質問紙 → DG ---
+class HexFirstA(HexPageBase):
+    is_displayed = shown_if(1, scale_order=2)
 
 
-class SurveyPage1A(SurveyPageBase):
-    is_displayed = shown_if_order(1)
-
-    @staticmethod
-    def get_form_fields(player: Player):
-        return survey_fields(player, 1)
-
-    @staticmethod
-    def vars_for_template(player: Player):
-        return survey_vars(player, 1)
+class FabPage1A(FabPage1Base):
+    is_displayed = shown_if(1)
 
 
-class SurveyPage2A(SurveyPageBase):
-    is_displayed = shown_if_order(1)
-
-    @staticmethod
-    def get_form_fields(player: Player):
-        return survey_fields(player, 2)
-
-    @staticmethod
-    def vars_for_template(player: Player):
-        return survey_vars(player, 2)
+class FabPage2A(FabPage2Base):
+    is_displayed = shown_if(1)
 
 
-class DemographicsA(DemographicsBase):
-    is_displayed = shown_if_order(1)
-
-
-class DGIntroB(DGIntroBase):
-    is_displayed = shown_if_order(2)
-
-
-class DGCheckB(DGCheckBase):
-    is_displayed = shown_if_order(2)
-
-
-class DGPredictB(DGPredictBase):
-    is_displayed = shown_if_order(2)
-
-
-class DGDecisionB(DGDecisionBase):
-    is_displayed = shown_if_order(2)
-
-
-class DGConfirmB(DGConfirmBase):
-    is_displayed = shown_if_order(2)
-
-
-class DGDecisionAgainB(DGDecisionAgainBase):
-    is_displayed = shown_if_order(2, revise=True)
-
-
-class SurveyIntroB(SurveyIntroBase):
-    is_displayed = shown_if_order(2)
-
-
-class SurveyPage1B(SurveyPageBase):
-    is_displayed = shown_if_order(2)
-
-    @staticmethod
-    def get_form_fields(player: Player):
-        return survey_fields(player, 1)
-
-    @staticmethod
-    def vars_for_template(player: Player):
-        return survey_vars(player, 1)
-
-
-class SurveyPage2B(SurveyPageBase):
-    is_displayed = shown_if_order(2)
-
-    @staticmethod
-    def get_form_fields(player: Player):
-        return survey_fields(player, 2)
-
-    @staticmethod
-    def vars_for_template(player: Player):
-        return survey_vars(player, 2)
-
-
-class DemographicsB(DemographicsBase):
-    is_displayed = shown_if_order(2)
+class HexLastA(HexPageBase):
+    is_displayed = shown_if(1, scale_order=1)
 
 
 class DGIntroA(DGIntroBase):
-    is_displayed = shown_if_order(1)
+    is_displayed = shown_if(1)
 
 
 class DGCheckA(DGCheckBase):
-    is_displayed = shown_if_order(1)
-
-
-class DGPredictA(DGPredictBase):
-    is_displayed = shown_if_order(1)
+    is_displayed = shown_if(1)
 
 
 class DGDecisionA(DGDecisionBase):
-    is_displayed = shown_if_order(1)
+    is_displayed = shown_if(1)
 
 
-class DGConfirmA(DGConfirmBase):
-    is_displayed = shown_if_order(1)
+# --- task_order 2: DG → 質問紙 ---
+class DGIntroB(DGIntroBase):
+    is_displayed = shown_if(2)
 
 
-class DGDecisionAgainA(DGDecisionAgainBase):
-    is_displayed = shown_if_order(1, revise=True)
+class DGCheckB(DGCheckBase):
+    is_displayed = shown_if(2)
+
+
+class DGDecisionB(DGDecisionBase):
+    is_displayed = shown_if(2)
+
+
+class HexFirstB(HexPageBase):
+    is_displayed = shown_if(2, scale_order=2)
+
+
+class FabPage1B(FabPage1Base):
+    is_displayed = shown_if(2)
+
+
+class FabPage2B(FabPage2Base):
+    is_displayed = shown_if(2)
+
+
+class HexLastB(HexPageBase):
+    is_displayed = shown_if(2, scale_order=1)
 
 
 page_sequence = [
     Consent,
-    ParticipantCode,
-    # order 1: 質問紙 → 属性 → DG
-    SurveyIntroA, SurveyPage1A, SurveyPage2A, DemographicsA,
-    # order 2: DG → 質問紙 → 属性
-    DGIntroB, DGCheckB, DGPredictB, DGDecisionB, DGConfirmB, DGDecisionAgainB,
-    SurveyIntroB, SurveyPage1B, SurveyPage2B, DemographicsB,
-    # order 1 の DG
-    DGIntroA, DGCheckA, DGPredictA, DGDecisionA, DGConfirmA, DGDecisionAgainA,
+    # task_order 1: 質問紙（HEXACO → FAB または FAB → HEXACO）→ DG
+    HexFirstA, FabPage1A, FabPage2A, HexLastA,
+    DGIntroA, DGCheckA, DGDecisionA,
+    # task_order 2: DG → 質問紙
+    DGIntroB, DGCheckB, DGDecisionB,
+    HexFirstB, FabPage1B, FabPage2B, HexLastB,
     # 共通: 事後評価 → 終了
     PostSurvey,
     End,

@@ -1,47 +1,55 @@
 # -*- coding: utf-8 -*-
-"""English texts (v0.2). Keys mirror ja.py.
+"""English texts (v0.5). Keys mirror ja.py.
 
 Sources (all at https://osf.io/t5mf2/)
 - FAB items: Supplement.pdf S1, quoted verbatim. Keys are the original variable names (hg_1 ... mc_23).
 - FAB instruction: Studies/11/11_codebook_raw.csv, QUESTION column.
 - Control questions: Studies/09 and 11 codebooks (cq1 = "strongly disagree", cq2 = "strongly agree").
 - Dictator Game wording: Studies/03/03_thesis_blinded.pdf appendix p.44 (German, translated) and the paper's Methods.
-- Entry confirmation (dg_correct): Studies/09 codebook / preprocessing.R.
 - Post-task evaluation items: Studies/11 codebook (AG11_01-06).
+- HEXACO-60 instruction and 5-point scale: hexaco.org (HEXACO-60).
+
+Removed in v0.5 (told to participants when the link is sent instead): payment and contact information, the Google form,
+the participant-code page at the start, demographics, self-prediction, entry confirmation.
 """
 
 TEXT = dict(
     title='Decision Study',
+    progress_label='Page {page} of {pages}',
 
     consent_title='Invitation to take part',
     consent_body=[
-        'You are invited to take part in a study on decision making and everyday behavior. It takes about 15 minutes, '
-        'can be done at any time and place on your own smartphone or computer, and consists of a short decision task and a questionnaire.',
-        'You will receive {fee} {currency} for taking part, plus an amount that depends on the decision task (how to receive it is explained on the final page).',
-        'Participation is voluntary. Once you start, please complete the study in one sitting without interruption (about 15 minutes). '
-        'If you want to stop, close this page; incomplete responses are not kept and no payment can be made.',
+        'You are invited to take part in a study on decision making and everyday behavior. It consists of a short decision task '
+        'and two questionnaires and takes about 10 minutes. You can do it on your own smartphone or computer.',
+        'Participation is voluntary. Once you start, please complete the study in one sitting without interruption. '
+        'If you want to stop, close this page; incomplete responses are not kept.',
         'Your answers are stored under a random participant code; no names or email addresses are stored with them. '
         'Anonymized data may be shared publicly for research.',
-        'Contact: [researcher name, affiliation, email]',
     ],
     consent_check='I have read the above and agree to take part.',
-    age_check='I am 18 years or older.',
-    student_check='I am a student at [university].',
-    consent_error='To take part, please tick all three boxes.',
-
-    code_title='Your participant code',
-    code_body='Your participant code is shown below. Please write it down or take a screenshot: you will need it to receive your payment.',
-    code_note='Do not close this tab until you reach the final page. If your connection drops, open the same URL again to continue where you left off.',
+    eligible_check='I am 18 years or older and a student at [university].',
+    consent_error='To take part, please tick both boxes.',
 
     survey_title='Questionnaire',
-    survey_intro=[
-        'The following pages show statements about how people behave and act in everyday life.',
+    survey_stage_title='Questionnaire {stage} of {stages}',
+    survey_page_note='This questionnaire has {pages} pages (this is page {page}).',
+    required_error='Some items are unanswered. Please answer all items on this page.',
+    scale_heading='Answer options',
+
+    fab_intro=[
+        'The following statements are about how people behave and act in everyday life.',
         'Please state honestly and spontaneously how you would typically behave or act. '
         'Answers are on a six-point scale. There are no right or wrong answers.',
     ],
-    survey_intro_short='Please state honestly and spontaneously how you would typically behave or act.',
+    fab_intro_short='Please state honestly and spontaneously how you would typically behave or act.',
     likert6=['strongly disagree', 'disagree', 'rather disagree', 'rather agree', 'agree', 'strongly agree'],
-    required_error='Some items are unanswered. Please answer all items on this page.',
+
+    hex_intro=[
+        'The following statements are about you. Please read each statement and decide how much you agree or disagree with it.',
+        'Answers are on a five-point scale. Please answer every statement, even if you are not completely sure of your response.',
+    ],
+    hex_intro_short='Please indicate how much you agree or disagree with each statement.',
+    likert5=['strongly disagree', 'disagree', 'neutral (neither agree nor disagree)', 'agree', 'strongly agree'],
 
     items=dict(
         # Help Giving (S1)
@@ -67,7 +75,7 @@ TEXT = dict(
         cq2='Please tick the option "strongly agree" for this question. This is a control question.',
         # HEXACO-60 Honesty-Humility (Ashton & Lee, 2009; hexaco.org, free for research use). hex_1..hex_10 = HEXACO-60 items
         # 6, 12R, 18, 24R, 30R, 36, 42R, 48R, 54, 60R (R = reverse-keyed; see codebook.csv). Transcribed from memory on 2026-10-24:
-        # verify against hexaco.org before use. Note: shown on the FAB 6-point scale (original HEXACO uses 5 points).
+        # verify against hexaco.org before use. v0.5: shown as a separate stage on the original 5-point scale.
         hex_1="I wouldn't use flattery to get a raise or promotion at work, even if I thought it would succeed.",
         hex_2="If I knew that I could never get caught, I would be willing to steal a million dollars.",
         hex_3="Having a lot of money is not especially important to me.",
@@ -79,20 +87,6 @@ TEXT = dict(
         hex_9="I wouldn't pretend to like someone just to get that person to do favors for me.",
         hex_10="I'd be tempted to use counterfeit money, if I were sure I could get away with it.",
     ),
-
-    demog_title='About you',
-    demog_intro='Please tell us a little about yourself.',
-    demog_age='Age',
-    demog_gender='Gender',
-    gender_options=[[1, 'Male'], [2, 'Female'], [3, 'Other'], [4, 'Prefer not to say']],
-    demog_grade='Year',
-    grade_options=[
-        ['B1', '1st year undergraduate'], ['B2', '2nd year undergraduate'], ['B3', '3rd year undergraduate'],
-        ['B4', '4th year undergraduate'], ['M1', "Master's 1st year"], ['M2', "Master's 2nd year"],
-        ['D', 'Doctoral'], ['other', 'Other'],
-    ],
-    demog_game_exp='Have you ever taken part in an economic experiment or a money-splitting task like this before?',
-    game_exp_options=[[True, 'Yes'], [False, 'No']],
 
     # Dictator Game. Original (Study 03 appendix p.44): "You are lucky! You are in our winner group ... We give you this
     # amount as a gift. 1. You can keep it. 2. You can share it with another participant who was not in the winner group and
@@ -109,7 +103,7 @@ TEXT = dict(
         'Because the lottery has not been drawn yet, everyone now decides as if they were in the lucky group. '
         'The decisions of those who end up in the lucky group are carried out exactly: they keep what they did not give, '
         'and their partner in the unlucky group receives what was given.',
-        'Payments are made later together with the participation fee of {fee} {currency}. You decide only once. There are no right or wrong answers.',
+        'You decide only once. There are no right or wrong answers.',
     ],
     dg_options=[
         'Keep the whole {endowment} {currency}.',
@@ -117,29 +111,21 @@ TEXT = dict(
         'That person stays anonymous to you, and you stay anonymous to them.',
     ],
     dg_intro_example='Example: if a person in the lucky group gives 200 {currency}, they keep 800 {currency} and their partner receives 200 {currency}.',
+    dg_reread='Read the task description again',
 
     check_title='Comprehension question',
+    check_lead='A quick check that the task description was clear.',
     check_question='Suppose you are in the lucky group and decide to give {check_amount} {currency} to your partner. How much do you keep?',
     check_unit='{currency}',
     check_retry='That is not correct. Please read the description below again and answer once more.',
 
-    predict_title='Before you decide',
-    predict_question='Before you decide: how much do you think you will actually give to your partner?',
-    predict_note='This answer does not affect any payment.',
-
     decision_title='Your decision',
     decision_lead='Suppose you are in the lucky group. You receive a gift of {endowment} {currency}.',
     decision_question='How much of the {endowment} {currency} do you give to your partner in the unlucky group?',
-    decision_hint='Enter any amount from 0 to {endowment} ({currency}).',
+    decision_hint='Enter any amount from 0 to {endowment} ({currency}). Your decision is final once you press "Next".',
     decision_keep='You keep',
     decision_other='Your partner receives',
     amount_error='Please enter an amount from 0 to {endowment} in steps of {step} {currency}.',
-
-    confirm_title='Please check your entry',
-    confirm_body='You give {give} {currency} to your partner and keep {keep} {currency}. Is this entry correct?',
-    confirm_options=[[1, 'Yes, it is correct'], [2, 'No, I want to enter it again']],
-    confirm_error='Please choose one option.',
-    decision_again_lead='Please enter your decision again. This entry will be final.',
 
     post_title='Finally',
     post_intro='A few questions about this study. Please indicate how much you agree with each statement.',
@@ -153,11 +139,9 @@ TEXT = dict(
 
     end_title='Thank you',
     end_body=[
-        'The study is now complete. Your participant code is shown below.',
-        'To receive your payment, open the contact form with the button below and enter your email address (the form already contains your code).',
-        'Pairs and the lucky/unlucky lottery are drawn after the study closes. How and when you receive your payment will be sent to the email address you enter.',
-        'You may now close this page.',
+        'The study is now complete.',
+        'Your participant code is shown below. Please write it down or take a screenshot.',
     ],
     end_code_label='Participant code',
-    end_button='Open the contact form',
+    end_close='You may now close this page.',
 )

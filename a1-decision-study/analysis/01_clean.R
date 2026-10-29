@@ -10,6 +10,8 @@
 #   - 入力ファイルの MD5・除外・集計方法を output/analysis_notes.md に自動で残す
 # v0.4: Page Times（$A1_RAW_DIR/PageTimes*.csv）からページごとの滞在時間を出し、極端に速い回答と中断を検出する（感度分析用のフラグ）。
 #       HEXACO 正直さ-謙虚さ（hex_1〜10、逆転は codebook）の平均 hh_mean を作る
+# v0.5: 画面の削減に合わせて dg_correct / dg_give_1 / dg_predict / 属性を廃止。HEXACO は 5 件法（逆転 = 6 − x）。質問紙の段階順 scale_order を保持。
+#       ページ名の変更（FabPage*, Hex*）に対応
 # 入力: $A1_RAW_DIR/altruism_study*.csv（tools/archive_export.py で完了者だけにした CSV。最新のものを使う）
 #       $A1_RAW_DIR/PageTimes*.csv（管理画面 Data → Page Times。任意だが推奨）
 #       $A1_DUP_DIR/dup_list_*.csv（tools/pairing.py の重複判定、任意）
@@ -66,17 +68,20 @@ d <- d %>%
     excluded      = n_flags > 0
   )
 
-# --- 尺度得点（S1 の 15 項目に逆転項目はない。codebook$reverse == 1 の項目があれば 7 - x にする）---
-rev_items <- codebook %>% filter(reverse == 1) %>% pull(variable)
-for (v in intersect(rev_items, names(d))) d[[v]] <- 7 - d[[v]]
+# --- 尺度得点（S1 の 15 項目に逆転項目はない。codebook$reverse == 1 の項目は (min + max) - x で逆転: HEXACO 5 件法なら 6 - x）---
+rev_items <- codebook %>% filter(reverse == 1) %>% select(variable, min, max)
+for (i in seq_len(nrow(rev_items))) {
+  v <- rev_items$variable[i]
+  if (v %in% names(d)) d[[v]] <- (rev_items$min[i] + rev_items$max[i]) - d[[v]]
+}
 d <- d %>%
   mutate(
     hg_mean_fab = rowMeans(across(all_of(HG_ITEMS)), na.rm = TRUE),  # 原研究 analysis.Rmd と同じ名前
     pp_mean_fab = rowMeans(across(all_of(PP_ITEMS)), na.rm = TRUE),
     mc_mean_fab = rowMeans(across(all_of(MC_ITEMS)), na.rm = TRUE),
-    dg_binary   = as.integer(dg_give > 0),                            # 原研究の dg_binary
-    revised     = as.integer(!is.na(dg_correct) & dg_correct == 2)
+    dg_binary   = as.integer(dg_give > 0)                             # 原研究の dg_binary
   )
+if (!"scale_order" %in% names(d)) d$scale_order <- NA_integer_
 # HEXACO 正直さ-謙虚さ（探索 H5）。use_hexaco = 0 のセッションでは NA
 if (all(HEX_ITEMS %in% names(d))) {
   d <- d %>% mutate(hh_mean = ifelse(!is.na(cfg_use_hexaco) & cfg_use_hexaco == 1, rowMeans(across(all_of(HEX_ITEMS)), na.rm = TRUE), NA_real_))
@@ -94,8 +99,8 @@ if (length(pt_file) == 1) {
     mutate(page_sec = epoch_time_completed - lag(epoch_time_completed)) %>%   # 1 ページ目（同意）は前がないので NA
     ungroup() %>%
     mutate(page_type = case_when(
-      grepl("^SurveyPage", page_name) ~ "survey",
-      grepl("^DGDecision", page_name) ~ "dg_decision",     # 入力し直し（DGDecisionAgain）も含む
+      grepl("^(SurveyPage|FabPage|Hex)", page_name) ~ "survey",   # v0.5: FabPage1A/2A/1B/2B, HexFirstA/HexLastA/...
+      grepl("^DGDecision", page_name) ~ "dg_decision",
       grepl("^DGIntro", page_name) ~ "dg_intro",
       grepl("^DGCheck", page_name) ~ "dg_check",
       TRUE ~ "other"))
@@ -113,7 +118,7 @@ if (length(pt_file) == 1) {
            speeder_flag = fast_survey_flag | fast_dg_flag,
            break_flag = !is.na(max_page_sec) & is.finite(max_page_sec) & max_page_sec >= CFG$break_sec)
   page_summary <- pt %>% filter(!is.na(page_sec)) %>%
-    mutate(page_base = sub("[AB]$", "", page_name)) %>%
+    mutate(page_base = sub("^Hex(First|Last)$", "HexPage", sub("[AB]$", "", page_name))) %>%
     group_by(page_base, page_type) %>%
     summarise(n = n(), median_sec = median(page_sec), q10_sec = quantile(page_sec, .10), q90_sec = quantile(page_sec, .90),
               min_sec = min(page_sec), max_sec = max(page_sec), .groups = "drop") %>% arrange(desc(median_sec))
@@ -155,8 +160,8 @@ overlap <- d %>% filter(excluded) %>%
   mutate(pattern = sub("\\+$", "", pattern)) %>% count(pattern, name = "n") %>% arrange(desc(n))
 
 # --- 記述統計表（全体・順序群、除外後と除外前）---
-desc_vars <- c("dg_give", "dg_give_1", "dg_predict", "hg_mean_fab", "pp_mean_fab", "mc_mean_fab", "hh_mean", "duration_sec",
-               "survey_sec_per_item", "dg_decision_sec", "age")
+desc_vars <- c("dg_give", "hg_mean_fab", "pp_mean_fab", "mc_mean_fab", "hh_mean", "duration_sec",
+               "survey_sec_per_item", "dg_decision_sec")
 describe_by <- function(dd, sample_label) {
   bind_rows(
     dd %>% mutate(group = "all"),
@@ -178,7 +183,7 @@ write_csv(d, data_path("clean.csv"))
 write_csv(excl, data_path("exclusion_table.csv"))
 write_csv(desc, out_path("descriptives.csv"))
 print(excl); print(overlap)
-cat(sprintf("median duration (s): %.0f  threshold: %.0f  revised DG entry (dg_correct = 2): %d\n", med, thr, sum(d$revised)))
+cat(sprintf("median duration (s): %.0f  threshold: %.0f\n", med, thr))
 
 note("## 除外（リストワイズ。原研究 preprocessing.R と同じ基準）",
      sprintf("- 所要時間の閾値: 中央値 %.0f 秒 × %.2f = %.0f 秒", med, CFG$duration_fraction, thr),
@@ -192,6 +197,6 @@ if (!is.null(page_summary)) {
 }
 note("## 尺度得点",
      "- HG/PP/MC = 各 5 項目の平均（1–6）。逆転項目なし。欠損は na.rm（必須項目なので通常は欠損なし）",
-     "- hh_mean = HEXACO-60 正直さ-謙虚さ 10 項目の平均（codebook の reverse = 1 の項目は 7 - x で逆転してから）。use_hexaco = 0 のセッションは NA",
-     "- dg_binary = dg_give > 0。revised = 入力し直し（dg_correct = 2）。dg_give は最終決定、dg_give_1 は 1 回目の入力",
+     "- hh_mean = HEXACO-60 正直さ-謙虚さ 10 項目（1–5）の平均（codebook の reverse = 1 の項目は 6 - x で逆転してから）。use_hexaco = 0 のセッションは NA",
+     "- dg_binary = dg_give > 0。dg_give は 1 回の入力（v0.5 から確認画面・入力し直しなし）。scale_order = 質問紙の段階順（1 = FAB→HEXACO, 2 = HEXACO→FAB）",
      sprintf("- 出力: %s, %s, %s（sd は標本 SD、n は有効回答数）", data_path("clean.csv"), data_path("exclusion_table.csv"), out_path("descriptives.csv")))

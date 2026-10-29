@@ -1,6 +1,7 @@
 {{ extends "global/Page.html" }}
 {{ block title }}{{ T.post_title }}{{ endblock }}
 {{ block content }}
+{{ include "global/progress.html" }}
 <p class="text-muted">{{ T.post_intro }}</p>
 {{ for it in items }}
 <div class="card item-card mb-3{{ if it.missing }} missing{{ endif }}">
@@ -8,10 +9,10 @@
     <p class="item-text">{{ it.text }}</p>
     <div class="likert">
     {{ for opt in it.options }}
-      <div class="form-check">
+      <label class="likert-option" for="{{ it.name }}_{{ opt.v }}">
         <input class="form-check-input" type="radio" name="{{ it.name }}" id="{{ it.name }}_{{ opt.v }}" value="{{ opt.v }}"{{ if opt.checked }} checked{{ endif }}>
-        <label class="form-check-label" for="{{ it.name }}_{{ opt.v }}">{{ opt.v }}. {{ opt.label }}</label>
-      </div>
+        <span class="likert-num">{{ opt.v }}</span><span class="likert-label">{{ opt.label }}</span>
+      </label>
     {{ endfor }}
     </div>
     {{ formfield_errors it.name }}
@@ -20,7 +21,7 @@
 {{ endfor }}
 <div class="mb-3">
   <label class="col-form-label" for="id_comment_open">{{ T.post_comment }}</label>
-  <textarea class="form-control" name="comment_open" id="id_comment_open" rows="4" maxlength="2000">{{ comment_text }}</textarea>
+  <textarea class="form-control" name="comment_open" id="id_comment_open" rows="3" maxlength="2000">{{ comment_text }}</textarea>
 </div>
 {{ next_button }}
 {{ endblock }}

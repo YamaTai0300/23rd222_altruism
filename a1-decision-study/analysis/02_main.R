@@ -11,6 +11,7 @@
 #   - 事前に固定した感度分析 (a)〜(e) を 1 つの表に出す（結論が変わるかを見る）
 #   - 結果は results.md（人が読む）と results.json・*.csv（機械可読）の両方に出し、表の数値は手で転記しない
 #   - 図は 04_figures.R に分離（パート C の方針で描く）
+# v0.5: 自己予測と入力確認（感度分析 (b)）を画面ごと廃止したので解析からも外した。HEXACO は 5 件法・別段階（段階順 scale_order を探索的に確認）
 # 入力: $A1_DATA_DIR/clean.csv
 # 出力: $A1_OUT_DIR/results.md, results.json, model_coefficients.csv, sensitivity.csv, corr_matrix_r.csv, corr_matrix_p.csv, analysis_notes.md（追記）
 # 実行: Rscript analysis/02_main.R（01_clean.R の後）
@@ -143,19 +144,6 @@ out <- c(out, "## H4 順序効果（探索。p 値は記述的に扱い、有意
          sprintf("差の検定（Fisher z）: z = %.2f, p = %.3f; HG × 順序の交互作用（Part 1）: b = %.3f, p = %.3f", zt$z, zt$p, b_int, p_int), "")
 
 # =============================================================================
-# 探索: 自己予測 vs 実際
-# =============================================================================
-w <- wilcox.test(d$dg_predict, d$dg_give, paired = TRUE, exact = FALSE, conf.int = TRUE)
-pr_hg <- spearman_boot(d$dg_predict, d$hg_mean_fab)
-pr_dg <- spearman_boot(d$dg_predict, d$dg_give)
-res$prediction <- list(n = sum(complete.cases(d$dg_predict, d$dg_give)), mean_pred = mean(d$dg_predict), mean_actual = mean(d$dg_give),
-                       hl_estimate = unname(w$estimate), hl_ci = unname(w$conf.int), p = w$p.value, rs_pred_hg = pr_hg, rs_pred_actual = pr_dg)
-out <- c(out, "## 探索: 自己予測 vs 実際",
-         sprintf("予測 M = %.0f, 実際 M = %.0f（n = %d）; 差の Hodges–Lehmann 推定値 = %.0f 円, 95%% CI [%.0f, %.0f], Wilcoxon p = %.3f",
-                 mean(d$dg_predict), mean(d$dg_give), res$prediction$n, w$estimate, w$conf.int[1], w$conf.int[2], w$p.value),
-         sprintf("予測 × HG: %s", fmt_r(pr_hg)), sprintf("予測 × 実際: %s", fmt_r(pr_dg)), "")
-
-# =============================================================================
 # H5（探索）: HEXACO 正直さ-謙虚さ × DG。先行研究で最も安定して再現される関連（r ≈ .2〜.3）なので、
 # HG × DG が出なかったときに「手続きの問題か、FAB の翻訳の問題か」を切り分ける比較基準（ベースライン）にする
 # =============================================================================
@@ -163,10 +151,22 @@ if ("hh_mean" %in% names(d) && sum(!is.na(d$hh_mean)) >= 10) {
   h5 <- spearman_boot(d$hh_mean, d$dg_give)
   hh_pp <- spearman_boot(d$hh_mean, d$hg_mean_fab)
   rel_hh <- { x <- d %>% select(all_of(HEX_ITEMS)) %>% filter(complete.cases(.)); c(alpha = psych::alpha(x)$total$raw_alpha, n = nrow(x)) }
-  res$H5 <- list(rs_hh_dg = h5, rs_hh_hg = hh_pp, alpha_hh = unname(rel_hh["alpha"]), note = "exploratory; HEXACO-60 H-H on the FAB 6-point scale")
-  out <- c(out, "## H5 探索: HEXACO 正直さ-謙虚さ × 分配額（先行研究 r ≈ .2〜.3 の比較基準。6 件法で提示した点は原版と異なる）",
+  res$H5 <- list(rs_hh_dg = h5, rs_hh_hg = hh_pp, alpha_hh = unname(rel_hh["alpha"]), note = "exploratory; HEXACO-60 H-H, original 5-point scale, separate stage")
+  out <- c(out, "## H5 探索: HEXACO 正直さ-謙虚さ × 分配額（先行研究 r ≈ .2〜.3 の比較基準。原版と同じ 5 件法、FAB とは別の段階で提示）",
            sprintf("HH × 分配額: %s", fmt_r(h5)), sprintf("HH × HG: %s", fmt_r(hh_pp)),
            sprintf("HH の alpha = %.2f（n = %d）", rel_hh["alpha"], rel_hh["n"]), "")
+  # 質問紙の段階順（scale_order: 1 = FAB→HEXACO, 2 = HEXACO→FAB）による尺度得点の違い（記述的。順序は参加者ごとにランダム化）
+  if ("scale_order" %in% names(d) && all(c(1, 2) %in% d$scale_order)) {
+    so <- d %>% filter(scale_order %in% c(1, 2)) %>% group_by(scale_order) %>%
+      summarise(n = n(), hg_mean = mean(hg_mean_fab), hg_sd = sd(hg_mean_fab), hh_sd = sd(hh_mean, na.rm = TRUE), hh_mean = mean(hh_mean, na.rm = TRUE), .groups = "drop") %>%
+      select(scale_order, n, hg_mean, hg_sd, hh_mean, hh_sd)
+    w_hg <- wilcox.test(hg_mean_fab ~ scale_order, data = filter(d, scale_order %in% c(1, 2)), exact = FALSE)
+    w_hh <- wilcox.test(hh_mean ~ scale_order, data = filter(d, scale_order %in% c(1, 2)), exact = FALSE)
+    res$scale_order <- list(by_group = so, p_hg = w_hg$p.value, p_hh = w_hh$p.value)
+    out <- c(out, "### 質問紙の段階順（scale_order）による尺度得点の違い（記述的。1 = FAB→HEXACO, 2 = HEXACO→FAB）",
+             md_table(so %>% mutate(across(where(is.numeric), ~ round(.x, 3)))), "",
+             sprintf("Wilcoxon: HG p = %.3f, HH p = %.3f（多重比較の対象外、記述的に扱う）", w_hg$p.value, w_hh$p.value), "")
+  }
 }
 
 # =============================================================================
@@ -175,7 +175,6 @@ if ("hh_mean" %in% names(d) && sum(!is.na(d$hh_mean)) >= 10) {
 sens <- bind_rows(
   { s <- h1; tibble(analysis = "main: analysis sample, final dg_give, Spearman", n = s$n, r = s$r, ci95_low = s$ci95[1], ci95_high = s$ci95[2], ci90_low = s$ci90[1], ci90_high = s$ci90[2], p = s$p, verdict = verdict(s$r, s$p, s$ci90)) },
   { s <- spearman_boot(d_all$hg_mean_fab, d_all$dg_give); tibble(analysis = "(a) all finished (before exclusion)", n = s$n, r = s$r, ci95_low = s$ci95[1], ci95_high = s$ci95[2], ci90_low = s$ci90[1], ci90_high = s$ci90[2], p = s$p, verdict = verdict(s$r, s$p, s$ci90)) },
-  { s <- spearman_boot(d$hg_mean_fab, d$dg_give_1); tibble(analysis = "(b) first entry dg_give_1", n = s$n, r = s$r, ci95_low = s$ci95[1], ci95_high = s$ci95[2], ci90_low = s$ci90[1], ci90_high = s$ci90[2], p = s$p, verdict = verdict(s$r, s$p, s$ci90)) },
   { s <- spearman_boot(d$hg_mean_fab, d$dg_give, method = "pearson"); tibble(analysis = "(c) Pearson r", n = s$n, r = s$r, ci95_low = s$ci95[1], ci95_high = s$ci95[2], ci90_low = s$ci90[1], ci90_high = s$ci90[2], p = s$p, verdict = verdict(s$r, s$p, s$ci90)) },
   { dd <- filter(d, is.na(eval_distract) | eval_distract < CFG$distract_cut); s <- spearman_boot(dd$hg_mean_fab, dd$dg_give)
     tibble(analysis = sprintf("(d) excluding eval_distract >= %d", CFG$distract_cut), n = s$n, r = s$r, ci95_low = s$ci95[1], ci95_high = s$ci95[2], ci90_low = s$ci90[1], ci90_high = s$ci90[2], p = s$p, verdict = verdict(s$r, s$p, s$ci90)) },
@@ -187,14 +186,14 @@ sens <- bind_rows(
     tibble(analysis = sprintf("(g) excluding interrupted (a page >= %d s)", CFG$break_sec), n = s$n, r = s$r, ci95_low = s$ci95[1], ci95_high = s$ci95[2], ci90_low = s$ci90[1], ci90_high = s$ci90[2], p = s$p, verdict = verdict(s$r, s$p, s$ci90)) }
 )
 res$sensitivity <- sens
-out <- c(out, "## 感度分析（事前に固定。(e) z 得点モデルは H2 の表を参照。(f)(g) は Page Times があるときだけ）",
+out <- c(out, "## 感度分析（事前に固定。(b) 1 回目の入力は v0.5 で入力確認を廃止したため欠番。(e) z 得点モデルは H2 の表を参照。(f)(g) は Page Times があるときだけ）",
          md_table(sens %>% mutate(across(where(is.numeric), ~ round(.x, 3)))), "",
          sprintf("主分析と判定が異なる感度分析: %s", { x <- sens$analysis[sens$verdict != sens$verdict[1]]; if (length(x)) paste(x, collapse = "; ") else "なし" }), "")
 
 # =============================================================================
 # 相関行列（原研究 Fig. 1 / Supplement S2 に対応。Spearman, Holm 補正。探索的）
 # =============================================================================
-corr_df <- d %>% transmute(HG = hg_mean_fab, PP = pp_mean_fab, MC = mc_mean_fab, HH = hh_mean, `DG Share` = dg_give, `DG Predict` = dg_predict)
+corr_df <- d %>% transmute(HG = hg_mean_fab, PP = pp_mean_fab, MC = mc_mean_fab, HH = hh_mean, `DG Share` = dg_give)
 if (all(is.na(corr_df$HH))) corr_df$HH <- NULL
 ct <- psych::corr.test(corr_df, method = "spearman", adjust = "holm")
 write_csv(as.data.frame(round(ct$r, 3)) %>% rownames_to_column("var"), out_path("corr_matrix_r.csv"))
@@ -224,11 +223,11 @@ out <- c(out, "## 信頼性（原研究 ω = .74〜.79）",
 # =============================================================================
 res$descriptives <- list(dg_mean = mean(d$dg_give), dg_median = median(d$dg_give), zero_pct = 100 * mean(d$dg_give == 0),
                          equal_pct = 100 * mean(d$dg_give == max(d$cfg_endowment, na.rm = TRUE) / 2),
-                         revised_n = sum(d$dg_correct == 2, na.rm = TRUE), check_retry_ok_n = sum(d$dg_check_attempts == 2 & d$dg_check_pass == 1, na.rm = TRUE))
+                         check_retry_ok_n = sum(d$dg_check_attempts == 2 & d$dg_check_pass == 1, na.rm = TRUE))
 out <- c(out, "## 記述統計（分析対象。全体・順序群の表は descriptives.csv）",
          sprintf("dg_give: M = %.0f, Md = %.0f, 0 円 %.1f%%（原研究 %.1f%%）, 均等 %.1f%%, n = %d",
                  mean(d$dg_give), median(d$dg_give), 100 * mean(d$dg_give == 0), CFG$original_zero_pct, res$descriptives$equal_pct, nrow(d)),
-         sprintf("入力し直し (dg_correct = 2): %d 名; 理解確認 2 回目で正答: %d 名", res$descriptives$revised_n, res$descriptives$check_retry_ok_n),
+         sprintf("理解確認 2 回目で正答: %d 名", res$descriptives$check_retry_ok_n),
          sprintf("事後評価 (1-6): 理解しやすさ M = %.2f, 難しさ M = %.2f, 実生活を反映 M = %.2f, 気が散った M = %.2f",
                  mean(d$eval_understand, na.rm = TRUE), mean(d$eval_difficult, na.rm = TRUE), mean(d$eval_reflect, na.rm = TRUE), mean(d$eval_distract, na.rm = TRUE)), "")
 
@@ -247,9 +246,8 @@ note("## 主分析（02_main.R）",
      "- H1: Spearman 相関（cor.test, exact = FALSE）。判定は 90% CI と SESOI による 3 段階。原研究の値が 95% CI に含まれるかは参考",
      sprintf("- H2/H3: 二部モデル。Part 1 glm(binomial, logit)、Part 2 lm(log(dg_give))。予測子 = %s、順序を固定効果。OR の CI は Wald、%% 変化の CI は t 分布", res$predictor_main),
      "- H4: 群ごとの Spearman + ブートストラップ CI、psych::r.test（独立相関の差）、交互作用は Part 1 のロジスティック",
-     "- 自己予測: wilcox.test(paired, conf.int) の Hodges–Lehmann 推定値。相関は Spearman + ブートストラップ",
-     "- H5（探索）: HEXACO 正直さ-謙虚さの平均 × dg_give の Spearman + ブートストラップ。6 件法で提示（原版は 5 件法）",
+     "- H5（探索）: HEXACO 正直さ-謙虚さの平均 × dg_give の Spearman + ブートストラップ。原版と同じ 5 件法、FAB とは別の段階（段階順はランダム化、scale_order で記述的に確認）",
      "- 感度分析 (f)(g): Page Times のフラグ（01_clean.R）で速い回答・中断を除いた場合",
-     "- 多重比較: 主検定は H1 のみ。相関行列は Holm 補正（psych::corr.test）。H4・自己予測は探索的",
+     "- 多重比較: 主検定は H1 のみ。相関行列は Holm 補正（psych::corr.test）。H4・H5・段階順は探索的",
      "- 信頼性: psych::alpha, psych::omega(nfactors = 1)。減衰補正は rs / sqrt(ω_HG)（探索）",
      sprintf("- 出力: %s", paste(out_path(c("results.md", "results.json", "model_coefficients.csv", "sensitivity.csv", "corr_matrix_r.csv", "corr_matrix_p.csv")), collapse = ", ")))

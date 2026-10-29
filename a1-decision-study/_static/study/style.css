@@ -3,15 +3,12 @@
 .item-card { border-radius: 10px; }
 .item-card.missing { border: 2px solid #c00; }
 .item-text { font-weight: 600; margin-bottom: .5rem; }
-.likert .form-check { margin-bottom: .35rem; }
-.likert .form-check-input { width: 1.25em; height: 1.25em; margin-top: .15em; }
-.likert .form-check-label { padding-left: .25rem; }
-.amounts .form-check { margin-bottom: .3rem; }
 .split-box { background: #f1f5f9; border-radius: 10px; padding: .75rem 1rem; margin: .75rem 0; font-size: 1.1rem; }
 .split-box strong { font-size: 1.3rem; }
 .code-box { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 1.8rem; letter-spacing: .15em; background: #f1f5f9; border-radius: 10px; padding: .6rem 1rem; display: inline-block; margin: .5rem 0 1rem; }
 .form-control-errors { color: #c00; margin-top: .25rem; }
 details.dg-recap { background: #fffbe6; border: 1px solid #f0d879; border-radius: 10px; padding: .5rem .9rem; margin: .75rem 0 1rem; }
+details.dg-recap summary { cursor: pointer; font-weight: 600; }
 
 /* v0.2 */
 .round-name { font-weight: 700; font-size: 1.15rem; margin-bottom: .75rem; }
@@ -19,4 +16,25 @@ details.dg-recap { background: #fffbe6; border: 1px solid #f0d879; border-radius
 .dg-options li { margin-bottom: .4rem; }
 .amount-input { max-width: 16rem; margin: .5rem 0 .25rem; }
 .amount-input input { font-size: 1.4rem; text-align: right; }
-.confirm-body { font-size: 1.15rem; font-weight: 600; }
+
+/* v0.5: 進捗表示 */
+.progress-line { display: flex; align-items: center; gap: .6rem; margin: -.25rem 0 1rem; }
+.progress-bar-outer { flex: 1; height: 6px; background: #e5e7eb; border-radius: 3px; overflow: hidden; }
+.progress-bar-inner { height: 100%; background: #2563eb; border-radius: 3px; transition: width .3s; }
+.progress-text { font-size: .8rem; color: #6b7280; white-space: nowrap; }
+
+/* v0.5: 段階の教示文と選択肢の説明 */
+.intro-box { background: #f8fafc; border-radius: 10px; padding: .75rem 1rem .25rem; margin-bottom: 1rem; }
+.intro-box p { margin-bottom: .5rem; }
+.scale-list { margin: 0 0 .5rem; padding-left: 1.6rem; font-size: .9rem; color: #374151; }
+.scale-list li { margin-bottom: .1rem; }
+
+/* v0.5: 選択肢の行全体をタップできるようにし、選んだ項目を薄く塗る */
+.likert { display: flex; flex-direction: column; gap: .25rem; }
+.likert-option { display: flex; align-items: center; gap: .55rem; padding: .35rem .5rem; border-radius: 8px; cursor: pointer; margin: 0; -webkit-tap-highlight-color: transparent; }
+.likert-option:hover { background: #f1f5f9; }
+.likert-option .form-check-input { width: 1.25em; height: 1.25em; margin: 0; flex: none; }
+.likert-num { color: #6b7280; min-width: 1.1em; text-align: right; font-variant-numeric: tabular-nums; }
+.likert-option:has(input:checked) { background: #e0ecff; }
+.item-card.answered { border-color: #93c5fd; }
+.item-card.answered .item-text::after { content: " ✓"; color: #2563eb; font-weight: 700; }

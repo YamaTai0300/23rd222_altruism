@@ -6,4 +6,33 @@
 {{ endblock }}
 
 {{ block global_scripts }}
+<script>
+  // v0.5: 参加者の手間を減らす共通の動作（文言は持たない）
+  (function () {
+    // 1) 未回答・誤りの項目があれば、その最初の項目まで自動でスクロールして目立たせる
+    var target = document.querySelector('.item-card.missing, .form-control-errors:not(:empty), .alert-danger');
+    if (target) {
+      var card = target.closest('.item-card') || target;
+      setTimeout(function () { card.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 50);
+    }
+    // 2) 回答済みの項目カードに印を付ける（選択するとすぐ反映）
+    document.querySelectorAll('.item-card').forEach(function (c) {
+      var mark = function () {
+        var done = c.querySelector('input[type=radio]:checked');
+        c.classList.toggle('answered', !!done);
+        if (done) c.classList.remove('missing');
+      };
+      c.addEventListener('change', mark);
+      mark();
+    });
+    // 3) 「次へ」の二重送信を防ぐ
+    var form = document.getElementById('form');
+    if (form) {
+      form.addEventListener('submit', function () {
+        var btn = form.querySelector('.otree-btn-next');
+        if (btn) setTimeout(function () { btn.disabled = true; }, 0);
+      });
+    }
+  })();
+</script>
 {{ endblock }}
