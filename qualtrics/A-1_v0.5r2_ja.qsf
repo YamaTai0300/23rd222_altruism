@@ -1,7 +1,7 @@
 {
  "SurveyEntry": {
   "SurveyID": "SV_egt7X9VgLDhmk8C",
-  "SurveyName": "A-1 意思決定と日常行動に関する調査（v0.5 Qualtrics）",
+  "SurveyName": "A-1 意思決定と日常行動に関する調査（v0.5r2 Qualtrics）",
   "SurveyDescription": null,
   "SurveyOwnerID": "UR_1QAwVwSMYMfW9nn",
   "SurveyBrandID": "qualtricsxmw5hysnkpn",
@@ -11,9 +11,9 @@
   "SurveyStatus": "Inactive",
   "SurveyStartDate": "0000-00-00 00:00:00",
   "SurveyExpirationDate": "0000-00-00 00:00:00",
-  "SurveyCreationDate": "2026-11-05 22:48:01",
+  "SurveyCreationDate": "2026-11-05 16:22:07",
   "CreatorID": "UR_1QAwVwSMYMfW9nn",
-  "LastModified": "2026-11-05 22:48:01",
+  "LastModified": "2026-11-05 16:22:07",
   "LastAccessed": "0000-00-00 00:00:00",
   "LastActivated": "0000-00-00 00:00:00",
   "Deleted": null
@@ -38,10 +38,6 @@
       {
        "Type": "Question",
        "QuestionID": "QID2"
-      },
-      {
-       "Type": "Question",
-       "QuestionID": "QID3"
       }
      ],
      "Options": {
@@ -52,16 +48,16 @@
     },
     "1": {
      "Type": "Standard",
-     "Description": "2 質問紙 1/2 FAB（1 ページ目）",
-     "ID": "BL_fab1",
+     "Description": "2-3 質問紙 FAB + 注意チェック（2 ページ）",
+     "ID": "BL_fab",
      "BlockElements": [
       {
        "Type": "Question",
-       "QuestionID": "QID21"
+       "QuestionID": "QID20"
       },
       {
        "Type": "Question",
-       "QuestionID": "QID22"
+       "QuestionID": "QID3"
       },
       {
        "Type": "Question",
@@ -97,62 +93,6 @@
       },
       {
        "Type": "Question",
-       "QuestionID": "QID19"
-      }
-     ],
-     "Options": {
-      "BlockLocking": "false",
-      "RandomizeQuestions": "Advanced",
-      "Randomization": {
-       "Advanced": {
-        "FixedOrder": [
-         "QID21",
-         "QID22",
-         "{~Randomized~}",
-         "{~Randomized~}",
-         "{~Randomized~}",
-         "{~Randomized~}",
-         "QID19",
-         "{~Randomized~}",
-         "{~Randomized~}",
-         "{~Randomized~}",
-         "{~Randomized~}"
-        ],
-        "RandomizeAll": [
-         "QID4",
-         "QID5",
-         "QID6",
-         "QID7",
-         "QID8",
-         "QID9",
-         "QID10",
-         "QID11"
-        ],
-        "RandomSubSet": [],
-        "Undisplayed": [],
-        "TotalRandSubset": "0",
-        "QuestionsPerPage": "0"
-       },
-       "EvenPresentation": false
-      },
-      "BlockVisibility": "Collapsed"
-     }
-    },
-    "2": {
-     "Type": "Standard",
-     "Description": "3 質問紙 1/2 FAB（2 ページ目）",
-     "ID": "BL_fab2",
-     "BlockElements": [
-      {
-       "Type": "Question",
-       "QuestionID": "QID23"
-      },
-      {
-       "Type": "Question",
-       "QuestionID": "QID24"
-      },
-      {
-       "Type": "Question",
        "QuestionID": "QID12"
       },
       {
@@ -181,7 +121,11 @@
       },
       {
        "Type": "Question",
-       "QuestionID": "QID20"
+       "QuestionID": "QID21"
+      },
+      {
+       "Type": "Question",
+       "QuestionID": "QID19"
       }
      ],
      "Options": {
@@ -190,41 +134,70 @@
       "Randomization": {
        "Advanced": {
         "FixedOrder": [
-         "QID23",
-         "QID24",
-         "{~Randomized~}",
-         "{~Randomized~}",
-         "{~Randomized~}",
          "QID20",
+         "{~Randomized~}",
+         "{~Randomized~}",
+         "{~Randomized~}",
+         "{~Randomized~}",
+         "QID18",
+         "{~Randomized~}",
+         "{~Randomized~}",
+         "{~Randomized~}",
+         "{~Randomized~}",
+         "QID21",
+         "{~Randomized~}",
+         "{~Randomized~}",
+         "{~Randomized~}",
+         "QID19",
          "{~Randomized~}",
          "{~Randomized~}",
          "{~Randomized~}",
          "{~Randomized~}"
         ],
         "RandomizeAll": [
+         "QID3",
+         "QID4",
+         "QID5",
+         "QID6",
+         "QID7",
+         "QID8",
+         "QID9",
+         "QID10",
+         "QID11",
          "QID12",
          "QID13",
          "QID14",
          "QID15",
          "QID16",
-         "QID17",
-         "QID18"
+         "QID17"
         ],
         "RandomSubSet": [],
         "Undisplayed": [],
         "TotalRandSubset": "0",
-        "QuestionsPerPage": "0"
+        "QuestionsPerPage": "10"
        },
        "EvenPresentation": false
       },
       "BlockVisibility": "Collapsed"
      }
     },
-    "3": {
+    "2": {
      "Type": "Standard",
-     "Description": "4 質問紙 2/2 HEXACO",
+     "Description": "4 質問紙 HEXACO",
      "ID": "BL_hex",
      "BlockElements": [
+      {
+       "Type": "Question",
+       "QuestionID": "QID22"
+      },
+      {
+       "Type": "Question",
+       "QuestionID": "QID23"
+      },
+      {
+       "Type": "Question",
+       "QuestionID": "QID24"
+      },
       {
        "Type": "Question",
        "QuestionID": "QID25"
@@ -256,22 +229,6 @@
       {
        "Type": "Question",
        "QuestionID": "QID32"
-      },
-      {
-       "Type": "Question",
-       "QuestionID": "QID33"
-      },
-      {
-       "Type": "Question",
-       "QuestionID": "QID34"
-      },
-      {
-       "Type": "Question",
-       "QuestionID": "QID35"
-      },
-      {
-       "Type": "Question",
-       "QuestionID": "QID36"
       }
      ],
      "Options": {
@@ -280,8 +237,7 @@
       "Randomization": {
        "Advanced": {
         "FixedOrder": [
-         "QID25",
-         "QID26",
+         "QID22",
          "{~Randomized~}",
          "{~Randomized~}",
          "{~Randomized~}",
@@ -294,16 +250,16 @@
          "{~Randomized~}"
         ],
         "RandomizeAll": [
+         "QID23",
+         "QID24",
+         "QID25",
+         "QID26",
          "QID27",
          "QID28",
          "QID29",
          "QID30",
          "QID31",
-         "QID32",
-         "QID33",
-         "QID34",
-         "QID35",
-         "QID36"
+         "QID32"
         ],
         "RandomSubSet": [],
         "Undisplayed": [],
@@ -315,18 +271,30 @@
       "BlockVisibility": "Collapsed"
      }
     },
-    "4": {
+    "3": {
      "Type": "Standard",
      "Description": "5 意思決定課題の説明",
      "ID": "BL_dg_intro",
      "BlockElements": [
       {
        "Type": "Question",
-       "QuestionID": "QID37"
-      },
+       "QuestionID": "QID33"
+      }
+     ],
+     "Options": {
+      "BlockLocking": "false",
+      "RandomizeQuestions": "false",
+      "BlockVisibility": "Collapsed"
+     }
+    },
+    "4": {
+     "Type": "Standard",
+     "Description": "6 理解確認",
+     "ID": "BL_dg_check",
+     "BlockElements": [
       {
        "Type": "Question",
-       "QuestionID": "QID38"
+       "QuestionID": "QID34"
       }
      ],
      "Options": {
@@ -337,16 +305,12 @@
     },
     "5": {
      "Type": "Standard",
-     "Description": "6 理解確認",
-     "ID": "BL_dg_check",
+     "Description": "6b 理解確認（再回答）",
+     "ID": "BL_dg_check2",
      "BlockElements": [
       {
        "Type": "Question",
-       "QuestionID": "QID39"
-      },
-      {
-       "Type": "Question",
-       "QuestionID": "QID40"
+       "QuestionID": "QID35"
       }
      ],
      "Options": {
@@ -357,9 +321,41 @@
     },
     "6": {
      "Type": "Standard",
-     "Description": "6b 理解確認（再回答）",
-     "ID": "BL_dg_check2",
+     "Description": "7 決定",
+     "ID": "BL_dg_decide",
      "BlockElements": [
+      {
+       "Type": "Question",
+       "QuestionID": "QID36"
+      }
+     ],
+     "Options": {
+      "BlockLocking": "false",
+      "RandomizeQuestions": "false",
+      "BlockVisibility": "Collapsed"
+     }
+    },
+    "7": {
+     "Type": "Standard",
+     "Description": "8 事後評価",
+     "ID": "BL_post",
+     "BlockElements": [
+      {
+       "Type": "Question",
+       "QuestionID": "QID37"
+      },
+      {
+       "Type": "Question",
+       "QuestionID": "QID38"
+      },
+      {
+       "Type": "Question",
+       "QuestionID": "QID39"
+      },
+      {
+       "Type": "Question",
+       "QuestionID": "QID40"
+      },
       {
        "Type": "Question",
        "QuestionID": "QID41"
@@ -375,58 +371,14 @@
       "BlockVisibility": "Collapsed"
      }
     },
-    "7": {
+    "8": {
      "Type": "Standard",
-     "Description": "7 決定",
-     "ID": "BL_dg_decide",
+     "Description": "9 終了",
+     "ID": "BL_end",
      "BlockElements": [
       {
        "Type": "Question",
        "QuestionID": "QID43"
-      },
-      {
-       "Type": "Question",
-       "QuestionID": "QID44"
-      }
-     ],
-     "Options": {
-      "BlockLocking": "false",
-      "RandomizeQuestions": "false",
-      "BlockVisibility": "Collapsed"
-     }
-    },
-    "8": {
-     "Type": "Standard",
-     "Description": "8 事後評価",
-     "ID": "BL_post",
-     "BlockElements": [
-      {
-       "Type": "Question",
-       "QuestionID": "QID45"
-      },
-      {
-       "Type": "Question",
-       "QuestionID": "QID46"
-      },
-      {
-       "Type": "Question",
-       "QuestionID": "QID47"
-      },
-      {
-       "Type": "Question",
-       "QuestionID": "QID48"
-      },
-      {
-       "Type": "Question",
-       "QuestionID": "QID49"
-      },
-      {
-       "Type": "Question",
-       "QuestionID": "QID50"
-      },
-      {
-       "Type": "Question",
-       "QuestionID": "QID51"
       }
      ],
      "Options": {
@@ -436,22 +388,6 @@
      }
     },
     "9": {
-     "Type": "Standard",
-     "Description": "9 終了",
-     "ID": "BL_end",
-     "BlockElements": [
-      {
-       "Type": "Question",
-       "QuestionID": "QID52"
-      }
-     ],
-     "Options": {
-      "BlockLocking": "false",
-      "RandomizeQuestions": "false",
-      "BlockVisibility": "Collapsed"
-     }
-    },
-    "10": {
      "Type": "Trash",
      "Description": "Trash / Unused Questions",
      "ID": "BL_trash",
@@ -474,22 +410,49 @@
       "FlowID": "FL_1",
       "EmbeddedData": [
        {
-        "Description": "endowment",
+        "Description": "cfg_endowment",
         "Type": "Custom",
-        "Field": "endowment",
+        "Field": "cfg_endowment",
         "VariableType": "String",
         "DataVisibility": [],
         "AnalyzeText": false,
         "Value": "1000"
        },
        {
-        "Description": "participation_fee_yen",
+        "Description": "cfg_fee",
         "Type": "Custom",
-        "Field": "participation_fee_yen",
+        "Field": "cfg_fee",
         "VariableType": "String",
         "DataVisibility": [],
         "AnalyzeText": false,
         "Value": "300"
+       },
+       {
+        "Description": "cfg_dg_step",
+        "Type": "Custom",
+        "Field": "cfg_dg_step",
+        "VariableType": "String",
+        "DataVisibility": [],
+        "AnalyzeText": false,
+        "Value": "1"
+       },
+       {
+        "Description": "cfg_use_hexaco",
+        "Type": "Custom",
+        "Field": "cfg_use_hexaco",
+        "VariableType": "String",
+        "DataVisibility": [],
+        "AnalyzeText": false,
+        "Value": "1"
+       },
+       {
+        "Description": "lang",
+        "Type": "Custom",
+        "Field": "lang",
+        "VariableType": "String",
+        "DataVisibility": [],
+        "AnalyzeText": false,
+        "Value": "ja"
        },
        {
         "Description": "app_version",
@@ -498,7 +461,16 @@
         "VariableType": "String",
         "DataVisibility": [],
         "AnalyzeText": false,
-        "Value": "v0.5-qualtrics"
+        "Value": "v0.5r2-qualtrics"
+       },
+       {
+        "Description": "qsf_hash",
+        "Type": "Custom",
+        "Field": "qsf_hash",
+        "VariableType": "String",
+        "DataVisibility": [],
+        "AnalyzeText": false,
+        "Value": "1de22a741015"
        },
        {
         "Description": "task_order",
@@ -513,6 +485,78 @@
         "Description": "scale_order",
         "Type": "Custom",
         "Field": "scale_order",
+        "VariableType": "String",
+        "DataVisibility": [],
+        "AnalyzeText": false,
+        "Value": ""
+       },
+       {
+        "Description": "fab_stage",
+        "Type": "Custom",
+        "Field": "fab_stage",
+        "VariableType": "String",
+        "DataVisibility": [],
+        "AnalyzeText": false,
+        "Value": ""
+       },
+       {
+        "Description": "hex_stage",
+        "Type": "Custom",
+        "Field": "hex_stage",
+        "VariableType": "String",
+        "DataVisibility": [],
+        "AnalyzeText": false,
+        "Value": ""
+       },
+       {
+        "Description": "p_fab1",
+        "Type": "Custom",
+        "Field": "p_fab1",
+        "VariableType": "String",
+        "DataVisibility": [],
+        "AnalyzeText": false,
+        "Value": ""
+       },
+       {
+        "Description": "p_fab2",
+        "Type": "Custom",
+        "Field": "p_fab2",
+        "VariableType": "String",
+        "DataVisibility": [],
+        "AnalyzeText": false,
+        "Value": ""
+       },
+       {
+        "Description": "p_hex",
+        "Type": "Custom",
+        "Field": "p_hex",
+        "VariableType": "String",
+        "DataVisibility": [],
+        "AnalyzeText": false,
+        "Value": ""
+       },
+       {
+        "Description": "p_dgi",
+        "Type": "Custom",
+        "Field": "p_dgi",
+        "VariableType": "String",
+        "DataVisibility": [],
+        "AnalyzeText": false,
+        "Value": ""
+       },
+       {
+        "Description": "p_chk",
+        "Type": "Custom",
+        "Field": "p_chk",
+        "VariableType": "String",
+        "DataVisibility": [],
+        "AnalyzeText": false,
+        "Value": ""
+       },
+       {
+        "Description": "p_dec",
+        "Type": "Custom",
+        "Field": "p_dec",
         "VariableType": "String",
         "DataVisibility": [],
         "AnalyzeText": false,
@@ -575,37 +619,76 @@
                 "DataVisibility": [],
                 "AnalyzeText": false,
                 "Value": "1"
+               },
+               {
+                "Description": "fab_stage",
+                "Type": "Custom",
+                "Field": "fab_stage",
+                "VariableType": "String",
+                "DataVisibility": [],
+                "AnalyzeText": false,
+                "Value": "1"
+               },
+               {
+                "Description": "hex_stage",
+                "Type": "Custom",
+                "Field": "hex_stage",
+                "VariableType": "String",
+                "DataVisibility": [],
+                "AnalyzeText": false,
+                "Value": "2"
+               },
+               {
+                "Description": "p_fab1",
+                "Type": "Custom",
+                "Field": "p_fab1",
+                "VariableType": "String",
+                "DataVisibility": [],
+                "AnalyzeText": false,
+                "Value": "2"
+               },
+               {
+                "Description": "p_fab2",
+                "Type": "Custom",
+                "Field": "p_fab2",
+                "VariableType": "String",
+                "DataVisibility": [],
+                "AnalyzeText": false,
+                "Value": "3"
+               },
+               {
+                "Description": "p_hex",
+                "Type": "Custom",
+                "Field": "p_hex",
+                "VariableType": "String",
+                "DataVisibility": [],
+                "AnalyzeText": false,
+                "Value": "4"
                }
               ]
              },
              {
               "Type": "Standard",
-              "ID": "BL_fab1",
+              "ID": "BL_fab",
               "FlowID": "FL_9",
               "Autofill": []
              },
              {
               "Type": "Standard",
-              "ID": "BL_fab2",
-              "FlowID": "FL_10",
-              "Autofill": []
-             },
-             {
-              "Type": "Standard",
               "ID": "BL_hex",
-              "FlowID": "FL_11",
+              "FlowID": "FL_10",
               "Autofill": []
              }
             ]
            },
            {
             "Type": "Group",
-            "FlowID": "FL_12",
+            "FlowID": "FL_11",
             "Description": "scale_order 2: HEXACO → FAB",
             "Flow": [
              {
               "Type": "EmbeddedData",
-              "FlowID": "FL_13",
+              "FlowID": "FL_12",
               "EmbeddedData": [
                {
                 "Description": "scale_order",
@@ -615,25 +698,64 @@
                 "DataVisibility": [],
                 "AnalyzeText": false,
                 "Value": "2"
+               },
+               {
+                "Description": "fab_stage",
+                "Type": "Custom",
+                "Field": "fab_stage",
+                "VariableType": "String",
+                "DataVisibility": [],
+                "AnalyzeText": false,
+                "Value": "2"
+               },
+               {
+                "Description": "hex_stage",
+                "Type": "Custom",
+                "Field": "hex_stage",
+                "VariableType": "String",
+                "DataVisibility": [],
+                "AnalyzeText": false,
+                "Value": "1"
+               },
+               {
+                "Description": "p_hex",
+                "Type": "Custom",
+                "Field": "p_hex",
+                "VariableType": "String",
+                "DataVisibility": [],
+                "AnalyzeText": false,
+                "Value": "2"
+               },
+               {
+                "Description": "p_fab1",
+                "Type": "Custom",
+                "Field": "p_fab1",
+                "VariableType": "String",
+                "DataVisibility": [],
+                "AnalyzeText": false,
+                "Value": "3"
+               },
+               {
+                "Description": "p_fab2",
+                "Type": "Custom",
+                "Field": "p_fab2",
+                "VariableType": "String",
+                "DataVisibility": [],
+                "AnalyzeText": false,
+                "Value": "4"
                }
               ]
              },
              {
               "Type": "Standard",
               "ID": "BL_hex",
+              "FlowID": "FL_13",
+              "Autofill": []
+             },
+             {
+              "Type": "Standard",
+              "ID": "BL_fab",
               "FlowID": "FL_14",
-              "Autofill": []
-             },
-             {
-              "Type": "Standard",
-              "ID": "BL_fab1",
-              "FlowID": "FL_15",
-              "Autofill": []
-             },
-             {
-              "Type": "Standard",
-              "ID": "BL_fab2",
-              "FlowID": "FL_16",
               "Autofill": []
              }
             ]
@@ -641,31 +763,64 @@
           ]
          },
          {
+          "Type": "EmbeddedData",
+          "FlowID": "FL_17",
+          "EmbeddedData": [
+           {
+            "Description": "p_dgi",
+            "Type": "Custom",
+            "Field": "p_dgi",
+            "VariableType": "String",
+            "DataVisibility": [],
+            "AnalyzeText": false,
+            "Value": "5"
+           },
+           {
+            "Description": "p_chk",
+            "Type": "Custom",
+            "Field": "p_chk",
+            "VariableType": "String",
+            "DataVisibility": [],
+            "AnalyzeText": false,
+            "Value": "6"
+           },
+           {
+            "Description": "p_dec",
+            "Type": "Custom",
+            "Field": "p_dec",
+            "VariableType": "String",
+            "DataVisibility": [],
+            "AnalyzeText": false,
+            "Value": "7"
+           }
+          ]
+         },
+         {
           "Type": "Standard",
           "ID": "BL_dg_intro",
-          "FlowID": "FL_19",
+          "FlowID": "FL_18",
           "Autofill": []
          },
          {
           "Type": "Standard",
           "ID": "BL_dg_check",
-          "FlowID": "FL_20",
+          "FlowID": "FL_19",
           "Autofill": []
          },
          {
           "Type": "Branch",
-          "FlowID": "FL_17",
+          "FlowID": "FL_15",
           "Description": "理解確認が不正解なら 1 回だけ再回答",
           "BranchLogic": {
            "0": {
             "0": {
              "LogicType": "Question",
-             "QuestionID": "QID40",
+             "QuestionID": "QID34",
              "QuestionIsInLoop": "no",
-             "ChoiceLocator": "q://QID40/ChoiceTextEntryValue",
+             "ChoiceLocator": "q://QID34/ChoiceTextEntryValue",
              "Operator": "NotEqualTo",
              "RightOperand": "700",
-             "LeftOperand": "q://QID40/ChoiceTextEntryValue",
+             "LeftOperand": "q://QID34/ChoiceTextEntryValue",
              "Type": "Expression",
              "Description": "<span class=\"ConjDesc\">If</span> <span class=\"QuestionDesc\">理解確認</span> <span class=\"LeftOpDesc\">Text Response</span> <span class=\"OpDesc\">Is Not Equal to</span> <span class=\"RightOpDesc\"> 700 </span>"
             },
@@ -677,7 +832,7 @@
            {
             "Type": "Standard",
             "ID": "BL_dg_check2",
-            "FlowID": "FL_18",
+            "FlowID": "FL_16",
             "Autofill": []
            }
           ]
@@ -685,19 +840,19 @@
          {
           "Type": "Standard",
           "ID": "BL_dg_decide",
-          "FlowID": "FL_21",
+          "FlowID": "FL_20",
           "Autofill": []
          }
         ]
        },
        {
         "Type": "Group",
-        "FlowID": "FL_22",
+        "FlowID": "FL_21",
         "Description": "task_order 2: DG → 質問紙",
         "Flow": [
          {
           "Type": "EmbeddedData",
-          "FlowID": "FL_23",
+          "FlowID": "FL_22",
           "EmbeddedData": [
            {
             "Description": "task_order",
@@ -707,6 +862,39 @@
             "DataVisibility": [],
             "AnalyzeText": false,
             "Value": "2"
+           }
+          ]
+         },
+         {
+          "Type": "EmbeddedData",
+          "FlowID": "FL_25",
+          "EmbeddedData": [
+           {
+            "Description": "p_dgi",
+            "Type": "Custom",
+            "Field": "p_dgi",
+            "VariableType": "String",
+            "DataVisibility": [],
+            "AnalyzeText": false,
+            "Value": "2"
+           },
+           {
+            "Description": "p_chk",
+            "Type": "Custom",
+            "Field": "p_chk",
+            "VariableType": "String",
+            "DataVisibility": [],
+            "AnalyzeText": false,
+            "Value": "3"
+           },
+           {
+            "Description": "p_dec",
+            "Type": "Custom",
+            "Field": "p_dec",
+            "VariableType": "String",
+            "DataVisibility": [],
+            "AnalyzeText": false,
+            "Value": "4"
            }
           ]
          },
@@ -724,18 +912,18 @@
          },
          {
           "Type": "Branch",
-          "FlowID": "FL_24",
+          "FlowID": "FL_23",
           "Description": "理解確認が不正解なら 1 回だけ再回答",
           "BranchLogic": {
            "0": {
             "0": {
              "LogicType": "Question",
-             "QuestionID": "QID40",
+             "QuestionID": "QID34",
              "QuestionIsInLoop": "no",
-             "ChoiceLocator": "q://QID40/ChoiceTextEntryValue",
+             "ChoiceLocator": "q://QID34/ChoiceTextEntryValue",
              "Operator": "NotEqualTo",
              "RightOperand": "700",
-             "LeftOperand": "q://QID40/ChoiceTextEntryValue",
+             "LeftOperand": "q://QID34/ChoiceTextEntryValue",
              "Type": "Expression",
              "Description": "<span class=\"ConjDesc\">If</span> <span class=\"QuestionDesc\">理解確認</span> <span class=\"LeftOpDesc\">Text Response</span> <span class=\"OpDesc\">Is Not Equal to</span> <span class=\"RightOpDesc\"> 700 </span>"
             },
@@ -747,7 +935,7 @@
            {
             "Type": "Standard",
             "ID": "BL_dg_check2",
-            "FlowID": "FL_25",
+            "FlowID": "FL_24",
             "Autofill": []
            }
           ]
@@ -781,37 +969,76 @@
                 "DataVisibility": [],
                 "AnalyzeText": false,
                 "Value": "1"
+               },
+               {
+                "Description": "fab_stage",
+                "Type": "Custom",
+                "Field": "fab_stage",
+                "VariableType": "String",
+                "DataVisibility": [],
+                "AnalyzeText": false,
+                "Value": "1"
+               },
+               {
+                "Description": "hex_stage",
+                "Type": "Custom",
+                "Field": "hex_stage",
+                "VariableType": "String",
+                "DataVisibility": [],
+                "AnalyzeText": false,
+                "Value": "2"
+               },
+               {
+                "Description": "p_fab1",
+                "Type": "Custom",
+                "Field": "p_fab1",
+                "VariableType": "String",
+                "DataVisibility": [],
+                "AnalyzeText": false,
+                "Value": "5"
+               },
+               {
+                "Description": "p_fab2",
+                "Type": "Custom",
+                "Field": "p_fab2",
+                "VariableType": "String",
+                "DataVisibility": [],
+                "AnalyzeText": false,
+                "Value": "6"
+               },
+               {
+                "Description": "p_hex",
+                "Type": "Custom",
+                "Field": "p_hex",
+                "VariableType": "String",
+                "DataVisibility": [],
+                "AnalyzeText": false,
+                "Value": "7"
                }
               ]
              },
              {
               "Type": "Standard",
-              "ID": "BL_fab1",
+              "ID": "BL_fab",
               "FlowID": "FL_32",
               "Autofill": []
              },
              {
               "Type": "Standard",
-              "ID": "BL_fab2",
-              "FlowID": "FL_33",
-              "Autofill": []
-             },
-             {
-              "Type": "Standard",
               "ID": "BL_hex",
-              "FlowID": "FL_34",
+              "FlowID": "FL_33",
               "Autofill": []
              }
             ]
            },
            {
             "Type": "Group",
-            "FlowID": "FL_35",
+            "FlowID": "FL_34",
             "Description": "scale_order 2: HEXACO → FAB",
             "Flow": [
              {
               "Type": "EmbeddedData",
-              "FlowID": "FL_36",
+              "FlowID": "FL_35",
               "EmbeddedData": [
                {
                 "Description": "scale_order",
@@ -821,25 +1048,64 @@
                 "DataVisibility": [],
                 "AnalyzeText": false,
                 "Value": "2"
+               },
+               {
+                "Description": "fab_stage",
+                "Type": "Custom",
+                "Field": "fab_stage",
+                "VariableType": "String",
+                "DataVisibility": [],
+                "AnalyzeText": false,
+                "Value": "2"
+               },
+               {
+                "Description": "hex_stage",
+                "Type": "Custom",
+                "Field": "hex_stage",
+                "VariableType": "String",
+                "DataVisibility": [],
+                "AnalyzeText": false,
+                "Value": "1"
+               },
+               {
+                "Description": "p_hex",
+                "Type": "Custom",
+                "Field": "p_hex",
+                "VariableType": "String",
+                "DataVisibility": [],
+                "AnalyzeText": false,
+                "Value": "5"
+               },
+               {
+                "Description": "p_fab1",
+                "Type": "Custom",
+                "Field": "p_fab1",
+                "VariableType": "String",
+                "DataVisibility": [],
+                "AnalyzeText": false,
+                "Value": "6"
+               },
+               {
+                "Description": "p_fab2",
+                "Type": "Custom",
+                "Field": "p_fab2",
+                "VariableType": "String",
+                "DataVisibility": [],
+                "AnalyzeText": false,
+                "Value": "7"
                }
               ]
              },
              {
               "Type": "Standard",
               "ID": "BL_hex",
+              "FlowID": "FL_36",
+              "Autofill": []
+             },
+             {
+              "Type": "Standard",
+              "ID": "BL_fab",
               "FlowID": "FL_37",
-              "Autofill": []
-             },
-             {
-              "Type": "Standard",
-              "ID": "BL_fab1",
-              "FlowID": "FL_38",
-              "Autofill": []
-             },
-             {
-              "Type": "Standard",
-              "ID": "BL_fab2",
-              "FlowID": "FL_39",
               "Autofill": []
              }
             ]
@@ -853,22 +1119,22 @@
      {
       "Type": "Standard",
       "ID": "BL_post",
-      "FlowID": "FL_40",
+      "FlowID": "FL_38",
       "Autofill": []
      },
      {
       "Type": "Standard",
       "ID": "BL_end",
-      "FlowID": "FL_41",
+      "FlowID": "FL_39",
       "Autofill": []
      },
      {
       "Type": "EndSurvey",
-      "FlowID": "FL_42"
+      "FlowID": "FL_40"
      }
     ],
     "Properties": {
-     "Count": 43,
+     "Count": 41,
      "RemovedFieldsets": []
     }
    }
@@ -883,14 +1149,14 @@
     "BackButton": "false",
     "SaveAndContinue": "true",
     "SurveyProtection": "PublicSurvey",
-    "BallotBoxStuffingPrevention": "false",
+    "BallotBoxStuffingPrevention": "true",
     "NoIndex": "Yes",
     "SecureResponseFiles": "true",
     "SurveyExpiration": "None",
     "SurveyTermination": "DefaultMessage",
     "Header": "",
     "Footer": "",
-    "ProgressBarDisplay": "VerboseText",
+    "ProgressBarDisplay": "None",
     "PartialData": "+1 week",
     "ValidationMessage": "",
     "PreviousButton": " ← ",
@@ -909,21 +1175,12 @@
     "ProtectSelectionIds": true,
     "SurveyLanguage": "JA",
     "PasswordProtection": "No",
-    "AnonymizeResponse": "No",
+    "AnonymizeResponse": "Yes",
     "RefererCheck": "No",
-    "UseCustomSurveyLinkCompletedMessage": null,
-    "SurveyLinkCompletedMessage": null,
-    "SurveyLinkCompletedMessageLibrary": null,
     "ResponseSummary": "No",
-    "EOSMessageLibrary": null,
-    "EOSRedirectURL": null,
     "EmailThankYou": "false",
-    "ThankYouEmailMessageLibrary": null,
-    "ThankYouEmailMessage": null,
     "ValidateMessage": "false",
-    "InactiveSurvey": "DefaultMessage",
-    "PartialDeletion": null,
-    "AutoConfirmTarget": null
+    "InactiveSurvey": "DefaultMessage"
    }
   },
   {
@@ -968,7 +1225,7 @@
    "SurveyID": "SV_egt7X9VgLDhmk8C",
    "Element": "QC",
    "PrimaryAttribute": "Survey Question Count",
-   "SecondaryAttribute": "52",
+   "SecondaryAttribute": "43",
    "TertiaryAttribute": null,
    "Payload": null
   },
@@ -984,63 +1241,10 @@
    "SurveyID": "SV_egt7X9VgLDhmk8C",
    "Element": "SQ",
    "PrimaryAttribute": "QID1",
-   "SecondaryAttribute": "Timing t_consent",
+   "SecondaryAttribute": "ページ 1 / 9調査へのご協力のお願いこの調査は、意思決定と日常の行動について調べる研究の一部です。短い意思決定課題と",
    "TertiaryAttribute": null,
    "Payload": {
-    "QuestionText": "Timing",
-    "DefaultChoices": false,
-    "DataExportTag": "t_consent",
-    "QuestionType": "Timing",
-    "Selector": "PageTimer",
-    "DataVisibility": {
-     "Private": false,
-     "Hidden": false
-    },
-    "Configuration": {
-     "QuestionDescriptionOption": "UseText",
-     "MinSeconds": "0",
-     "MaxSeconds": "0"
-    },
-    "QuestionDescription": "Timing",
-    "Choices": {
-     "1": {
-      "Display": "First Click"
-     },
-     "2": {
-      "Display": "Last Click"
-     },
-     "3": {
-      "Display": "Page Submit"
-     },
-     "4": {
-      "Display": "Click Count"
-     }
-    },
-    "ChoiceOrder": [
-     "1",
-     "2",
-     "3",
-     "4"
-    ],
-    "Validation": {
-     "Settings": {
-      "Type": "None"
-     }
-    },
-    "NextChoiceId": 5,
-    "NextAnswerId": 1,
-    "QuestionID": "QID1",
-    "Language": []
-   }
-  },
-  {
-   "SurveyID": "SV_egt7X9VgLDhmk8C",
-   "Element": "SQ",
-   "PrimaryAttribute": "QID2",
-   "SecondaryAttribute": "調査へのご協力のお願いこの調査は、意思決定と日常の行動について調べる研究の一部です。短い意思決定課題と 2 つの質問紙か",
-   "TertiaryAttribute": null,
-   "Payload": {
-    "QuestionText": "<h2>調査へのご協力のお願い</h2><p>この調査は、意思決定と日常の行動について調べる研究の一部です。短い意思決定課題と 2 つの質問紙からなり、所要時間は約 10 分です。お手持ちのスマートフォンやパソコンから回答できます。</p><p>参加は任意です。ただし、いったん始めたら中断せずに最後まで一度にお答えください。途中でやめる場合はこのページを閉じてください。その場合、入力途中の回答は保存されません。</p><p>回答は参加者コード（ランダムな文字列）のもとに保存され、氏名やメールアドレスと一緒に保存されることはありません。個人が特定できない形にしたデータは、研究目的で公開することがあります。</p>",
+    "QuestionText": "<p><small>ページ 1 / 9</small></p><h2>調査へのご協力のお願い</h2><p>この調査は、意思決定と日常の行動について調べる研究の一部です。短い意思決定課題と 2 つの質問紙からなり、所要時間は約 10 分です。お手持ちのスマートフォンやパソコンから回答できます。</p><p>参加は任意です。ただし、いったん始めたら中断せずに最後まで一度にお答えください。途中でやめる場合はこのページを閉じてください。その場合、入力途中の回答は保存されません。</p><p>回答は参加者コード（ランダムな文字列）のもとに保存され、氏名やメールアドレスと一緒に保存されることはありません。個人が特定できない形にしたデータは、研究目的で公開することがあります。</p>",
     "DefaultChoices": false,
     "DataExportTag": "consent_text",
     "QuestionType": "DB",
@@ -1052,7 +1256,7 @@
     "Configuration": {
      "QuestionDescriptionOption": "UseText"
     },
-    "QuestionDescription": "調査へのご協力のお願いこの調査は、意思決定と日常の行動について調べる研究の一部です。短い意思決定課題と 2 つの質問紙からなり、所要時間は約 10 分です。お手持ちのスマートフォンやパソコンから回答で",
+    "QuestionDescription": "ページ 1 / 9調査へのご協力のお願いこの調査は、意思決定と日常の行動について調べる研究の一部です。短い意思決定課題と 2 つの質問紙からなり、所要時間は約 10 分です。お手持ちのスマートフォンや",
     "ChoiceOrder": [],
     "Validation": {
      "Settings": {
@@ -1061,14 +1265,14 @@
     },
     "NextChoiceId": 4,
     "NextAnswerId": 1,
-    "QuestionID": "QID2",
+    "QuestionID": "QID1",
     "Language": []
    }
   },
   {
    "SurveyID": "SV_egt7X9VgLDhmk8C",
    "Element": "SQ",
-   "PrimaryAttribute": "QID3",
+   "PrimaryAttribute": "QID2",
    "SecondaryAttribute": "参加するには 2 つの項目にチェックを入れてください。",
    "TertiaryAttribute": null,
    "Payload": {
@@ -1112,14 +1316,14 @@
     },
     "NextChoiceId": 3,
     "NextAnswerId": 1,
-    "QuestionID": "QID3",
+    "QuestionID": "QID2",
     "Language": []
    }
   },
   {
    "SurveyID": "SV_egt7X9VgLDhmk8C",
    "Element": "SQ",
-   "PrimaryAttribute": "QID4",
+   "PrimaryAttribute": "QID3",
    "SecondaryAttribute": "迷ったときは、私は強い側よりも弱い側に味方する。",
    "TertiaryAttribute": null,
    "Payload": {
@@ -1190,14 +1394,14 @@
     },
     "NextChoiceId": 7,
     "NextAnswerId": 1,
-    "QuestionID": "QID4",
+    "QuestionID": "QID3",
     "Language": []
    }
   },
   {
    "SurveyID": "SV_egt7X9VgLDhmk8C",
    "Element": "SQ",
-   "PrimaryAttribute": "QID5",
+   "PrimaryAttribute": "QID4",
    "SecondaryAttribute": "飢えや病気に苦しむ人を助けるためなら、私は自分の生活や健康を犠牲にしてもかまわない。",
    "TertiaryAttribute": null,
    "Payload": {
@@ -1268,14 +1472,14 @@
     },
     "NextChoiceId": 7,
     "NextAnswerId": 1,
-    "QuestionID": "QID5",
+    "QuestionID": "QID4",
     "Language": []
    }
   },
   {
    "SurveyID": "SV_egt7X9VgLDhmk8C",
    "Element": "SQ",
-   "PrimaryAttribute": "QID6",
+   "PrimaryAttribute": "QID5",
    "SecondaryAttribute": "緊急事態では、私はおそらくとっさに自分の命を危険にさらしてでも、見ず知らずの人を助けるだろう。",
    "TertiaryAttribute": null,
    "Payload": {
@@ -1346,14 +1550,14 @@
     },
     "NextChoiceId": 7,
     "NextAnswerId": 1,
-    "QuestionID": "QID6",
+    "QuestionID": "QID5",
     "Language": []
    }
   },
   {
    "SurveyID": "SV_egt7X9VgLDhmk8C",
    "Element": "SQ",
-   "PrimaryAttribute": "QID7",
+   "PrimaryAttribute": "QID6",
    "SecondaryAttribute": "自分に負担がかかるとしても、私は知り合いかどうかに関係なく人を支援する。",
    "TertiaryAttribute": null,
    "Payload": {
@@ -1424,14 +1628,14 @@
     },
     "NextChoiceId": 7,
     "NextAnswerId": 1,
-    "QuestionID": "QID7",
+    "QuestionID": "QID6",
     "Language": []
    }
   },
   {
    "SurveyID": "SV_egt7X9VgLDhmk8C",
    "Element": "SQ",
-   "PrimaryAttribute": "QID8",
+   "PrimaryAttribute": "QID7",
    "SecondaryAttribute": "私は、見返りや下心なしに、他の人のためによいことをすることがよくある。",
    "TertiaryAttribute": null,
    "Payload": {
@@ -1502,14 +1706,14 @@
     },
     "NextChoiceId": 7,
     "NextAnswerId": 1,
-    "QuestionID": "QID8",
+    "QuestionID": "QID7",
     "Language": []
    }
   },
   {
    "SurveyID": "SV_egt7X9VgLDhmk8C",
    "Element": "SQ",
-   "PrimaryAttribute": "QID9",
+   "PrimaryAttribute": "QID8",
    "SecondaryAttribute": "誰かが自分だけ特別扱いを要求したら、私はその人を止めるために協力してくれる仲間を探す。",
    "TertiaryAttribute": null,
    "Payload": {
@@ -1580,14 +1784,14 @@
     },
     "NextChoiceId": 7,
     "NextAnswerId": 1,
-    "QuestionID": "QID9",
+    "QuestionID": "QID8",
     "Language": []
    }
   },
   {
    "SurveyID": "SV_egt7X9VgLDhmk8C",
    "Element": "SQ",
-   "PrimaryAttribute": "QID10",
+   "PrimaryAttribute": "QID9",
    "SecondaryAttribute": "誰かがわざとみんな（共同体）を利用したら、私は何らかの形でこっそり仕返しをする。",
    "TertiaryAttribute": null,
    "Payload": {
@@ -1658,14 +1862,14 @@
     },
     "NextChoiceId": 7,
     "NextAnswerId": 1,
-    "QuestionID": "QID10",
+    "QuestionID": "QID9",
     "Language": []
    }
   },
   {
    "SurveyID": "SV_egt7X9VgLDhmk8C",
    "Element": "SQ",
-   "PrimaryAttribute": "QID11",
+   "PrimaryAttribute": "QID10",
    "SecondaryAttribute": "私は、チームの中で誰かが不適切なふるまいをしていないか、注意深く見ている。",
    "TertiaryAttribute": null,
    "Payload": {
@@ -1736,14 +1940,14 @@
     },
     "NextChoiceId": 7,
     "NextAnswerId": 1,
-    "QuestionID": "QID11",
+    "QuestionID": "QID10",
     "Language": []
    }
   },
   {
    "SurveyID": "SV_egt7X9VgLDhmk8C",
    "Element": "SQ",
-   "PrimaryAttribute": "QID12",
+   "PrimaryAttribute": "QID11",
    "SecondaryAttribute": "誰かが他のみんなを犠牲にして得をしているなら、私はその人がうまくいかないように、人知れず働きかける。",
    "TertiaryAttribute": null,
    "Payload": {
@@ -1814,14 +2018,14 @@
     },
     "NextChoiceId": 7,
     "NextAnswerId": 1,
-    "QuestionID": "QID12",
+    "QuestionID": "QID11",
     "Language": []
    }
   },
   {
    "SurveyID": "SV_egt7X9VgLDhmk8C",
    "Element": "SQ",
-   "PrimaryAttribute": "QID13",
+   "PrimaryAttribute": "QID12",
    "SecondaryAttribute": "ルールを自分に都合よく解釈する人は、遅かれ早かれ私と仲間によって責任を取らされることになる。",
    "TertiaryAttribute": null,
    "Payload": {
@@ -1892,14 +2096,14 @@
     },
     "NextChoiceId": 7,
     "NextAnswerId": 1,
-    "QuestionID": "QID13",
+    "QuestionID": "QID12",
     "Language": []
    }
   },
   {
    "SurveyID": "SV_egt7X9VgLDhmk8C",
    "Element": "SQ",
-   "PrimaryAttribute": "QID14",
+   "PrimaryAttribute": "QID13",
    "SecondaryAttribute": "私は、権威のある人や上司の決定に、公然と疑問を投げかける。",
    "TertiaryAttribute": null,
    "Payload": {
@@ -1970,14 +2174,14 @@
     },
     "NextChoiceId": 7,
     "NextAnswerId": 1,
-    "QuestionID": "QID14",
+    "QuestionID": "QID13",
     "Language": []
    }
   },
   {
    "SurveyID": "SV_egt7X9VgLDhmk8C",
    "Element": "SQ",
-   "PrimaryAttribute": "QID15",
+   "PrimaryAttribute": "QID14",
    "SecondaryAttribute": "私は、自分の道徳的な信念のために、人の気分を害したことがある。",
    "TertiaryAttribute": null,
    "Payload": {
@@ -2048,14 +2252,14 @@
     },
     "NextChoiceId": 7,
     "NextAnswerId": 1,
-    "QuestionID": "QID15",
+    "QuestionID": "QID14",
     "Language": []
    }
   },
   {
    "SurveyID": "SV_egt7X9VgLDhmk8C",
    "Element": "SQ",
-   "PrimaryAttribute": "QID16",
+   "PrimaryAttribute": "QID15",
    "SecondaryAttribute": "私は、世間が反対していても、みんなにとって重要な方針を貫こうとする。",
    "TertiaryAttribute": null,
    "Payload": {
@@ -2126,14 +2330,14 @@
     },
     "NextChoiceId": 7,
     "NextAnswerId": 1,
-    "QuestionID": "QID16",
+    "QuestionID": "QID15",
     "Language": []
    }
   },
   {
    "SurveyID": "SV_egt7X9VgLDhmk8C",
    "Element": "SQ",
-   "PrimaryAttribute": "QID17",
+   "PrimaryAttribute": "QID16",
    "SecondaryAttribute": "私は、たとえ得るものより失うものが大きくても、「上」からの不当な指示には抵抗する。",
    "TertiaryAttribute": null,
    "Payload": {
@@ -2204,14 +2408,14 @@
     },
     "NextChoiceId": 7,
     "NextAnswerId": 1,
-    "QuestionID": "QID17",
+    "QuestionID": "QID16",
     "Language": []
    }
   },
   {
    "SurveyID": "SV_egt7X9VgLDhmk8C",
    "Element": "SQ",
-   "PrimaryAttribute": "QID18",
+   "PrimaryAttribute": "QID17",
    "SecondaryAttribute": "争いが起きたら、私は加害者に立ち向かう。",
    "TertiaryAttribute": null,
    "Payload": {
@@ -2282,14 +2486,14 @@
     },
     "NextChoiceId": 7,
     "NextAnswerId": 1,
-    "QuestionID": "QID18",
+    "QuestionID": "QID17",
     "Language": []
    }
   },
   {
    "SurveyID": "SV_egt7X9VgLDhmk8C",
    "Element": "SQ",
-   "PrimaryAttribute": "QID19",
+   "PrimaryAttribute": "QID18",
    "SecondaryAttribute": "この質問では、「全くそう思わない」を選んでください。これは確認のための質問です。",
    "TertiaryAttribute": null,
    "Payload": {
@@ -2360,14 +2564,14 @@
     },
     "NextChoiceId": 7,
     "NextAnswerId": 1,
-    "QuestionID": "QID19",
+    "QuestionID": "QID18",
     "Language": []
    }
   },
   {
    "SurveyID": "SV_egt7X9VgLDhmk8C",
    "Element": "SQ",
-   "PrimaryAttribute": "QID20",
+   "PrimaryAttribute": "QID19",
    "SecondaryAttribute": "この質問では、「強くそう思う」を選んでください。これは確認のための質問です。",
    "TertiaryAttribute": null,
    "Payload": {
@@ -2438,71 +2642,18 @@
     },
     "NextChoiceId": 7,
     "NextAnswerId": 1,
-    "QuestionID": "QID20",
+    "QuestionID": "QID19",
     "Language": []
    }
   },
   {
    "SurveyID": "SV_egt7X9VgLDhmk8C",
    "Element": "SQ",
-   "PrimaryAttribute": "QID21",
-   "SecondaryAttribute": "Timing t_fab1",
+   "PrimaryAttribute": "QID20",
+   "SecondaryAttribute": "ページ ${e://Field/p_fab1} / 9質問紙 ${e://Field/fab_stage}/2このアンケ",
    "TertiaryAttribute": null,
    "Payload": {
-    "QuestionText": "Timing",
-    "DefaultChoices": false,
-    "DataExportTag": "t_fab1",
-    "QuestionType": "Timing",
-    "Selector": "PageTimer",
-    "DataVisibility": {
-     "Private": false,
-     "Hidden": false
-    },
-    "Configuration": {
-     "QuestionDescriptionOption": "UseText",
-     "MinSeconds": "0",
-     "MaxSeconds": "0"
-    },
-    "QuestionDescription": "Timing",
-    "Choices": {
-     "1": {
-      "Display": "First Click"
-     },
-     "2": {
-      "Display": "Last Click"
-     },
-     "3": {
-      "Display": "Page Submit"
-     },
-     "4": {
-      "Display": "Click Count"
-     }
-    },
-    "ChoiceOrder": [
-     "1",
-     "2",
-     "3",
-     "4"
-    ],
-    "Validation": {
-     "Settings": {
-      "Type": "None"
-     }
-    },
-    "NextChoiceId": 5,
-    "NextAnswerId": 1,
-    "QuestionID": "QID21",
-    "Language": []
-   }
-  },
-  {
-   "SurveyID": "SV_egt7X9VgLDhmk8C",
-   "Element": "SQ",
-   "PrimaryAttribute": "QID22",
-   "SecondaryAttribute": "質問紙 1/2以下の文は、日常生活でのふるまいや行動に関するものです。それぞれの文について、あなたが普段どのようにふるま",
-   "TertiaryAttribute": null,
-   "Payload": {
-    "QuestionText": "<h2>質問紙 1/2</h2><p>以下の文は、日常生活でのふるまいや行動に関するものです。</p><p>それぞれの文について、あなたが普段どのようにふるまい、行動するかを、正直に、直感的にお答えください。回答は 6 段階です。正解や不正解はありません。</p><p class=\"small\">選択肢</p><ol><li>1. 全くそう思わない</li><li>2. そう思わない</li><li>3. あまりそう思わない</li><li>4. ややそう思う</li><li>5. そう思う</li><li>6. 強くそう思う</li></ol>",
+    "QuestionText": "<p><small>ページ ${e://Field/p_fab1} / 9</small></p><h2>質問紙 ${e://Field/fab_stage}/2</h2><p class=\"small\">このアンケートは全 2 ページです（いま 1 ページ目）。</p><p>以下の文は、日常生活でのふるまいや行動に関するものです。</p><p>それぞれの文について、あなたが普段どのようにふるまい、行動するかを、正直に、直感的にお答えください。回答は 6 段階です。正解や不正解はありません。</p><p><small>選択肢</small></p><ol><li>1. 全くそう思わない</li><li>2. そう思わない</li><li>3. あまりそう思わない</li><li>4. ややそう思う</li><li>5. そう思う</li><li>6. 強くそう思う</li></ol>",
     "DefaultChoices": false,
     "DataExportTag": "fab_intro",
     "QuestionType": "DB",
@@ -2514,7 +2665,71 @@
     "Configuration": {
      "QuestionDescriptionOption": "UseText"
     },
-    "QuestionDescription": "質問紙 1/2以下の文は、日常生活でのふるまいや行動に関するものです。それぞれの文について、あなたが普段どのようにふるまい、行動するかを、正直に、直感的にお答えください。回答は 6 段階です。正解や不",
+    "QuestionDescription": "ページ ${e://Field/p_fab1} / 9質問紙 ${e://Field/fab_stage}/2このアンケートは全 2 ページです（いま 1 ページ目）。以下の文は、日常生活でのふるまい",
+    "ChoiceOrder": [],
+    "Validation": {
+     "Settings": {
+      "Type": "None"
+     }
+    },
+    "NextChoiceId": 4,
+    "NextAnswerId": 1,
+    "QuestionID": "QID20",
+    "Language": []
+   }
+  },
+  {
+   "SurveyID": "SV_egt7X9VgLDhmk8C",
+   "Element": "SQ",
+   "PrimaryAttribute": "QID21",
+   "SecondaryAttribute": "ページ ${e://Field/p_fab2} / 9質問紙 ${e://Field/fab_stage}/2このアンケ",
+   "TertiaryAttribute": null,
+   "Payload": {
+    "QuestionText": "<p><small>ページ ${e://Field/p_fab2} / 9</small></p><h2>質問紙 ${e://Field/fab_stage}/2</h2><p class=\"small\">このアンケートは全 2 ページです（いま 2 ページ目）。</p><p>あなたが普段どのようにふるまい、行動するかを、正直に、直感的にお答えください。</p>",
+    "DefaultChoices": false,
+    "DataExportTag": "fab_intro2",
+    "QuestionType": "DB",
+    "Selector": "TB",
+    "DataVisibility": {
+     "Private": false,
+     "Hidden": false
+    },
+    "Configuration": {
+     "QuestionDescriptionOption": "UseText"
+    },
+    "QuestionDescription": "ページ ${e://Field/p_fab2} / 9質問紙 ${e://Field/fab_stage}/2このアンケートは全 2 ページです（いま 2 ページ目）。あなたが普段どのようにふるまい、",
+    "ChoiceOrder": [],
+    "Validation": {
+     "Settings": {
+      "Type": "None"
+     }
+    },
+    "NextChoiceId": 4,
+    "NextAnswerId": 1,
+    "QuestionID": "QID21",
+    "Language": []
+   }
+  },
+  {
+   "SurveyID": "SV_egt7X9VgLDhmk8C",
+   "Element": "SQ",
+   "PrimaryAttribute": "QID22",
+   "SecondaryAttribute": "ページ ${e://Field/p_hex} / 9質問紙 ${e://Field/hex_stage}/2以下の文は、",
+   "TertiaryAttribute": null,
+   "Payload": {
+    "QuestionText": "<p><small>ページ ${e://Field/p_hex} / 9</small></p><h2>質問紙 ${e://Field/hex_stage}/2</h2><p>以下の文は、あなた自身についての記述です。それぞれの文を読み、あなたにどの程度あてはまるかをお答えください。</p><p>回答は 5 段階です。確信がもてない場合も、すべての文にお答えください。</p><p><small>選択肢</small></p><ol><li>1. 全くそう思わない</li><li>2. そう思わない</li><li>3. どちらでもない</li><li>4. そう思う</li><li>5. 強くそう思う</li></ol>",
+    "DefaultChoices": false,
+    "DataExportTag": "hex_intro",
+    "QuestionType": "DB",
+    "Selector": "TB",
+    "DataVisibility": {
+     "Private": false,
+     "Hidden": false
+    },
+    "Configuration": {
+     "QuestionDescriptionOption": "UseText"
+    },
+    "QuestionDescription": "ページ ${e://Field/p_hex} / 9質問紙 ${e://Field/hex_stage}/2以下の文は、あなた自身についての記述です。それぞれの文を読み、あなたにどの程度あてはまるかを",
     "ChoiceOrder": [],
     "Validation": {
      "Settings": {
@@ -2531,176 +2746,6 @@
    "SurveyID": "SV_egt7X9VgLDhmk8C",
    "Element": "SQ",
    "PrimaryAttribute": "QID23",
-   "SecondaryAttribute": "Timing t_fab2",
-   "TertiaryAttribute": null,
-   "Payload": {
-    "QuestionText": "Timing",
-    "DefaultChoices": false,
-    "DataExportTag": "t_fab2",
-    "QuestionType": "Timing",
-    "Selector": "PageTimer",
-    "DataVisibility": {
-     "Private": false,
-     "Hidden": false
-    },
-    "Configuration": {
-     "QuestionDescriptionOption": "UseText",
-     "MinSeconds": "0",
-     "MaxSeconds": "0"
-    },
-    "QuestionDescription": "Timing",
-    "Choices": {
-     "1": {
-      "Display": "First Click"
-     },
-     "2": {
-      "Display": "Last Click"
-     },
-     "3": {
-      "Display": "Page Submit"
-     },
-     "4": {
-      "Display": "Click Count"
-     }
-    },
-    "ChoiceOrder": [
-     "1",
-     "2",
-     "3",
-     "4"
-    ],
-    "Validation": {
-     "Settings": {
-      "Type": "None"
-     }
-    },
-    "NextChoiceId": 5,
-    "NextAnswerId": 1,
-    "QuestionID": "QID23",
-    "Language": []
-   }
-  },
-  {
-   "SurveyID": "SV_egt7X9VgLDhmk8C",
-   "Element": "SQ",
-   "PrimaryAttribute": "QID24",
-   "SecondaryAttribute": "質問紙 1/2（2 ページ目）あなたが普段どのようにふるまい、行動するかを、正直に、直感的にお答えください。",
-   "TertiaryAttribute": null,
-   "Payload": {
-    "QuestionText": "<h2>質問紙 1/2（2 ページ目）</h2><p class=\"small\">あなたが普段どのようにふるまい、行動するかを、正直に、直感的にお答えください。</p>",
-    "DefaultChoices": false,
-    "DataExportTag": "fab_intro2",
-    "QuestionType": "DB",
-    "Selector": "TB",
-    "DataVisibility": {
-     "Private": false,
-     "Hidden": false
-    },
-    "Configuration": {
-     "QuestionDescriptionOption": "UseText"
-    },
-    "QuestionDescription": "質問紙 1/2（2 ページ目）あなたが普段どのようにふるまい、行動するかを、正直に、直感的にお答えください。",
-    "ChoiceOrder": [],
-    "Validation": {
-     "Settings": {
-      "Type": "None"
-     }
-    },
-    "NextChoiceId": 4,
-    "NextAnswerId": 1,
-    "QuestionID": "QID24",
-    "Language": []
-   }
-  },
-  {
-   "SurveyID": "SV_egt7X9VgLDhmk8C",
-   "Element": "SQ",
-   "PrimaryAttribute": "QID25",
-   "SecondaryAttribute": "Timing t_hex",
-   "TertiaryAttribute": null,
-   "Payload": {
-    "QuestionText": "Timing",
-    "DefaultChoices": false,
-    "DataExportTag": "t_hex",
-    "QuestionType": "Timing",
-    "Selector": "PageTimer",
-    "DataVisibility": {
-     "Private": false,
-     "Hidden": false
-    },
-    "Configuration": {
-     "QuestionDescriptionOption": "UseText",
-     "MinSeconds": "0",
-     "MaxSeconds": "0"
-    },
-    "QuestionDescription": "Timing",
-    "Choices": {
-     "1": {
-      "Display": "First Click"
-     },
-     "2": {
-      "Display": "Last Click"
-     },
-     "3": {
-      "Display": "Page Submit"
-     },
-     "4": {
-      "Display": "Click Count"
-     }
-    },
-    "ChoiceOrder": [
-     "1",
-     "2",
-     "3",
-     "4"
-    ],
-    "Validation": {
-     "Settings": {
-      "Type": "None"
-     }
-    },
-    "NextChoiceId": 5,
-    "NextAnswerId": 1,
-    "QuestionID": "QID25",
-    "Language": []
-   }
-  },
-  {
-   "SurveyID": "SV_egt7X9VgLDhmk8C",
-   "Element": "SQ",
-   "PrimaryAttribute": "QID26",
-   "SecondaryAttribute": "質問紙 2/2以下の文は、あなた自身についての記述です。それぞれの文を読み、あなたにどの程度あてはまるかをお答えください",
-   "TertiaryAttribute": null,
-   "Payload": {
-    "QuestionText": "<h2>質問紙 2/2</h2><p>以下の文は、あなた自身についての記述です。それぞれの文を読み、あなたにどの程度あてはまるかをお答えください。</p><p>回答は 5 段階です。確信がもてない場合も、すべての文にお答えください。</p><p class=\"small\">選択肢</p><ol><li>1. 全くそう思わない</li><li>2. そう思わない</li><li>3. どちらでもない</li><li>4. そう思う</li><li>5. 強くそう思う</li></ol>",
-    "DefaultChoices": false,
-    "DataExportTag": "hex_intro",
-    "QuestionType": "DB",
-    "Selector": "TB",
-    "DataVisibility": {
-     "Private": false,
-     "Hidden": false
-    },
-    "Configuration": {
-     "QuestionDescriptionOption": "UseText"
-    },
-    "QuestionDescription": "質問紙 2/2以下の文は、あなた自身についての記述です。それぞれの文を読み、あなたにどの程度あてはまるかをお答えください。回答は 5 段階です。確信がもてない場合も、すべての文にお答えください。選択肢",
-    "ChoiceOrder": [],
-    "Validation": {
-     "Settings": {
-      "Type": "None"
-     }
-    },
-    "NextChoiceId": 4,
-    "NextAnswerId": 1,
-    "QuestionID": "QID26",
-    "Language": []
-   }
-  },
-  {
-   "SurveyID": "SV_egt7X9VgLDhmk8C",
-   "Element": "SQ",
-   "PrimaryAttribute": "QID27",
    "SecondaryAttribute": "【HEXACO 正直さ-謙虚さ 項目 1（未転記）】",
    "TertiaryAttribute": null,
    "Payload": {
@@ -2765,14 +2810,14 @@
     },
     "NextChoiceId": 6,
     "NextAnswerId": 1,
-    "QuestionID": "QID27",
+    "QuestionID": "QID23",
     "Language": []
    }
   },
   {
    "SurveyID": "SV_egt7X9VgLDhmk8C",
    "Element": "SQ",
-   "PrimaryAttribute": "QID28",
+   "PrimaryAttribute": "QID24",
    "SecondaryAttribute": "【HEXACO 正直さ-謙虚さ 項目 2（未転記）】",
    "TertiaryAttribute": null,
    "Payload": {
@@ -2837,14 +2882,14 @@
     },
     "NextChoiceId": 6,
     "NextAnswerId": 1,
-    "QuestionID": "QID28",
+    "QuestionID": "QID24",
     "Language": []
    }
   },
   {
    "SurveyID": "SV_egt7X9VgLDhmk8C",
    "Element": "SQ",
-   "PrimaryAttribute": "QID29",
+   "PrimaryAttribute": "QID25",
    "SecondaryAttribute": "【HEXACO 正直さ-謙虚さ 項目 3（未転記）】",
    "TertiaryAttribute": null,
    "Payload": {
@@ -2909,14 +2954,14 @@
     },
     "NextChoiceId": 6,
     "NextAnswerId": 1,
-    "QuestionID": "QID29",
+    "QuestionID": "QID25",
     "Language": []
    }
   },
   {
    "SurveyID": "SV_egt7X9VgLDhmk8C",
    "Element": "SQ",
-   "PrimaryAttribute": "QID30",
+   "PrimaryAttribute": "QID26",
    "SecondaryAttribute": "【HEXACO 正直さ-謙虚さ 項目 4（未転記）】",
    "TertiaryAttribute": null,
    "Payload": {
@@ -2981,14 +3026,14 @@
     },
     "NextChoiceId": 6,
     "NextAnswerId": 1,
-    "QuestionID": "QID30",
+    "QuestionID": "QID26",
     "Language": []
    }
   },
   {
    "SurveyID": "SV_egt7X9VgLDhmk8C",
    "Element": "SQ",
-   "PrimaryAttribute": "QID31",
+   "PrimaryAttribute": "QID27",
    "SecondaryAttribute": "【HEXACO 正直さ-謙虚さ 項目 5（未転記）】",
    "TertiaryAttribute": null,
    "Payload": {
@@ -3053,14 +3098,14 @@
     },
     "NextChoiceId": 6,
     "NextAnswerId": 1,
-    "QuestionID": "QID31",
+    "QuestionID": "QID27",
     "Language": []
    }
   },
   {
    "SurveyID": "SV_egt7X9VgLDhmk8C",
    "Element": "SQ",
-   "PrimaryAttribute": "QID32",
+   "PrimaryAttribute": "QID28",
    "SecondaryAttribute": "【HEXACO 正直さ-謙虚さ 項目 6（未転記）】",
    "TertiaryAttribute": null,
    "Payload": {
@@ -3125,14 +3170,14 @@
     },
     "NextChoiceId": 6,
     "NextAnswerId": 1,
-    "QuestionID": "QID32",
+    "QuestionID": "QID28",
     "Language": []
    }
   },
   {
    "SurveyID": "SV_egt7X9VgLDhmk8C",
    "Element": "SQ",
-   "PrimaryAttribute": "QID33",
+   "PrimaryAttribute": "QID29",
    "SecondaryAttribute": "【HEXACO 正直さ-謙虚さ 項目 7（未転記）】",
    "TertiaryAttribute": null,
    "Payload": {
@@ -3197,14 +3242,14 @@
     },
     "NextChoiceId": 6,
     "NextAnswerId": 1,
-    "QuestionID": "QID33",
+    "QuestionID": "QID29",
     "Language": []
    }
   },
   {
    "SurveyID": "SV_egt7X9VgLDhmk8C",
    "Element": "SQ",
-   "PrimaryAttribute": "QID34",
+   "PrimaryAttribute": "QID30",
    "SecondaryAttribute": "【HEXACO 正直さ-謙虚さ 項目 8（未転記）】",
    "TertiaryAttribute": null,
    "Payload": {
@@ -3269,14 +3314,14 @@
     },
     "NextChoiceId": 6,
     "NextAnswerId": 1,
-    "QuestionID": "QID34",
+    "QuestionID": "QID30",
     "Language": []
    }
   },
   {
    "SurveyID": "SV_egt7X9VgLDhmk8C",
    "Element": "SQ",
-   "PrimaryAttribute": "QID35",
+   "PrimaryAttribute": "QID31",
    "SecondaryAttribute": "【HEXACO 正直さ-謙虚さ 項目 9（未転記）】",
    "TertiaryAttribute": null,
    "Payload": {
@@ -3341,14 +3386,14 @@
     },
     "NextChoiceId": 6,
     "NextAnswerId": 1,
-    "QuestionID": "QID35",
+    "QuestionID": "QID31",
     "Language": []
    }
   },
   {
    "SurveyID": "SV_egt7X9VgLDhmk8C",
    "Element": "SQ",
-   "PrimaryAttribute": "QID36",
+   "PrimaryAttribute": "QID32",
    "SecondaryAttribute": "【HEXACO 正直さ-謙虚さ 項目 10（未転記）】",
    "TertiaryAttribute": null,
    "Payload": {
@@ -3413,71 +3458,18 @@
     },
     "NextChoiceId": 6,
     "NextAnswerId": 1,
-    "QuestionID": "QID36",
+    "QuestionID": "QID32",
     "Language": []
    }
   },
   {
    "SurveyID": "SV_egt7X9VgLDhmk8C",
    "Element": "SQ",
-   "PrimaryAttribute": "QID37",
-   "SecondaryAttribute": "Timing t_dg_intro",
+   "PrimaryAttribute": "QID33",
+   "SecondaryAttribute": "ページ ${e://Field/p_dgi} / 9意思決定課題「当たり」と「はずれ」この課題では、あなたはこの調査に参",
    "TertiaryAttribute": null,
    "Payload": {
-    "QuestionText": "Timing",
-    "DefaultChoices": false,
-    "DataExportTag": "t_dg_intro",
-    "QuestionType": "Timing",
-    "Selector": "PageTimer",
-    "DataVisibility": {
-     "Private": false,
-     "Hidden": false
-    },
-    "Configuration": {
-     "QuestionDescriptionOption": "UseText",
-     "MinSeconds": "0",
-     "MaxSeconds": "0"
-    },
-    "QuestionDescription": "Timing",
-    "Choices": {
-     "1": {
-      "Display": "First Click"
-     },
-     "2": {
-      "Display": "Last Click"
-     },
-     "3": {
-      "Display": "Page Submit"
-     },
-     "4": {
-      "Display": "Click Count"
-     }
-    },
-    "ChoiceOrder": [
-     "1",
-     "2",
-     "3",
-     "4"
-    ],
-    "Validation": {
-     "Settings": {
-      "Type": "None"
-     }
-    },
-    "NextChoiceId": 5,
-    "NextAnswerId": 1,
-    "QuestionID": "QID37",
-    "Language": []
-   }
-  },
-  {
-   "SurveyID": "SV_egt7X9VgLDhmk8C",
-   "Element": "SQ",
-   "PrimaryAttribute": "QID38",
-   "SecondaryAttribute": "意思決定課題「当たり」と「はずれ」この課題では、あなたはこの調査に参加する別の 1 人とペアになります。相手は調査期間中",
-   "TertiaryAttribute": null,
-   "Payload": {
-    "QuestionText": "<h2>意思決定課題</h2><p><b>「当たり」と「はずれ」</b></p><p>この課題では、あなたはこの調査に参加する別の 1 人とペアになります。相手は調査期間中の別の時刻に参加する人で、お互いに相手が誰かを知ることはなく、やり取りもありません。</p><p>調査の締切後に、コンピュータのくじ引きで参加者を「当たりグループ」と「はずれグループ」に半分ずつ分け、当たりグループの 1 人とはずれグループの 1 人をペアにします。</p><p>当たりグループの人には 1,000 円 をプレゼントします。当たりグループの人には次の 2 つの選択肢があります。</p><ol><li>1. 1,000 円 を全部自分のものにする。</li><li>2. そのお金の一部または全部を、ペアになったはずれグループの人（プレゼントをもらえなかった人）に分ける。その人はあなたにとって匿名であり、あなたもその人にとって匿名です。</li></ol><p>くじ引きの結果はまだ分かりませんので、いまは全員が当たりグループになったつもりで決めてください。実際に当たりグループになった人の決定は、そのまま実行されます。分けなかった分はその人のものになり、はずれグループの人はペアの相手が分けた額を受け取ります。</p><p>決定は 1 回だけです。正解や不正解はありません。</p><p><b>例: 当たりグループの人が 200 円 を分けると決めた場合、その人は 800 円、はずれグループの相手は 200 円 を受け取ります。</b></p>",
+    "QuestionText": "<p><small>ページ ${e://Field/p_dgi} / 9</small></p><h2>意思決定課題</h2><p><b>「当たり」と「はずれ」</b></p><p>この課題では、あなたはこの調査に参加する別の 1 人とペアになります。相手は調査期間中の別の時刻に参加する人で、お互いに相手が誰かを知ることはなく、やり取りもありません。</p><p>調査の締切後に、コンピュータのくじ引きで参加者を「当たりグループ」と「はずれグループ」に半分ずつ分け、当たりグループの 1 人とはずれグループの 1 人をペアにします。</p><p>当たりグループの人には 1,000 円 をプレゼントします。当たりグループの人には次の 2 つの選択肢があります。</p><ol><li>1. 1,000 円 を全部自分のものにする。</li><li>2. そのお金の一部または全部を、ペアになったはずれグループの人（プレゼントをもらえなかった人）に分ける。その人はあなたにとって匿名であり、あなたもその人にとって匿名です。</li></ol><p>くじ引きの結果はまだ分かりませんので、いまは全員が当たりグループになったつもりで決めてください。実際に当たりグループになった人の決定は、そのまま実行されます。分けなかった分はその人のものになり、はずれグループの人はペアの相手が分けた額を受け取ります。</p><p>決定は 1 回だけです。正解や不正解はありません。</p><p><b>例: 当たりグループの人が 200 円 を分けると決めた場合、その人は 800 円、はずれグループの相手は 200 円 を受け取ります。</b></p>",
     "DefaultChoices": false,
     "DataExportTag": "dg_intro",
     "QuestionType": "DB",
@@ -3489,7 +3481,7 @@
     "Configuration": {
      "QuestionDescriptionOption": "UseText"
     },
-    "QuestionDescription": "意思決定課題「当たり」と「はずれ」この課題では、あなたはこの調査に参加する別の 1 人とペアになります。相手は調査期間中の別の時刻に参加する人で、お互いに相手が誰かを知ることはなく、やり取りもありませ",
+    "QuestionDescription": "ページ ${e://Field/p_dgi} / 9意思決定課題「当たり」と「はずれ」この課題では、あなたはこの調査に参加する別の 1 人とペアになります。相手は調査期間中の別の時刻に参加する人で、お",
     "ChoiceOrder": [],
     "Validation": {
      "Settings": {
@@ -3498,73 +3490,20 @@
     },
     "NextChoiceId": 4,
     "NextAnswerId": 1,
-    "QuestionID": "QID38",
+    "QuestionID": "QID33",
     "Language": []
    }
   },
   {
    "SurveyID": "SV_egt7X9VgLDhmk8C",
    "Element": "SQ",
-   "PrimaryAttribute": "QID39",
-   "SecondaryAttribute": "Timing t_dg_check",
+   "PrimaryAttribute": "QID34",
+   "SecondaryAttribute": "ページ ${e://Field/p_chk} / 9確認問題課題の説明を正しく理解できているかの確認です。あなたが当たり",
    "TertiaryAttribute": null,
    "Payload": {
-    "QuestionText": "Timing",
+    "QuestionText": "<p><small>ページ ${e://Field/p_chk} / 9</small></p><h2>確認問題</h2><p class=\"small\">課題の説明を正しく理解できているかの確認です。</p><p><b>あなたが当たりグループになり、相手に 300 円 を分けると決めたとします。あなたの取り分はいくらになりますか。</b></p><p class=\"small\">半角数字（円）</p><details><summary>課題の説明をもう一度読む</summary><h2>意思決定課題</h2><p><b>「当たり」と「はずれ」</b></p><p>この課題では、あなたはこの調査に参加する別の 1 人とペアになります。相手は調査期間中の別の時刻に参加する人で、お互いに相手が誰かを知ることはなく、やり取りもありません。</p><p>調査の締切後に、コンピュータのくじ引きで参加者を「当たりグループ」と「はずれグループ」に半分ずつ分け、当たりグループの 1 人とはずれグループの 1 人をペアにします。</p><p>当たりグループの人には 1,000 円 をプレゼントします。当たりグループの人には次の 2 つの選択肢があります。</p><ol><li>1. 1,000 円 を全部自分のものにする。</li><li>2. そのお金の一部または全部を、ペアになったはずれグループの人（プレゼントをもらえなかった人）に分ける。その人はあなたにとって匿名であり、あなたもその人にとって匿名です。</li></ol><p>くじ引きの結果はまだ分かりませんので、いまは全員が当たりグループになったつもりで決めてください。実際に当たりグループになった人の決定は、そのまま実行されます。分けなかった分はその人のものになり、はずれグループの人はペアの相手が分けた額を受け取ります。</p><p>決定は 1 回だけです。正解や不正解はありません。</p><p><b>例: 当たりグループの人が 200 円 を分けると決めた場合、その人は 800 円、はずれグループの相手は 200 円 を受け取ります。</b></p></details>",
     "DefaultChoices": false,
-    "DataExportTag": "t_dg_check",
-    "QuestionType": "Timing",
-    "Selector": "PageTimer",
-    "DataVisibility": {
-     "Private": false,
-     "Hidden": false
-    },
-    "Configuration": {
-     "QuestionDescriptionOption": "UseText",
-     "MinSeconds": "0",
-     "MaxSeconds": "0"
-    },
-    "QuestionDescription": "Timing",
-    "Choices": {
-     "1": {
-      "Display": "First Click"
-     },
-     "2": {
-      "Display": "Last Click"
-     },
-     "3": {
-      "Display": "Page Submit"
-     },
-     "4": {
-      "Display": "Click Count"
-     }
-    },
-    "ChoiceOrder": [
-     "1",
-     "2",
-     "3",
-     "4"
-    ],
-    "Validation": {
-     "Settings": {
-      "Type": "None"
-     }
-    },
-    "NextChoiceId": 5,
-    "NextAnswerId": 1,
-    "QuestionID": "QID39",
-    "Language": []
-   }
-  },
-  {
-   "SurveyID": "SV_egt7X9VgLDhmk8C",
-   "Element": "SQ",
-   "PrimaryAttribute": "QID40",
-   "SecondaryAttribute": "確認問題課題の説明を正しく理解できているかの確認です。あなたが当たりグループになり、相手に 300 円 を分けると決めた",
-   "TertiaryAttribute": null,
-   "Payload": {
-    "QuestionText": "<h2>確認問題</h2><p class=\"small\">課題の説明を正しく理解できているかの確認です。</p><p><b>あなたが当たりグループになり、相手に 300 円 を分けると決めたとします。あなたの取り分はいくらになりますか。</b></p><p class=\"small\">半角数字（円）</p><details><summary>課題の説明をもう一度読む</summary><h2>意思決定課題</h2><p><b>「当たり」と「はずれ」</b></p><p>この課題では、あなたはこの調査に参加する別の 1 人とペアになります。相手は調査期間中の別の時刻に参加する人で、お互いに相手が誰かを知ることはなく、やり取りもありません。</p><p>調査の締切後に、コンピュータのくじ引きで参加者を「当たりグループ」と「はずれグループ」に半分ずつ分け、当たりグループの 1 人とはずれグループの 1 人をペアにします。</p><p>当たりグループの人には 1,000 円 をプレゼントします。当たりグループの人には次の 2 つの選択肢があります。</p><ol><li>1. 1,000 円 を全部自分のものにする。</li><li>2. そのお金の一部または全部を、ペアになったはずれグループの人（プレゼントをもらえなかった人）に分ける。その人はあなたにとって匿名であり、あなたもその人にとって匿名です。</li></ol><p>くじ引きの結果はまだ分かりませんので、いまは全員が当たりグループになったつもりで決めてください。実際に当たりグループになった人の決定は、そのまま実行されます。分けなかった分はその人のものになり、はずれグループの人はペアの相手が分けた額を受け取ります。</p><p>決定は 1 回だけです。正解や不正解はありません。</p><p><b>例: 当たりグループの人が 200 円 を分けると決めた場合、その人は 800 円、はずれグループの相手は 200 円 を受け取ります。</b></p></details>",
-    "DefaultChoices": false,
-    "DataExportTag": "dg_check",
+    "DataExportTag": "dg_check_answer1",
     "QuestionType": "TE",
     "Selector": "SL",
     "DataVisibility": {
@@ -3576,7 +3515,7 @@
      "InputWidth": 120,
      "InputHeight": 1
     },
-    "QuestionDescription": "確認問題課題の説明を正しく理解できているかの確認です。あなたが当たりグループになり、相手に 300 円 を分けると決めたとします。あなたの取り分はいくらになりますか。半角数字（円）課題の説明をもう一度",
+    "QuestionDescription": "ページ ${e://Field/p_chk} / 9確認問題課題の説明を正しく理解できているかの確認です。あなたが当たりグループになり、相手に 300 円 を分けると決めたとします。あなたの取り分はい",
     "ChoiceOrder": [],
     "Validation": {
      "Settings": {
@@ -3596,73 +3535,20 @@
     },
     "NextChoiceId": 4,
     "NextAnswerId": 1,
-    "QuestionID": "QID40",
+    "QuestionID": "QID34",
     "Language": []
    }
   },
   {
    "SurveyID": "SV_egt7X9VgLDhmk8C",
    "Element": "SQ",
-   "PrimaryAttribute": "QID41",
-   "SecondaryAttribute": "Timing t_dg_check2",
+   "PrimaryAttribute": "QID35",
+   "SecondaryAttribute": "ページ ${e://Field/p_chk} / 9確認問題正しくありません。下の説明をもう一度読んでから、お答えくださ",
    "TertiaryAttribute": null,
    "Payload": {
-    "QuestionText": "Timing",
+    "QuestionText": "<p><small>ページ ${e://Field/p_chk} / 9</small></p><h2>確認問題</h2><p><b>正しくありません。下の説明をもう一度読んでから、お答えください。</b></p><h2>意思決定課題</h2><p><b>「当たり」と「はずれ」</b></p><p>この課題では、あなたはこの調査に参加する別の 1 人とペアになります。相手は調査期間中の別の時刻に参加する人で、お互いに相手が誰かを知ることはなく、やり取りもありません。</p><p>調査の締切後に、コンピュータのくじ引きで参加者を「当たりグループ」と「はずれグループ」に半分ずつ分け、当たりグループの 1 人とはずれグループの 1 人をペアにします。</p><p>当たりグループの人には 1,000 円 をプレゼントします。当たりグループの人には次の 2 つの選択肢があります。</p><ol><li>1. 1,000 円 を全部自分のものにする。</li><li>2. そのお金の一部または全部を、ペアになったはずれグループの人（プレゼントをもらえなかった人）に分ける。その人はあなたにとって匿名であり、あなたもその人にとって匿名です。</li></ol><p>くじ引きの結果はまだ分かりませんので、いまは全員が当たりグループになったつもりで決めてください。実際に当たりグループになった人の決定は、そのまま実行されます。分けなかった分はその人のものになり、はずれグループの人はペアの相手が分けた額を受け取ります。</p><p>決定は 1 回だけです。正解や不正解はありません。</p><p><b>例: 当たりグループの人が 200 円 を分けると決めた場合、その人は 800 円、はずれグループの相手は 200 円 を受け取ります。</b></p><p><b>あなたが当たりグループになり、相手に 300 円 を分けると決めたとします。あなたの取り分はいくらになりますか。</b></p><p class=\"small\">半角数字（円）</p>",
     "DefaultChoices": false,
-    "DataExportTag": "t_dg_check2",
-    "QuestionType": "Timing",
-    "Selector": "PageTimer",
-    "DataVisibility": {
-     "Private": false,
-     "Hidden": false
-    },
-    "Configuration": {
-     "QuestionDescriptionOption": "UseText",
-     "MinSeconds": "0",
-     "MaxSeconds": "0"
-    },
-    "QuestionDescription": "Timing",
-    "Choices": {
-     "1": {
-      "Display": "First Click"
-     },
-     "2": {
-      "Display": "Last Click"
-     },
-     "3": {
-      "Display": "Page Submit"
-     },
-     "4": {
-      "Display": "Click Count"
-     }
-    },
-    "ChoiceOrder": [
-     "1",
-     "2",
-     "3",
-     "4"
-    ],
-    "Validation": {
-     "Settings": {
-      "Type": "None"
-     }
-    },
-    "NextChoiceId": 5,
-    "NextAnswerId": 1,
-    "QuestionID": "QID41",
-    "Language": []
-   }
-  },
-  {
-   "SurveyID": "SV_egt7X9VgLDhmk8C",
-   "Element": "SQ",
-   "PrimaryAttribute": "QID42",
-   "SecondaryAttribute": "確認問題正しくありません。下の説明をもう一度読んでから、お答えください。意思決定課題「当たり」と「はずれ」この課題では、",
-   "TertiaryAttribute": null,
-   "Payload": {
-    "QuestionText": "<h2>確認問題</h2><p style=\"color:#b00020\"><b>正しくありません。下の説明をもう一度読んでから、お答えください。</b></p><h2>意思決定課題</h2><p><b>「当たり」と「はずれ」</b></p><p>この課題では、あなたはこの調査に参加する別の 1 人とペアになります。相手は調査期間中の別の時刻に参加する人で、お互いに相手が誰かを知ることはなく、やり取りもありません。</p><p>調査の締切後に、コンピュータのくじ引きで参加者を「当たりグループ」と「はずれグループ」に半分ずつ分け、当たりグループの 1 人とはずれグループの 1 人をペアにします。</p><p>当たりグループの人には 1,000 円 をプレゼントします。当たりグループの人には次の 2 つの選択肢があります。</p><ol><li>1. 1,000 円 を全部自分のものにする。</li><li>2. そのお金の一部または全部を、ペアになったはずれグループの人（プレゼントをもらえなかった人）に分ける。その人はあなたにとって匿名であり、あなたもその人にとって匿名です。</li></ol><p>くじ引きの結果はまだ分かりませんので、いまは全員が当たりグループになったつもりで決めてください。実際に当たりグループになった人の決定は、そのまま実行されます。分けなかった分はその人のものになり、はずれグループの人はペアの相手が分けた額を受け取ります。</p><p>決定は 1 回だけです。正解や不正解はありません。</p><p><b>例: 当たりグループの人が 200 円 を分けると決めた場合、その人は 800 円、はずれグループの相手は 200 円 を受け取ります。</b></p><p><b>あなたが当たりグループになり、相手に 300 円 を分けると決めたとします。あなたの取り分はいくらになりますか。</b></p><p class=\"small\">半角数字（円）</p>",
-    "DefaultChoices": false,
-    "DataExportTag": "dg_check2",
+    "DataExportTag": "dg_check_answer2",
     "QuestionType": "TE",
     "Selector": "SL",
     "DataVisibility": {
@@ -3674,7 +3560,7 @@
      "InputWidth": 120,
      "InputHeight": 1
     },
-    "QuestionDescription": "確認問題正しくありません。下の説明をもう一度読んでから、お答えください。意思決定課題「当たり」と「はずれ」この課題では、あなたはこの調査に参加する別の 1 人とペアになります。相手は調査期間中の別の時",
+    "QuestionDescription": "ページ ${e://Field/p_chk} / 9確認問題正しくありません。下の説明をもう一度読んでから、お答えください。意思決定課題「当たり」と「はずれ」この課題では、あなたはこの調査に参加する別",
     "ChoiceOrder": [],
     "Validation": {
      "Settings": {
@@ -3694,71 +3580,18 @@
     },
     "NextChoiceId": 4,
     "NextAnswerId": 1,
-    "QuestionID": "QID42",
+    "QuestionID": "QID35",
     "Language": []
    }
   },
   {
    "SurveyID": "SV_egt7X9VgLDhmk8C",
    "Element": "SQ",
-   "PrimaryAttribute": "QID43",
-   "SecondaryAttribute": "Timing t_dg_decide",
+   "PrimaryAttribute": "QID36",
+   "SecondaryAttribute": "ページ ${e://Field/p_dec} / 9あなたの決定あなたが当たりグループになったとします。1,000 円 ",
    "TertiaryAttribute": null,
    "Payload": {
-    "QuestionText": "Timing",
-    "DefaultChoices": false,
-    "DataExportTag": "t_dg_decide",
-    "QuestionType": "Timing",
-    "Selector": "PageTimer",
-    "DataVisibility": {
-     "Private": false,
-     "Hidden": false
-    },
-    "Configuration": {
-     "QuestionDescriptionOption": "UseText",
-     "MinSeconds": "0",
-     "MaxSeconds": "0"
-    },
-    "QuestionDescription": "Timing",
-    "Choices": {
-     "1": {
-      "Display": "First Click"
-     },
-     "2": {
-      "Display": "Last Click"
-     },
-     "3": {
-      "Display": "Page Submit"
-     },
-     "4": {
-      "Display": "Click Count"
-     }
-    },
-    "ChoiceOrder": [
-     "1",
-     "2",
-     "3",
-     "4"
-    ],
-    "Validation": {
-     "Settings": {
-      "Type": "None"
-     }
-    },
-    "NextChoiceId": 5,
-    "NextAnswerId": 1,
-    "QuestionID": "QID43",
-    "Language": []
-   }
-  },
-  {
-   "SurveyID": "SV_egt7X9VgLDhmk8C",
-   "Element": "SQ",
-   "PrimaryAttribute": "QID44",
-   "SecondaryAttribute": "あなたの決定あなたが当たりグループになったとします。1,000 円 をプレゼントします。1,000 円 のうち、いくらを",
-   "TertiaryAttribute": null,
-   "Payload": {
-    "QuestionText": "<h2>あなたの決定</h2><p>あなたが当たりグループになったとします。1,000 円 をプレゼントします。</p><p><b>1,000 円 のうち、いくらをはずれグループの相手に分けますか。</b></p><p class=\"small\">0 から 1,000 までの金額（円）を半角数字で入力してください。「次へ」を押すと決定は確定します。</p>",
+    "QuestionText": "<p><small>ページ ${e://Field/p_dec} / 9</small></p><h2>あなたの決定</h2><p>あなたが当たりグループになったとします。1,000 円 をプレゼントします。</p><p><b>1,000 円 のうち、いくらをはずれグループの相手に分けますか。</b></p><p class=\"small\">0 から 1,000 までの金額（円）を半角数字で入力してください。「次へ」を押すと決定は確定します。</p><p class=\"small\">入力した額が相手の受け取る額、1,000 円 から引いた残りがあなたの取り分になります。</p>",
     "DefaultChoices": false,
     "DataExportTag": "dg_give",
     "QuestionType": "TE",
@@ -3772,7 +3605,7 @@
      "InputWidth": 120,
      "InputHeight": 1
     },
-    "QuestionDescription": "あなたの決定あなたが当たりグループになったとします。1,000 円 をプレゼントします。1,000 円 のうち、いくらをはずれグループの相手に分けますか。0 から 1,000 までの金額（円）を半角数",
+    "QuestionDescription": "ページ ${e://Field/p_dec} / 9あなたの決定あなたが当たりグループになったとします。1,000 円 をプレゼントします。1,000 円 のうち、いくらをはずれグループの相手に分けま",
     "ChoiceOrder": [],
     "Validation": {
      "Settings": {
@@ -3792,72 +3625,18 @@
     },
     "NextChoiceId": 4,
     "NextAnswerId": 1,
-    "QuestionJS": "Qualtrics.SurveyEngine.addOnReady(function(){var endowment=1000, unit='円'; var inp=this.getQuestionContainer().querySelector('input[type=text]'); if(!inp){return;}inp.setAttribute('inputmode','numeric'); inp.setAttribute('autocomplete','off');var box=document.createElement('div'); box.style.cssText='display:none;background:#f1f5f9;border-radius:10px;padding:.75rem 1rem;margin:.75rem 0;font-size:1.1rem;';inp.parentNode.appendChild(box);function upd(){var g=parseInt(inp.value,10); if(isNaN(g)||g<0||g>endowment){box.style.display='none';return;}box.innerHTML='あなたの取り分: <b>'+(endowment-g).toLocaleString()+' '+unit+'</b><br>相手が受け取る額: <b>'+g.toLocaleString()+' '+unit+'</b>'; box.style.display='block';}inp.addEventListener('input',upd); upd();});",
-    "QuestionID": "QID44",
+    "QuestionID": "QID36",
     "Language": []
    }
   },
   {
    "SurveyID": "SV_egt7X9VgLDhmk8C",
    "Element": "SQ",
-   "PrimaryAttribute": "QID45",
-   "SecondaryAttribute": "Timing t_post",
+   "PrimaryAttribute": "QID37",
+   "SecondaryAttribute": "ページ 8 / 9最後にこの調査についてお聞きします。それぞれの文に、どの程度そう思うかをお答えください。",
    "TertiaryAttribute": null,
    "Payload": {
-    "QuestionText": "Timing",
-    "DefaultChoices": false,
-    "DataExportTag": "t_post",
-    "QuestionType": "Timing",
-    "Selector": "PageTimer",
-    "DataVisibility": {
-     "Private": false,
-     "Hidden": false
-    },
-    "Configuration": {
-     "QuestionDescriptionOption": "UseText",
-     "MinSeconds": "0",
-     "MaxSeconds": "0"
-    },
-    "QuestionDescription": "Timing",
-    "Choices": {
-     "1": {
-      "Display": "First Click"
-     },
-     "2": {
-      "Display": "Last Click"
-     },
-     "3": {
-      "Display": "Page Submit"
-     },
-     "4": {
-      "Display": "Click Count"
-     }
-    },
-    "ChoiceOrder": [
-     "1",
-     "2",
-     "3",
-     "4"
-    ],
-    "Validation": {
-     "Settings": {
-      "Type": "None"
-     }
-    },
-    "NextChoiceId": 5,
-    "NextAnswerId": 1,
-    "QuestionID": "QID45",
-    "Language": []
-   }
-  },
-  {
-   "SurveyID": "SV_egt7X9VgLDhmk8C",
-   "Element": "SQ",
-   "PrimaryAttribute": "QID46",
-   "SecondaryAttribute": "最後にこの調査についてお聞きします。それぞれの文に、どの程度そう思うかをお答えください。",
-   "TertiaryAttribute": null,
-   "Payload": {
-    "QuestionText": "<h2>最後に</h2><p class=\"small\">この調査についてお聞きします。それぞれの文に、どの程度そう思うかをお答えください。</p>",
+    "QuestionText": "<p><small>ページ 8 / 9</small></p><h2>最後に</h2><p class=\"small\">この調査についてお聞きします。それぞれの文に、どの程度そう思うかをお答えください。</p>",
     "DefaultChoices": false,
     "DataExportTag": "post_intro",
     "QuestionType": "DB",
@@ -3869,7 +3648,7 @@
     "Configuration": {
      "QuestionDescriptionOption": "UseText"
     },
-    "QuestionDescription": "最後にこの調査についてお聞きします。それぞれの文に、どの程度そう思うかをお答えください。",
+    "QuestionDescription": "ページ 8 / 9最後にこの調査についてお聞きします。それぞれの文に、どの程度そう思うかをお答えください。",
     "ChoiceOrder": [],
     "Validation": {
      "Settings": {
@@ -3878,14 +3657,14 @@
     },
     "NextChoiceId": 4,
     "NextAnswerId": 1,
-    "QuestionID": "QID46",
+    "QuestionID": "QID37",
     "Language": []
    }
   },
   {
    "SurveyID": "SV_egt7X9VgLDhmk8C",
    "Element": "SQ",
-   "PrimaryAttribute": "QID47",
+   "PrimaryAttribute": "QID38",
    "SecondaryAttribute": "全体として、意思決定課題は理解しやすかった。",
    "TertiaryAttribute": null,
    "Payload": {
@@ -3956,14 +3735,14 @@
     },
     "NextChoiceId": 7,
     "NextAnswerId": 1,
-    "QuestionID": "QID47",
+    "QuestionID": "QID38",
     "Language": []
    }
   },
   {
    "SurveyID": "SV_egt7X9VgLDhmk8C",
    "Element": "SQ",
-   "PrimaryAttribute": "QID48",
+   "PrimaryAttribute": "QID39",
    "SecondaryAttribute": "意思決定課題で決定を下すのは難しかった。",
    "TertiaryAttribute": null,
    "Payload": {
@@ -4034,14 +3813,14 @@
     },
     "NextChoiceId": 7,
     "NextAnswerId": 1,
-    "QuestionID": "QID48",
+    "QuestionID": "QID39",
     "Language": []
    }
   },
   {
    "SurveyID": "SV_egt7X9VgLDhmk8C",
    "Element": "SQ",
-   "PrimaryAttribute": "QID49",
+   "PrimaryAttribute": "QID40",
    "SecondaryAttribute": "意思決定課題での私の決定は、実生活でのやり取りにおける私の決定を反映している。",
    "TertiaryAttribute": null,
    "Payload": {
@@ -4112,14 +3891,14 @@
     },
     "NextChoiceId": 7,
     "NextAnswerId": 1,
-    "QuestionID": "QID49",
+    "QuestionID": "QID40",
     "Language": []
    }
   },
   {
    "SurveyID": "SV_egt7X9VgLDhmk8C",
    "Element": "SQ",
-   "PrimaryAttribute": "QID50",
+   "PrimaryAttribute": "QID41",
    "SecondaryAttribute": "参加中、気が散っていた。",
    "TertiaryAttribute": null,
    "Payload": {
@@ -4190,14 +3969,14 @@
     },
     "NextChoiceId": 7,
     "NextAnswerId": 1,
-    "QuestionID": "QID50",
+    "QuestionID": "QID41",
     "Language": []
    }
   },
   {
    "SurveyID": "SV_egt7X9VgLDhmk8C",
    "Element": "SQ",
-   "PrimaryAttribute": "QID51",
+   "PrimaryAttribute": "QID42",
    "SecondaryAttribute": "この調査について、気づいたことや感想があれば自由にお書きください（任意）。",
    "TertiaryAttribute": null,
    "Payload": {
@@ -4229,18 +4008,18 @@
     },
     "NextChoiceId": 4,
     "NextAnswerId": 1,
-    "QuestionID": "QID51",
+    "QuestionID": "QID42",
     "Language": []
    }
   },
   {
    "SurveyID": "SV_egt7X9VgLDhmk8C",
    "Element": "SQ",
-   "PrimaryAttribute": "QID52",
-   "SecondaryAttribute": "ご協力ありがとうございましたこれで調査は終了です。あなたの参加者コードは下の通りです。メモや画面の保存などで控えてくださ",
+   "PrimaryAttribute": "QID43",
+   "SecondaryAttribute": "ページ 9 / 9ご協力ありがとうございましたこれで調査は終了です。あなたの参加者コードは下の通りです。メモや画面の保存",
    "TertiaryAttribute": null,
    "Payload": {
-    "QuestionText": "<h2>ご協力ありがとうございました</h2><p>これで調査は終了です。</p><p>あなたの参加者コードは下の通りです。メモや画面の保存などで控えてください。</p><p>参加者コード</p><p style=\"font-family:monospace;font-size:1.6rem;letter-spacing:.1em;background:#f1f5f9;display:inline-block;padding:.5rem 1rem;border-radius:10px\">${e://Field/ResponseID}</p><p class=\"small\">このページは閉じていただいて構いません。</p>",
+    "QuestionText": "<p><small>ページ 9 / 9</small></p><h2>ご協力ありがとうございました</h2><p>これで調査は終了です。</p><p>あなたの参加者コードは下の通りです。メモや画面の保存などで控えてください。</p><p>参加者コード</p><p><b><span style=\"font-family:monospace;font-size:1.6rem;letter-spacing:.1em\">${e://Field/ResponseID}</span></b></p><p class=\"small\">参加者コードを控えたら「次へ」を押して回答を送信してください。送信されるまで回答は完了になりません。</p>",
     "DefaultChoices": false,
     "DataExportTag": "end_text",
     "QuestionType": "DB",
@@ -4252,7 +4031,7 @@
     "Configuration": {
      "QuestionDescriptionOption": "UseText"
     },
-    "QuestionDescription": "ご協力ありがとうございましたこれで調査は終了です。あなたの参加者コードは下の通りです。メモや画面の保存などで控えてください。参加者コード${e://Field/ResponseID}このページは閉じて",
+    "QuestionDescription": "ページ 9 / 9ご協力ありがとうございましたこれで調査は終了です。あなたの参加者コードは下の通りです。メモや画面の保存などで控えてください。参加者コード${e://Field/ResponseID}",
     "ChoiceOrder": [],
     "Validation": {
      "Settings": {
@@ -4261,7 +4040,7 @@
     },
     "NextChoiceId": 4,
     "NextAnswerId": 1,
-    "QuestionID": "QID52",
+    "QuestionID": "QID43",
     "Language": []
    }
   }
