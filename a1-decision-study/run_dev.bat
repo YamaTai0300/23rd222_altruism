@@ -1,9 +1,9 @@
 @echo off
 rem ============================================================
-rem  A-1 decision study v0.5 : start the oTree dev server (Windows)
+rem  A-1 decision study v0.6 : start the oTree dev server (Windows)
 rem  Double-click this file. See README.md section "動かし方".
 rem
-rem  1. copies the project to %LOCALAPPDATA%\a1-decision-study_v0.5
+rem  1. copies the project to %LOCALAPPDATA%\a1-decision-study_v0.6
 rem     (runtime copy outside OneDrive; .venv and db.sqlite3 stay there; v0.4 uses a different folder)
 rem  2. finds Python 3.10-3.12 (A1_PYTHON / py launcher / conda env "a1" / python on PATH), creates a venv, installs requirements
 rem  3. starts otree devserver; tools\ensure_room.py then creates a session in room "demo" and opens the REUSABLE link
@@ -13,7 +13,7 @@ rem  Options:  run_dev.bat [port] [a1_ja|a1_en]      e.g.  run_dev.bat 8001 a1_e
 rem ============================================================
 setlocal
 set "SRC=%~dp0"
-set "DST=%LOCALAPPDATA%\a1-decision-study_v0.5"
+set "DST=%LOCALAPPDATA%\a1-decision-study_v0.6"
 set "PORT=8000"
 if not "%~1"=="" set "PORT=%~1"
 set "CONFIG=a1_ja"

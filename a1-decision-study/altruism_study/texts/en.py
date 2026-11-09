@@ -23,11 +23,11 @@ TEXT = dict(
         'and two questionnaires and takes about 10 minutes. You can do it on your own smartphone or computer.',
         'Participation is voluntary. Once you start, please complete the study in one sitting without interruption. '
         'If you want to stop, close this page; incomplete responses are not kept.',
-        'Your answers are stored under a random participant code; no names or email addresses are stored with them. '
+        'Your answers are stored under a random experiment ID; no names or email addresses are stored with them. '
         'Anonymized data may be shared publicly for research.',
     ],
     consent_check='I have read the above and agree to take part.',
-    eligible_check='I am 18 years or older and a student at [university].',
+    eligible_check='I am 18 years or older and a native speaker of Japanese.',
     consent_error='To take part, please tick both boxes.',
 
     survey_title='Questionnaire',
@@ -140,8 +140,9 @@ TEXT = dict(
     end_title='Thank you',
     end_body=[
         'The study is now complete.',
-        'Your participant code is shown below. Please write it down or take a screenshot.',
+        'Your experiment ID is shown below. Go back to the CrowdWorks task page, enter this ID in the form and click "Complete".',
+        'Please write the ID down or take a screenshot. Without it we cannot pay the reward.',
     ],
-    end_code_label='Participant code',
+    end_code_label='Experiment ID',
     end_close='You may now close this page.',
 )

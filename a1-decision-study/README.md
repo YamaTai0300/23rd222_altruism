@@ -1,31 +1,40 @@
-# a1-decision-study_v0.5 — A-1 追試（FAB・HEXACO 質問紙 × 独裁者ゲーム）の oTree 実装（v0.5・日本語版）
+# a1-decision-study_v0.6 — A-1 追試（FAB・HEXACO 質問紙 × 独裁者ゲーム）の oTree 実装（v0.6・日本語版）
 
 Binder, Schultze, Chen & Windmann (2026, *Sci Rep* 16:11600) の「Help Giving → 独裁者ゲーム」を
-日本の大学生で再現する一回完結のオンライン実験。設計はこの文書に従う:
+日本の CrowdWorks ワーカーで再現する一回完結のオンライン実験（v0.6 で学内募集から変更）。設計はこの文書に従う:
 
 - 要件定義・設計書: https://claude.ai/code/artifact/5f9cc974-cbb4-4fd0-840b-7836e6283d47
 - 実験計画書 A-1: https://claude.ai/code/artifact/7d6d3bf2-110f-4096-87f7-f1ae9ec69219
 - 再現要素一覧（Excel）: `../A-1_再現要素一覧.xlsx`
 - 原研究の公開資料（OSF T5MF2）からの抜粋と対応表: `docs/osf_sources.md`、変更履歴: `CHANGELOG.md`
-- 修正前の v0.4 は `../a1-decision-study/` にそのまま残してある。v0.4 → v0.5 の比較: `docs/compare_v0.4_v0.5.md`（文言・変数・解析）、
-  `docs/compare_screens_v0.4_v0.5_ja.pdf`（画面の並列比較）、`docs/diff_v0.4_to_v0.5.patch`（ソースの差分）
+- 修正前の v0.5 は `../a1-decision-study_v0.5/`、v0.4 は `../a1-decision-study/` にそのまま残してある。v0.5 → v0.6 の比較: `docs/compare_v0.5_v0.6.md`、
+  ソースの差分 `docs/diff_v0.5_to_v0.6.patch`。v0.4 → v0.5: `docs/compare_v0.4_v0.5.md`、`docs/compare_screens_v0.4_v0.5_ja.pdf`、`docs/diff_v0.4_to_v0.5.patch`
+- 募集・実施・承認の運用（CrowdWorks × Qualtrics、研究室マニュアル）は計画書 v0.6 の「募集と実施の運用」。Qualtrics 版は `../qualtrics/`（r3）
 
 参加者は各自のスマホ・PC から募集期間中の好きな時刻に 1 人で参加する（完全非同期、約 10 分）。
 WaitPage やグループは使わない。DG の相手とのペアは締切後に `tools/pairing.py` でオフラインに組む。
+参加者は CrowdWorks のタスクから来て、終了画面の 10 桁の実験 ID を CW の作業ページに入力する（`tools/match_cw_ids.py` で照合）。
 
-## 状態（2026-10-29, v0.5）
+## 状態（2026-11-09, v0.6）
 
 v0.2 で OSF T5MF2 の原資料（補足資料 S1、codebook、前処理・解析スクリプト、卒論付録の教示原文）に合わせて改訂し、
 v0.3 で実験計画書の「記録・分析ノート・図表」と改訂した「分析計画」（判定基準・感度分析・不確実性の明示）を実装、
 v0.4 で HEXACO の採用、完了者だけの保存、設定値の CSV からの読み取り、Page Times による速い回答の検出を加え、
-v0.5 でデモを見て画面を必要最低限（9 ページ）にし、質問紙を FAB / HEXACO の 2 段階にし、参加者の手間を減らし、使い回せるデモ URL を付けた。
+v0.5 でデモを見て画面を必要最低限（9 ページ）にし、質問紙を FAB / HEXACO の 2 段階にし、参加者の手間を減らし、使い回せるデモ URL を付け、
+v0.6 で研究室マニュアル（CrowdWorks × Qualtrics）に合わせて募集を CrowdWorks にし、参加資格・終了画面（実験 ID）・照合と支払いのツールを変えた。
+v0.6 の変更は文言とツールだけで、画面構成・変数（exp_id の追加以外）・解析スクリプトは v0.5 と同じ。ボットテストと R は v0.6 ではまだ実行していない。
 変更点の一覧は `CHANGELOG.md`。
 
 できていること
 
+- **CrowdWorks 募集向け（v0.6）**: 参加資格のチェックを「18 歳以上で、日本語が母語」に（`eligible_check`）。終了画面に 10 桁の実験 ID `exp_id`
+  （セッション作成時に `secrets` で発行、セッション内で一意、CSV に出る）を表示し、参加者が CW の作業ページのフォームに入力する。
+  `tools/match_cw_ids.py` が CW の承認待ち一覧（CSV / HTML）と調査データ（Qualtrics の CSV か oTree 形式）を照合して approve / check / reject と
+  未申告の一覧、`pairing.py` 用の `contacts_<date>.csv` を出す。`tools/pairing.py` は `player.exp_id` を code に使い、`--realize-pairs N` で
+  計画書の案 B（抽選で一部のペアだけ実現）に対応。連絡先（メールアドレス）は集めない
 - **最低限の画面（v0.5）**: 同意 → 質問紙 1/2（FAB + 注意チェック、2 ページ）→ 質問紙 2/2（HEXACO、1 ページ）→ DG 説明 → 理解確認 → 決定
   → 事後評価 → 終了（順序群 2 は DG が質問紙の前）。謝礼・連絡先の案内、参加者コードの前置き、属性、自己予測、入力確認は外した
-  （案内はリンク配布時に伝える）。参加者コードは終了画面にだけ出す
+  （案内は CW の募集ページに書く）。終了画面には実験 ID だけ出す（v0.6。v0.5 は oTree の参加者コード）
 - **質問紙の 2 段階（v0.5）**: FAB は 6 件法、HEXACO 正直さ-謙虚さ 10 項目は原版と同じ 5 件法で別の段階。段階の順序 `scale_order` を
   `task_order` と 2 × 2 でブロックランダム化（4 人ごとに 4 通り）。各段階内はランダム順（`fab_item_order`, `hex_item_order`）
 - **参加者の手間（v0.5）**: 進捗「ページ k / 9」、未回答項目への自動スクロール、行全体をタップ、回答済みの印、教示は各段階の 1 ページ目に統合、
@@ -64,9 +73,10 @@ v0.5 でデモを見て画面を必要最低限（9 ページ）にし、質問�
 
 1. **FAB の和訳の確定**: `altruism_study/texts/ja.py` の 15 項目はすべて訳案。バックトランスレーション
    （和訳 → 別の人が英訳 → S1 の原文と比較 → 修正）を経た確定版に置き換える。英語原文は `en.py` と `docs/osf_sources.md`
-2. **リンク配布時の案内文**: 謝礼（参加謝礼の額、DG の結果に応じた額、種類・送付方法・時期）、連絡先、終了画面の参加者コードをどう申告するかを、
-   実験の外（募集メール・掲示）で伝える。画面には出さない（v0.5）。文面を計画書「倫理・謝礼」に入れる
-3. **同意文の固有情報**: `eligible_check` の [大学名]
+2. **CrowdWorks の募集ページ**: 文案は計画書 v0.6「募集と実施の運用」。報酬（タスク単価 300 円、DG の追加報酬の書き方は案 A / B の決定後）、
+   作業時間の上限（60 分）、入力フォーム「実験 ID」（20 文字以下、重複を認めない）、応募条件（承認率 95% 以上）を設定し、高橋先生のチェックを受ける
+3. **v0.6 の検証**: `run_tests.bat`（exp_id の 10 桁・一意の検査を tests.py に追加済み）と `run_analysis.bat synthetic` を実行する。
+   `99_synthetic.R` は `exp_id` 列を作らないので、`01_clean.R` が列の有無で止まらないことを確認する
 4. **決めること（CHANGELOG「確認が必要な点」）**: DG の刻み（既定 1 円）、注意チェックの正答（両端）、
    所要時間の除外閾値（中央値の 1/4）、事後評価の 4 項目を残すか
 5. `docs/screens_v0.5_ja.pdf`（v0.5 の全画面、スマホ幅）と `docs/compare_screens_v0.4_v0.5_ja.pdf` を見て文言・レイアウトを確認する。
@@ -95,16 +105,16 @@ v0.5 でデモを見て画面を必要最低限（9 ページ）にし、質問�
    `http://localhost:8000/join/<code>` をブラウザで開く。このリンクは**開くたびに新しい参加者として最初から始まる**ので、
    /demo に戻って参加者リンクを選び直す必要がない（100 回まで。足りなくなったら `run_dev.bat` を再実行）。
    固定リンク `http://localhost:8000/room/demo`（本実験と同じ URL の形）も使える。こちらは同じブラウザで開き直すと続きから再開し、
-   シークレットウィンドウ・スマホ・別のブラウザからは新しい参加者になる。リンクは `%LOCALAPPDATA%\a1-decision-study_v0.5\__demo_links.txt` にも書かれる。
+   シークレットウィンドウ・スマホ・別のブラウザからは新しい参加者になる。リンクは `%LOCALAPPDATA%\a1-decision-study_v0.6\__demo_links.txt` にも書かれる。
    スマホ表示を見るにはブラウザの開発者ツール（F12）→ デバイスツールバーで幅 375 にする。英語版は `run_dev.bat 8000 a1_en`。
 4. 止めるときは黒い窓で Ctrl+C。
 
-`run_dev.bat` は、このフォルダー（OneDrive 配下）の中身を `%LOCALAPPDATA%\a1-decision-study_v0.5` にコピーしてから
+`run_dev.bat` は、このフォルダー（OneDrive 配下）の中身を `%LOCALAPPDATA%\a1-decision-study_v0.6` にコピーしてから
 起動する（v0.4 の `%LOCALAPPDATA%\a1-decision-study` とは別なので両方を見比べられる）。OneDrive の同期と `db.sqlite3` の書き込みが
 ぶつかるのを避けるため。**コードの編集はこのフォルダーで行い、編集後に `run_dev.bat` をもう一度実行する**（コピー先を直接編集すると
 次回上書きされる）。ポートが使用中なら `run_dev.bat 8001` のように引数で変えられる。
 
-ボットテストと CSV 出力は `run_tests.bat`（引数で人数、既定 24 = 6 ケース × 4 通りの順序）。結果は `%LOCALAPPDATA%\a1-decision-study_v0.5\__temp_bots\`。
+ボットテストと CSV 出力は `run_tests.bat`（引数で人数、既定 24 = 6 ケース × 4 通りの順序）。結果は `%LOCALAPPDATA%\a1-decision-study_v0.6\__temp_bots\`。
 
 ### 手動で行う場合（PowerShell / macOS / Linux）
 
@@ -154,7 +164,7 @@ tools/archive_export.py      エクスポートから完了者だけを raw/<pur
 tools/run_log.py             エクスポート CSV からセッションの要約を docs/run_log.csv に追記（v0.3）
 tools/browser_walk.py        Playwright で 4 人分を通し、全種類の画面を撮って PDF にまとめる
 tools/compare_screens.py     v0.4 と v0.5 のスクリーンショットを左右に並べた比較 PDF を作る（v0.5）
-run_dev.bat / run_tests.bat  Windows 用の起動・テスト（OneDrive 外 %LOCALAPPDATA%\a1-decision-study_v0.5 にコピーして実行）
+run_dev.bat / run_tests.bat  Windows 用の起動・テスト（OneDrive 外 %LOCALAPPDATA%\a1-decision-study_v0.6 にコピーして実行）
 run_analysis.bat / .sh       解析パイプライン 01 → 02 → 04 を順に実行（synthetic / original モードあり）（v0.3）
 docs/osf_sources.md          OSF T5MF2 から取得した原資料の抜粋（教示文・注意チェック・除外基準・変数名）
 docs/screens_v0.5_ja.pdf     v0.5 の全画面のスクリーンショット（英語版は screens_v0.5_en.pdf）
@@ -235,6 +245,8 @@ run_analysis.bat original      analysis\03_compare_original.R（OSF の公開デ
   `python tools/run_log.py raw/main/altruism_study_<date>.csv --purpose main` で run ログを更新する
 - 起動前に環境変数 `A1_GIT_COMMIT` にコードのコミットを入れる（`run_dev.bat` は `git rev-parse` で自動設定。Git 管理していなければ
   `unknown` になるので、`app_version` を版ごとに必ず変える）
-- 締切後: `python tools/pairing.py --data raw/final/altruism_study_<date>.csv --contacts raw/contacts_<date>.csv --seed <整数>`
-  → `payout/pairs_<date>.csv` の `payout_yen` を支払う（元手・参加謝礼は CSV の記録値から読む。支払いの方法・送付手順は未決、計画書に記載予定）。
-  `--contacts` の CSV は v0.5 では実験の外で集める（参加者が申告した参加者コード + 連絡先）
+- 締切後（v0.6）: まず `python tools/match_cw_ids.py --cw <CW の承認待ち一覧 CSV/HTML> --data raw/final/altruism_study_<date>.csv` で実験 ID を照合し、
+  `payout/match_<date>.csv` の approve / check / reject に沿って CW で承認・非承認（募集終了後 14 日以内。微妙なら承認）。
+  次に `python tools/pairing.py --data raw/final/altruism_study_<date>.csv --contacts payout/contacts_<date>.csv --seed <整数> [--realize-pairs 10]`
+  → `payout/pairs_<date>.csv` の `payout_yen`（参加謝礼はタスク報酬で支払い済みなので、DG 分 = payout_yen − fee）を CW の個別発注で支払う。
+  案 A（全ペア）か案 B（`--realize-pairs`）かは計画書「倫理・謝礼」で決める

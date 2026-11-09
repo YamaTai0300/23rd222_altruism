@@ -1,5 +1,45 @@
 # 変更履歴
 
+## v0.6-pilot（2026-11-09）— CrowdWorks 募集に合わせる（研究室マニュアル『Qualtrics とクラウドワークスの使い方』、計画書 v0.6）
+
+研究室のオンライン実験マニュアル（募集は CrowdWorks のタスク、実施は Qualtrics、終了画面の ID を CW に入力して照合・承認）に合わせた。
+修正前（v0.5）は `../a1-decision-study_v0.5/` にそのまま残し、比較は `docs/compare_v0.5_v0.6.md`、ソースの差分は `docs/diff_v0.5_to_v0.6.patch`。
+画面構成（9 ページ）、変数（`exp_id` の追加以外）、解析スクリプトは v0.5 のまま。Qualtrics 版は `../qualtrics/`（r3）で同じ変更をした。
+
+### 1. 参加資格と文言（texts/ja.py, en.py, codebook.csv）
+- `eligible_check`: 「18 歳以上で、[大学名] に在籍する学生」→「18 歳以上で、日本語を母語としています」（CW の対象 = 日本語母語の 18 歳以上。
+  学生の限定をやめた）。変数 `eligible_confirm` はそのまま（codebook のラベルを更新）。
+- 同意文の「参加者コード（ランダムな文字列）」→「実験 ID（ランダムな数字）」。終了画面の文言を「実験 ID を CrowdWorks の作業ページのフォームに入力して
+  『作業を完了する』を押す」「入力がないと報酬を支払えない」に。`end_code_label` = 実験 ID。
+
+### 2. 実験 ID（__init__.py, End.html 経由の表示, tests.py, codebook.csv）
+- `Player.exp_id`（文字列、10 桁の数字）を追加。`creating_session` で `secrets.randbelow` により発行し、セッション内で一意にする
+  （乱数シード `rand_seed` とは独立なので、割り当てから推測できない）。終了画面は `exp_id` を表示（`participant.code` は内部用・エクスポートに残る）。
+- 10 桁にした理由: マニュアルの推奨（6 桁では使い回し・偶然の一致が起きた）。数字だけにしたのは入力ミス（O/0、l/1）を減らすため。
+- tests.py: 終了時に `exp_id` が 10 桁の数字で、同じセッションに重複がないことを検査（ボットテストは v0.6 ではまだ実行していない）。
+
+### 3. 照合と支払いのツール（tools/match_cw_ids.py 新規, tools/pairing.py）
+- `tools/match_cw_ids.py`: CW の承認待ち一覧（CSV / TSV / HTML、UTF-8 か CP932）と調査データ（Qualtrics の生 CSV か oTree 形式）を実験 ID で照合し、
+  approve（完了回答に 1 対 1 で存在）/ check（未完了、同じ ID の最初の入力、1 文字違いの近い ID）/ reject（存在しない、形式違い、同じ ID の 2 件目以降）と
+  理由を `payout/match_<date>.csv` に出す。未申告の完了回答は `unclaimed_<date>.csv`、承認分の `code, cw_user, cw_profile_url, work_id` は
+  `contacts_<date>.csv`（pairing.py の `--contacts`）。CW 規約の非承認の上限（3 件か総数の 30%）を超えると警告。合成データで動作確認済み。
+- `tools/pairing.py`: code に `player.exp_id` を使う（なければ `participant.code`）。連絡先の列は `cw_user` / 「作業者」も自動判定。
+  `--realize-pairs N`（計画書の案 B: 抽選で N ペアだけ決定どおり支払い、残りは参加謝礼のみ。`realized` 列）。
+  `cw_extra_yen` 列（= payout − fee。参加謝礼はタスク報酬で支払い済みなので、CW で個別発注する額）。合成データで案 A / B とも動作確認済み。
+- 連絡先（メールアドレス）は集めない。CW のユーザー名・作業 ID は回答データと別フォルダーに置き、検収後に削除する（計画書「倫理」）。
+
+### 4. そのほか
+- settings.py: `app_version` = `v0.6-pilot`、`participation_fee_yen` のコメント（= CW のタスク単価）、デモページの説明。
+- run_dev.bat / run_tests.bat: コピー先を `%LOCALAPPDATA%\a1-decision-study_v0.6` に。
+- 99_synthetic.R: `player.exp_id` 列と `app_version` = `v0.6-synthetic`（R は v0.6 ではまだ実行していない。01_clean.R は codebook で列を検査しないので、
+  `exp_id` の有無で止まらない見込み）。
+- README.md: v0.6 の状態、CW 募集ページの設定、締切後の手順（照合 → 承認 → pairing → 個別発注）。
+
+### 確認が必要な点（v0.6 で増えた分）
+- 案 A（全ペア実現）か案 B（`--realize-pairs`）か。CW の受取額（契約額の約 86%）と「決定どおり」の読み方。
+- 注意チェックの位置: oTree 版はページの端に置かない制約が v0.5 からある。Qualtrics 版は固定位置（1 ページ目 5 番目、2 ページ目 4 番目）。
+- CW の作業時間の上限（60 分）、入力フォームの文字数（20 文字以下）、「重複を認めない」の設定は CW の募集ページ側で行う（コードにはない）。
+
 ## v0.5-pilot（2026-10-29）— 画面を必要最低限に、質問紙を 2 段階に、参加者の手間を減らす、使い回せるデモ URL
 
 デモ（v0.4）を見ての修正。修正前（v0.4）は `../a1-decision-study/` にそのまま残し、比較は `docs/compare_v0.4_v0.5.md`、

@@ -1,4 +1,4 @@
-"""A-1 追試: FAB 質問紙 × HEXACO × 独裁者ゲーム（一回完結・順序ランダム化・役割不確定法）v0.5
+"""A-1 追試: FAB 質問紙 × HEXACO × 独裁者ゲーム（一回完結・順序ランダム化・役割不確定法）v0.6
 
 設計書: https://claude.ai/code/artifact/5f9cc974-cbb4-4fd0-840b-7836e6283d47
 原資料: https://osf.io/t5mf2/（Binder et al., 2026 の補足資料。CHANGELOG.md に対応表）
@@ -6,6 +6,9 @@
 - WaitPage・グループは使わない。各参加者は自分のペースで最後まで進む（FR-25）
 - 文言は texts/ から引く。テンプレートに文言を書かない（§8）
 - 変数名は原研究の整形済みデータ（Studies/XX/XX_data.csv）に合わせる: hg_1 … mc_23, cq1, cq2, dg_give
+- v0.6: CrowdWorks 募集に合わせた（研究室マニュアル）。参加資格を「18 歳以上・日本語が母語」に、終了画面に 10 桁の実験 ID
+  （player.exp_id、セッション作成時に secrets で発行、セッション内で一意）を表示。参加者はそれを CW のフォームに入力し、
+  tools/match_cw_ids.py で CW の承認待ち一覧と照合する。participant.code は内部用に残す
 - v0.5: 画面を実験に必要な最低限にした（同意 → 質問紙 2 段階 → DG 説明・理解確認・決定 → 事後評価 → 終了。順序群で前後が入れ替わる）。
   謝礼・連絡先の案内、参加者コードの前置きページ、属性、自己予測、入力確認を外した（案内はリンク配布時に伝える）。
   質問紙を FAB（+注意チェック、6 件法、2 ページ）と HEXACO（5 件法、1 ページ）の 2 段階にし、段階の順序 scale_order も
@@ -17,6 +20,7 @@
 import hashlib
 import os
 import random
+import secrets
 import subprocess
 from datetime import datetime, timezone
 
@@ -52,7 +56,7 @@ def _git_commit():
 GIT_COMMIT = _git_commit()
 
 doc = """
-Binder et al. (2026) の Help Giving → 独裁者ゲームの関連を日本の大学生で再現する一回完結のオンライン実験。
+Binder et al. (2026) の Help Giving → 独裁者ゲームの関連を日本の CrowdWorks ワーカーで再現する一回完結のオンライン実験。
 質問紙（FAB 15 項目 + 注意チェック 2、HEXACO 正直さ-謙虚さ 10 項目）と意思決定課題（DG, 元手は session config）の
 順序、および 2 つの質問紙の順序を参加者ごとにランダム化する。
 """
@@ -249,7 +253,16 @@ def creating_session(subsession: Subsession):
         block = [(1, 1), (1, 2), (2, 1), (2, 2)]
         rng.shuffle(block)
         combos.extend(block)
+    # 実験 ID（v0.6）: 10 桁の数字、セッション内で一意。乱数シードとは独立（secrets）なので割り当てからは推測できない。
+    # 終了画面に表示し、参加者が CrowdWorks の作業ページに入力する（研究室マニュアル: 10 桁程度、重複を認めない）
+    used_ids = set()
     for p, (to, so) in zip(players, combos):
+        while True:
+            eid = str(secrets.randbelow(9_000_000_000) + 1_000_000_000)
+            if eid not in used_ids:
+                used_ids.add(eid)
+                break
+        p.exp_id = eid
         p.task_order = to
         p.scale_order = so if hexaco else 0
         p.lang = cfg['lang']
@@ -304,9 +317,11 @@ class Player(BasePlayer):
     cfg_use_hexaco = models.BooleanField(blank=True)
     user_agent = models.LongStringField(blank=True)
     screen_width = models.IntegerField(blank=True)
-    # 同意（v0.5: 同意 + 参加資格の 2 項目）
+    # 実験 ID（v0.6）: 終了画面に表示し CrowdWorks に入力してもらう 10 桁の数字。creating_session で発行
+    exp_id = models.StringField(blank=True)
+    # 同意（v0.5: 同意 + 参加資格の 2 項目。v0.6: 参加資格 = 18 歳以上・日本語が母語）
     consent = models.BooleanField(widget=widgets.CheckboxInput, blank=True)
-    eligible_confirm = models.BooleanField(widget=widgets.CheckboxInput, blank=True)  # 18 歳以上かつ対象大学の学生
+    eligible_confirm = models.BooleanField(widget=widgets.CheckboxInput, blank=True)  # 18 歳以上かつ日本語が母語（v0.6）
     # FAB（原研究の変数名。1〜6、逆転項目なし）
     hg_1 = likert_field()
     hg_3 = likert_field()
@@ -538,7 +553,8 @@ class End(Page):
             player.excluded_in_app = bool(reasons)
             player.exclude_reason_in_app = ','.join(reasons)
             player.finished = True
-        return ctx(player, code=player.participant.code)
+        # v0.6: 終了画面には実験 ID（exp_id）を出す。participant.code は管理画面・エクスポートに残る
+        return ctx(player, code=player.field_maybe_none('exp_id') or player.participant.code)
 
 
 # ---------------------------------------------------------------------------

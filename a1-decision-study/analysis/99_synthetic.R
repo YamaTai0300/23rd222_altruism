@@ -42,9 +42,11 @@ d <- tibble(
   `participant._current_page_name` = "End", `participant.time_started_utc` = format(t0, "%Y-%m-%d %H:%M:%S"), `participant.visited` = 1,
   `participant.mturk_worker_id` = "", `participant.mturk_assignment_id` = "", `participant.payoff` = 0,
   `player.id_in_group` = 1, `player.role` = "", `player.payoff` = 0,
-  `player.task_order` = task_order, `player.scale_order` = scale_order, `player.lang` = "ja", `player.app_version` = "v0.5-synthetic", `player.git_commit` = "synthetic",
+  `player.task_order` = task_order, `player.scale_order` = scale_order, `player.lang` = "ja", `player.app_version` = "v0.6-synthetic", `player.git_commit` = "synthetic",
   `player.otree_version` = "5.11.5", `player.rand_seed` = 12345, `player.cfg_endowment` = endow, `player.cfg_dg_step` = 1, `player.cfg_fee` = 300, `player.cfg_use_hexaco` = 0,
   `player.user_agent` = "synthetic", `player.screen_width` = sample(c(375, 390, 1280), N, TRUE),
+  # v0.6: 実験 ID（10 桁の数字、一意）
+  `player.exp_id` = paste0(sample(1:9, N, TRUE), sapply(seq_len(N), function(i) paste(sample(0:9, 9, TRUE), collapse = ""))),
   `player.consent` = 1, `player.eligible_confirm` = 1
 ) %>%
   bind_cols(setNames(items, paste0("player.", names(items)))) %>%

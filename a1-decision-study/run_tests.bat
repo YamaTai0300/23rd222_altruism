@@ -1,8 +1,8 @@
 @echo off
-rem  A-1 decision study v0.5 : run the bot tests (6 cases x N participants) and export CSVs
+rem  A-1 decision study v0.6 : run the bot tests (6 cases x N participants) and export CSVs
 rem  Usage: run_tests.bat [N]   (default N=24 = 6 cases x 4 order cells). Run run_dev.bat once first so the venv exists.
 setlocal
-set "DST=%LOCALAPPDATA%\a1-decision-study_v0.5"
+set "DST=%LOCALAPPDATA%\a1-decision-study_v0.6"
 set "N=24"
 if not "%~1"=="" set "N=%~1"
 if not exist "%DST%\.venv\Scripts\otree.exe" (

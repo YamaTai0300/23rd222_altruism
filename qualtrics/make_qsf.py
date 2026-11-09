@@ -1,8 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""A-1 追試 v0.5 の実験を Qualtrics で再現する QSF（調査定義ファイル）を生成する（r2, 2026-11-06）。
+"""A-1 追試 v0.6 の実験を Qualtrics で再現する QSF（調査定義ファイル）を生成する（r3, 2026-11-09）。
 
-使い方: python make_qsf.py --texts <a1-decision-study_v0.5>/altruism_study/texts/ja.py --out A-1_v0.5r2_ja.qsf
+使い方: python make_qsf.py --texts <a1-decision-study_v0.6>/altruism_study/texts/ja.py --out A-1_v0.6r3_ja.qsf
+
+r3（2026-11-09、計画書 v0.6 = CrowdWorks 募集）での変更
+- ★ 実験 ID: Survey Flow の先頭で埋め込みデータ exp_id に 10 桁の乱数（${rand://int/1000000000:9999999999}）を入れ、終了ページ／終了メッセージには
+  ResponseID ではなく exp_id を表示する。参加者はこれを CrowdWorks の作業ページに入力し、tools/match_cw_ids.py（v0.6）で承認待ち一覧と照合する。
+  ResponseID はこれまでどおりエクスポートに残る（変換で participant.label に入る）
+- ★ 参加資格のチェックが「18 歳以上で、日本語が母語」になる（texts/ja.py v0.6 から読む）。終了文も「CW のフォームに入力」に変わる
+- ★ 未完了回答の記録（--partial）の既定を +4 hours にした（研究室マニュアル: 締切から 4 時間待って確定）
+- 多重回答防止（BallotBoxStuffingPrevention）は r2 から ON。CW 側の「重複を認めない」と合わせて二重の対策になる
+
 取り込み: Qualtrics の Projects → Create project → Survey → "Import a QSF file"（新規プロジェクトになる）
 
 文言の正本は oTree 版の altruism_study/texts/ja.py。参加者に見せる文言はすべてそこから読み、Qualtrics のビルダーでは直さない
@@ -10,7 +19,7 @@
 
 oTree 版（v0.5）との対応（r2 で合わせた点に ★）
 - 画面: 同意 → 質問紙 1/2（FAB + 注意チェック、2 ページ）→ 質問紙 2/2（HEXACO、1 ページ）→ DG 説明 → 理解確認（不正解なら 1 回だけ再回答）
-  → 決定 → 事後評価 → 終了（参加者コード = ResponseID）。順序群 2 は DG が先
+  → 決定 → 事後評価 → 終了（実験 ID = 埋め込みデータ exp_id。r2 までは ResponseID）。順序群 2 は DG が先
 - ★ 段階番号: 見出し「質問紙 1/2」「2/2」は埋め込みデータ fab_stage / hex_stage から埋める（scale_order 2 では HEXACO が 1/2）
 - ★ 進捗: Qualtrics の進捗バーは切り、oTree 版と同じ「ページ k / 9」を各ページの先頭に出す（k は埋め込みデータ p_* で順序群ごとに設定）
 - ★ FAB の項目順: 1 ブロックで 15 項目を Advanced Randomization、注意チェック cq1 / cq2 は固定位置（1 ページ目の 5 番目、2 ページ目の 4 番目）、
@@ -21,7 +30,7 @@ oTree 版（v0.5）との対応（r2 で合わせた点に ★）
 - ★ 記録: 変数名 = codebook と同じ（hg_1 … mc_23, cq1, cq2, hex_1 … hex_10, dg_check_answer1 / dg_check_answer2, dg_give, eval_*, comment_open、
   埋め込みデータ cfg_endowment, cfg_fee, cfg_dg_step, cfg_use_hexaco, lang, app_version, qsf_hash）。項目順は Qualtrics のエクスポート
   オプション「Export viewing order data for randomized surveys」で取れる。oTree 形式への変換は qualtrics_to_otree.py
-- ★ 終了: --eos-message MS_xxx を渡すと終了ページをブロックではなく End of Survey のカスタムメッセージにする（到達した時点で回答が完了になる。
+- ★ 終了: 終了ページには実験 ID（埋め込みデータ exp_id、r3）を出す。--eos-message MS_xxx を渡すと終了ページをブロックではなく End of Survey のカスタムメッセージにする（到達した時点で回答が完了になる。
   メッセージは Library に手で 1 回作る。本文は eos_message.html に出力）。渡さないときは終了ブロックのまま、「次へ」で送信するよう促す文を出す
 - ★ Survey Options: 多重回答防止 ON（--allow-multiple で OFF）、匿名化 ON（--keep-ip で OFF）、未完了回答の扱いは --partial（既定 +1 week）
 - 時間（--full、有料ライセンス向け）: 各ページに Timing 質問（t_<page>: First Click / Last Click / Page Submit / Click Count）
@@ -43,12 +52,12 @@ FEE = 300
 DG_STEP = 1
 CURRENCY = '円'
 LANG = 'ja'
-APP_VERSION = 'v0.5r2-qualtrics'
+APP_VERSION = 'v0.6r3-qualtrics'
 TOTAL_PAGES = 9
-SURVEY_ID = 'SV_egt7X9VgLDhmk8C'   # 取り込み時には新しい ID が振られる（r1: SV_6PfFg1rhsV2G2uG「study_v5」、r2: SV_cSIPHEGOiULgN82「study_v6」2026-11-06）
+SURVEY_ID = 'SV_egt7X9VgLDhmk8C'   # 取り込み時には新しい ID が振られる（r1: SV_6PfFg1rhsV2G2uG「study_v5」、r2: SV_cSIPHEGOiULgN82「study_v6」2026-11-06、r3: 未取り込み）
 BRAND_ID = 'qualtricsxmw5hysnkpn'   # 空だと ESDEF10 で拒否される
 OWNER_ID = 'UR_1QAwVwSMYMfW9nn'
-SURVEY_NAME = 'A-1 意思決定と日常行動に関する調査（v0.5r2 Qualtrics）'
+SURVEY_NAME = 'A-1 意思決定と日常行動に関する調査（v0.6r3 Qualtrics）'
 
 HG = ['hg_1', 'hg_3', 'hg_7', 'hg_10', 'hg_13']
 PP = ['pp_1', 'pp_8', 'pp_12', 'pp_14', 'pp_15']
@@ -63,7 +72,7 @@ QTEXT = dict(
     # 無料版は JavaScript で取り分を即時表示できないので、代わりに 1 文で補う
     decision_note_static='入力した額が相手の受け取る額、{endowment} {currency} から引いた残りがあなたの取り分になります。',
     # 終了ページをブロックで出すとき（--eos-message なし）: 「次へ」を押すまで回答が完了にならないことを伝える
-    end_submit='参加者コードを控えたら「次へ」を押して回答を送信してください。送信されるまで回答は完了になりません。',
+    end_submit='実験 ID を控えたら「次へ」を押して回答を送信してください。送信されるまで回答は完了になりません。',
 )
 
 
@@ -264,11 +273,11 @@ def dg_intro_html(T):
 
 def end_html(T, progress_html, close_note):
     return (progress_html + f'<h2>{esc(T["end_title"])}</h2>' + paras(T['end_body']) + f'<p>{esc(T["end_code_label"])}</p>'
-            '<p><b><span style="font-family:monospace;font-size:1.6rem;letter-spacing:.1em">${e://Field/ResponseID}</span></b></p>'
+            '<p><b><span style="font-family:monospace;font-size:1.6rem;letter-spacing:.1em">${e://Field/exp_id}</span></b></p>'
             + paras([close_note], 'small'))
 
 
-def build(T, Q, full=False, meta=False, eos_message=None, allow_multiple=False, keep_ip=False, partial='+1 week'):
+def build(T, Q, full=False, meta=False, eos_message=None, allow_multiple=False, keep_ip=False, partial='+4 hours'):
     b = Builder(T, Q, full, meta)
     scale6 = T['likert6']
     scale5 = T['likert5']
@@ -398,7 +407,9 @@ def build(T, Q, full=False, meta=False, eos_message=None, allow_multiple=False, 
 
     root_flow = [
         # 設定値・来歴（codebook と同じ列名）と、順序群で決まる埋め込みデータの初期値（列を必ず作る）
-        ed(cfg_endowment=ENDOWMENT, cfg_fee=FEE, cfg_dg_step=DG_STEP, cfg_use_hexaco=1, lang=LANG, app_version=APP_VERSION,
+        # exp_id（r3）: 10 桁の乱数。パイプテキストはこのフロー要素に達した時点で評価され、回答に固定される
+        ed(exp_id='${rand://int/1000000000:9999999999}',
+           cfg_endowment=ENDOWMENT, cfg_fee=FEE, cfg_dg_step=DG_STEP, cfg_use_hexaco=1, lang=LANG, app_version=APP_VERSION,
            qsf_hash='', task_order='', scale_order='', fab_stage='', hex_stage='',
            p_fab1='', p_fab2='', p_hex='', p_dgi='', p_chk='', p_dec=''),
         blk('consent'),
@@ -466,14 +477,14 @@ def build(T, Q, full=False, meta=False, eos_message=None, allow_multiple=False, 
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--texts', required=True, help='a1-decision-study_v0.5/altruism_study/texts/ja.py')
-    ap.add_argument('--out', default='A-1_v0.5r2_ja.qsf')
+    ap.add_argument('--texts', required=True, help='a1-decision-study_v0.6/altruism_study/texts/ja.py')
+    ap.add_argument('--out', default='A-1_v0.6r3_ja.qsf')
     ap.add_argument('--full', action='store_true', help='Timing 質問と JavaScript を入れる（有料ライセンス向け）')
     ap.add_argument('--meta', action='store_true', help='同意ページに Meta Info 質問（ブラウザ・OS・画面解像度）を入れる。無料アカウントで通るか未確認')
     ap.add_argument('--eos-message', default=None, help='終了メッセージの Library ID（MS_xxx）。渡すと終了ブロックの代わりに End of Survey メッセージで参加者コードを出す')
     ap.add_argument('--allow-multiple', action='store_true', help='多重回答防止（BallotBoxStuffingPrevention）を切る')
     ap.add_argument('--keep-ip', action='store_true', help='匿名化（IP・位置情報を記録しない）を切る')
-    ap.add_argument('--partial', default='+1 week', help='未完了回答を記録するまでの期間（Survey Options の PartialData。既定 +1 week）')
+    ap.add_argument('--partial', default='+4 hours', help='未完了回答を記録するまでの期間（Survey Options の PartialData。既定 +4 hours = 研究室マニュアルの運用）')
     ap.add_argument('--brand', default=None, help='SurveyBrandID（既定: スクリプトの BRAND_ID）')
     args = ap.parse_args()
     global BRAND_ID

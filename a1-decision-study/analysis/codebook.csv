@@ -13,7 +13,8 @@ cfg_use_hexaco,bool,0|1,,,,設定値: HEXACO 質問紙を入れたか,config: HE
 user_agent,str,,,,,ブラウザの User-Agent（先頭 300 文字、未取得なら空）,browser user agent,,Consent,1,provenance,
 screen_width,int,,0,20000,,画面幅（px、未取得なら空）,screen width (px),,Consent,1,provenance,
 consent,bool,0|1,,,,同意,consent,,Consent,1,inclusion,cons
-eligible_confirm,bool,0|1,,,,参加資格（18 歳以上かつ対象大学の学生）,eligible (18+ and student),,Consent,1,inclusion,
+exp_id,str,,,,,実験 ID（10 桁の数字、セッション内で一意。終了画面に表示し CrowdWorks の作業ページに入力してもらう。tools/match_cw_ids.py で照合）,experiment ID (10 digits; shown at the end and entered on CrowdWorks),,creating_session,1,provenance/matching,
+eligible_confirm,bool,0|1,,,,参加資格（18 歳以上かつ日本語が母語。v0.5 は対象大学の学生）,eligible (18+ and native Japanese speaker),,Consent,1,inclusion,
 hg_1,int,,1,6,,FAB Help Giving（S1 hg_1）,FAB HG item hg_1,0,FabPage,1,predictor,hg_1
 hg_3,int,,1,6,,FAB Help Giving（S1 hg_3）,FAB HG item hg_3,0,FabPage,1,predictor,hg_3
 hg_7,int,,1,6,,FAB Help Giving（S1 hg_7）,FAB HG item hg_7,0,FabPage,1,predictor,hg_7

@@ -1,0 +1,1127 @@
+diff -ruN '--exclude=__pycache__' '--exclude=docs' '--exclude=*.pyc' a1-decision-study_v0.5/CHANGELOG.md a1-decision-study_v0.6/CHANGELOG.md
+--- a1-decision-study_v0.5/CHANGELOG.md	2026-10-29 01:22:56.154410500 +0000
++++ a1-decision-study_v0.6/CHANGELOG.md	2026-11-09 03:51:26.688933200 +0000
+@@ -1,5 +1,45 @@
+ # 変更履歴
+ 
++## v0.6-pilot（2026-11-09）— CrowdWorks 募集に合わせる（研究室マニュアル『Qualtrics とクラウドワークスの使い方』、計画書 v0.6）
++
++研究室のオンライン実験マニュアル（募集は CrowdWorks のタスク、実施は Qualtrics、終了画面の ID を CW に入力して照合・承認）に合わせた。
++修正前（v0.5）は `../a1-decision-study_v0.5/` にそのまま残し、比較は `docs/compare_v0.5_v0.6.md`、ソースの差分は `docs/diff_v0.5_to_v0.6.patch`。
++画面構成（9 ページ）、変数（`exp_id` の追加以外）、解析スクリプトは v0.5 のまま。Qualtrics 版は `../qualtrics/`（r3）で同じ変更をした。
++
++### 1. 参加資格と文言（texts/ja.py, en.py, codebook.csv）
++- `eligible_check`: 「18 歳以上で、[大学名] に在籍する学生」→「18 歳以上で、日本語を母語としています」（CW の対象 = 日本語母語の 18 歳以上。
++  学生の限定をやめた）。変数 `eligible_confirm` はそのまま（codebook のラベルを更新）。
++- 同意文の「参加者コード（ランダムな文字列）」→「実験 ID（ランダムな数字）」。終了画面の文言を「実験 ID を CrowdWorks の作業ページのフォームに入力して
++  『作業を完了する』を押す」「入力がないと報酬を支払えない」に。`end_code_label` = 実験 ID。
++
++### 2. 実験 ID（__init__.py, End.html 経由の表示, tests.py, codebook.csv）
++- `Player.exp_id`（文字列、10 桁の数字）を追加。`creating_session` で `secrets.randbelow` により発行し、セッション内で一意にする
++  （乱数シード `rand_seed` とは独立なので、割り当てから推測できない）。終了画面は `exp_id` を表示（`participant.code` は内部用・エクスポートに残る）。
++- 10 桁にした理由: マニュアルの推奨（6 桁では使い回し・偶然の一致が起きた）。数字だけにしたのは入力ミス（O/0、l/1）を減らすため。
++- tests.py: 終了時に `exp_id` が 10 桁の数字で、同じセッションに重複がないことを検査（ボットテストは v0.6 ではまだ実行していない）。
++
++### 3. 照合と支払いのツール（tools/match_cw_ids.py 新規, tools/pairing.py）
++- `tools/match_cw_ids.py`: CW の承認待ち一覧（CSV / TSV / HTML、UTF-8 か CP932）と調査データ（Qualtrics の生 CSV か oTree 形式）を実験 ID で照合し、
++  approve（完了回答に 1 対 1 で存在）/ check（未完了、同じ ID の最初の入力、1 文字違いの近い ID）/ reject（存在しない、形式違い、同じ ID の 2 件目以降）と
++  理由を `payout/match_<date>.csv` に出す。未申告の完了回答は `unclaimed_<date>.csv`、承認分の `code, cw_user, cw_profile_url, work_id` は
++  `contacts_<date>.csv`（pairing.py の `--contacts`）。CW 規約の非承認の上限（3 件か総数の 30%）を超えると警告。合成データで動作確認済み。
++- `tools/pairing.py`: code に `player.exp_id` を使う（なければ `participant.code`）。連絡先の列は `cw_user` / 「作業者」も自動判定。
++  `--realize-pairs N`（計画書の案 B: 抽選で N ペアだけ決定どおり支払い、残りは参加謝礼のみ。`realized` 列）。
++  `cw_extra_yen` 列（= payout − fee。参加謝礼はタスク報酬で支払い済みなので、CW で個別発注する額）。合成データで案 A / B とも動作確認済み。
++- 連絡先（メールアドレス）は集めない。CW のユーザー名・作業 ID は回答データと別フォルダーに置き、検収後に削除する（計画書「倫理」）。
++
++### 4. そのほか
++- settings.py: `app_version` = `v0.6-pilot`、`participation_fee_yen` のコメント（= CW のタスク単価）、デモページの説明。
++- run_dev.bat / run_tests.bat: コピー先を `%LOCALAPPDATA%\a1-decision-study_v0.6` に。
++- 99_synthetic.R: `player.exp_id` 列と `app_version` = `v0.6-synthetic`（R は v0.6 ではまだ実行していない。01_clean.R は codebook で列を検査しないので、
++  `exp_id` の有無で止まらない見込み）。
++- README.md: v0.6 の状態、CW 募集ページの設定、締切後の手順（照合 → 承認 → pairing → 個別発注）。
++
++### 確認が必要な点（v0.6 で増えた分）
++- 案 A（全ペア実現）か案 B（`--realize-pairs`）か。CW の受取額（契約額の約 86%）と「決定どおり」の読み方。
++- 注意チェックの位置: oTree 版はページの端に置かない制約が v0.5 からある。Qualtrics 版は固定位置（1 ページ目 5 番目、2 ページ目 4 番目）。
++- CW の作業時間の上限（60 分）、入力フォームの文字数（20 文字以下）、「重複を認めない」の設定は CW の募集ページ側で行う（コードにはない）。
++
+ ## v0.5-pilot（2026-10-29）— 画面を必要最低限に、質問紙を 2 段階に、参加者の手間を減らす、使い回せるデモ URL
+ 
+ デモ（v0.4）を見ての修正。修正前（v0.4）は `../a1-decision-study/` にそのまま残し、比較は `docs/compare_v0.4_v0.5.md`、
+diff -ruN '--exclude=__pycache__' '--exclude=docs' '--exclude=*.pyc' a1-decision-study_v0.5/README.md a1-decision-study_v0.6/README.md
+--- a1-decision-study_v0.5/README.md	2026-10-29 01:22:56.014095300 +0000
++++ a1-decision-study_v0.6/README.md	2026-11-09 03:50:29.469757200 +0000
+@@ -1,31 +1,40 @@
+-# a1-decision-study_v0.5 — A-1 追試（FAB・HEXACO 質問紙 × 独裁者ゲーム）の oTree 実装（v0.5・日本語版）
++# a1-decision-study_v0.6 — A-1 追試（FAB・HEXACO 質問紙 × 独裁者ゲーム）の oTree 実装（v0.6・日本語版）
+ 
+ Binder, Schultze, Chen & Windmann (2026, *Sci Rep* 16:11600) の「Help Giving → 独裁者ゲーム」を
+-日本の大学生で再現する一回完結のオンライン実験。設計はこの文書に従う:
++日本の CrowdWorks ワーカーで再現する一回完結のオンライン実験（v0.6 で学内募集から変更）。設計はこの文書に従う:
+ 
+ - 要件定義・設計書: https://claude.ai/code/artifact/5f9cc974-cbb4-4fd0-840b-7836e6283d47
+ - 実験計画書 A-1: https://claude.ai/code/artifact/7d6d3bf2-110f-4096-87f7-f1ae9ec69219
+ - 再現要素一覧（Excel）: `../A-1_再現要素一覧.xlsx`
+ - 原研究の公開資料（OSF T5MF2）からの抜粋と対応表: `docs/osf_sources.md`、変更履歴: `CHANGELOG.md`
+-- 修正前の v0.4 は `../a1-decision-study/` にそのまま残してある。v0.4 → v0.5 の比較: `docs/compare_v0.4_v0.5.md`（文言・変数・解析）、
+-  `docs/compare_screens_v0.4_v0.5_ja.pdf`（画面の並列比較）、`docs/diff_v0.4_to_v0.5.patch`（ソースの差分）
++- 修正前の v0.5 は `../a1-decision-study_v0.5/`、v0.4 は `../a1-decision-study/` にそのまま残してある。v0.5 → v0.6 の比較: `docs/compare_v0.5_v0.6.md`、
++  ソースの差分 `docs/diff_v0.5_to_v0.6.patch`。v0.4 → v0.5: `docs/compare_v0.4_v0.5.md`、`docs/compare_screens_v0.4_v0.5_ja.pdf`、`docs/diff_v0.4_to_v0.5.patch`
++- 募集・実施・承認の運用（CrowdWorks × Qualtrics、研究室マニュアル）は計画書 v0.6 の「募集と実施の運用」。Qualtrics 版は `../qualtrics/`（r3）
+ 
+ 参加者は各自のスマホ・PC から募集期間中の好きな時刻に 1 人で参加する（完全非同期、約 10 分）。
+ WaitPage やグループは使わない。DG の相手とのペアは締切後に `tools/pairing.py` でオフラインに組む。
++参加者は CrowdWorks のタスクから来て、終了画面の 10 桁の実験 ID を CW の作業ページに入力する（`tools/match_cw_ids.py` で照合）。
+ 
+-## 状態（2026-10-29, v0.5）
++## 状態（2026-11-09, v0.6）
+ 
+ v0.2 で OSF T5MF2 の原資料（補足資料 S1、codebook、前処理・解析スクリプト、卒論付録の教示原文）に合わせて改訂し、
+ v0.3 で実験計画書の「記録・分析ノート・図表」と改訂した「分析計画」（判定基準・感度分析・不確実性の明示）を実装、
+ v0.4 で HEXACO の採用、完了者だけの保存、設定値の CSV からの読み取り、Page Times による速い回答の検出を加え、
+-v0.5 でデモを見て画面を必要最低限（9 ページ）にし、質問紙を FAB / HEXACO の 2 段階にし、参加者の手間を減らし、使い回せるデモ URL を付けた。
++v0.5 でデモを見て画面を必要最低限（9 ページ）にし、質問紙を FAB / HEXACO の 2 段階にし、参加者の手間を減らし、使い回せるデモ URL を付け、
++v0.6 で研究室マニュアル（CrowdWorks × Qualtrics）に合わせて募集を CrowdWorks にし、参加資格・終了画面（実験 ID）・照合と支払いのツールを変えた。
++v0.6 の変更は文言とツールだけで、画面構成・変数（exp_id の追加以外）・解析スクリプトは v0.5 と同じ。ボットテストと R は v0.6 ではまだ実行していない。
+ 変更点の一覧は `CHANGELOG.md`。
+ 
+ できていること
+ 
++- **CrowdWorks 募集向け（v0.6）**: 参加資格のチェックを「18 歳以上で、日本語が母語」に（`eligible_check`）。終了画面に 10 桁の実験 ID `exp_id`
++  （セッション作成時に `secrets` で発行、セッション内で一意、CSV に出る）を表示し、参加者が CW の作業ページのフォームに入力する。
++  `tools/match_cw_ids.py` が CW の承認待ち一覧（CSV / HTML）と調査データ（Qualtrics の CSV か oTree 形式）を照合して approve / check / reject と
++  未申告の一覧、`pairing.py` 用の `contacts_<date>.csv` を出す。`tools/pairing.py` は `player.exp_id` を code に使い、`--realize-pairs N` で
++  計画書の案 B（抽選で一部のペアだけ実現）に対応。連絡先（メールアドレス）は集めない
+ - **最低限の画面（v0.5）**: 同意 → 質問紙 1/2（FAB + 注意チェック、2 ページ）→ 質問紙 2/2（HEXACO、1 ページ）→ DG 説明 → 理解確認 → 決定
+   → 事後評価 → 終了（順序群 2 は DG が質問紙の前）。謝礼・連絡先の案内、参加者コードの前置き、属性、自己予測、入力確認は外した
+-  （案内はリンク配布時に伝える）。参加者コードは終了画面にだけ出す
++  （案内は CW の募集ページに書く）。終了画面には実験 ID だけ出す（v0.6。v0.5 は oTree の参加者コード）
+ - **質問紙の 2 段階（v0.5）**: FAB は 6 件法、HEXACO 正直さ-謙虚さ 10 項目は原版と同じ 5 件法で別の段階。段階の順序 `scale_order` を
+   `task_order` と 2 × 2 でブロックランダム化（4 人ごとに 4 通り）。各段階内はランダム順（`fab_item_order`, `hex_item_order`）
+ - **参加者の手間（v0.5）**: 進捗「ページ k / 9」、未回答項目への自動スクロール、行全体をタップ、回答済みの印、教示は各段階の 1 ページ目に統合、
+@@ -64,9 +73,10 @@
+ 
+ 1. **FAB の和訳の確定**: `altruism_study/texts/ja.py` の 15 項目はすべて訳案。バックトランスレーション
+    （和訳 → 別の人が英訳 → S1 の原文と比較 → 修正）を経た確定版に置き換える。英語原文は `en.py` と `docs/osf_sources.md`
+-2. **リンク配布時の案内文**: 謝礼（参加謝礼の額、DG の結果に応じた額、種類・送付方法・時期）、連絡先、終了画面の参加者コードをどう申告するかを、
+-   実験の外（募集メール・掲示）で伝える。画面には出さない（v0.5）。文面を計画書「倫理・謝礼」に入れる
+-3. **同意文の固有情報**: `eligible_check` の [大学名]
++2. **CrowdWorks の募集ページ**: 文案は計画書 v0.6「募集と実施の運用」。報酬（タスク単価 300 円、DG の追加報酬の書き方は案 A / B の決定後）、
++   作業時間の上限（60 分）、入力フォーム「実験 ID」（20 文字以下、重複を認めない）、応募条件（承認率 95% 以上）を設定し、高橋先生のチェックを受ける
++3. **v0.6 の検証**: `run_tests.bat`（exp_id の 10 桁・一意の検査を tests.py に追加済み）と `run_analysis.bat synthetic` を実行する。
++   `99_synthetic.R` は `exp_id` 列を作らないので、`01_clean.R` が列の有無で止まらないことを確認する
+ 4. **決めること（CHANGELOG「確認が必要な点」）**: DG の刻み（既定 1 円）、注意チェックの正答（両端）、
+    所要時間の除外閾値（中央値の 1/4）、事後評価の 4 項目を残すか
+ 5. `docs/screens_v0.5_ja.pdf`（v0.5 の全画面、スマホ幅）と `docs/compare_screens_v0.4_v0.5_ja.pdf` を見て文言・レイアウトを確認する。
+@@ -95,16 +105,16 @@
+    `http://localhost:8000/join/<code>` をブラウザで開く。このリンクは**開くたびに新しい参加者として最初から始まる**ので、
+    /demo に戻って参加者リンクを選び直す必要がない（100 回まで。足りなくなったら `run_dev.bat` を再実行）。
+    固定リンク `http://localhost:8000/room/demo`（本実験と同じ URL の形）も使える。こちらは同じブラウザで開き直すと続きから再開し、
+-   シークレットウィンドウ・スマホ・別のブラウザからは新しい参加者になる。リンクは `%LOCALAPPDATA%\a1-decision-study_v0.5\__demo_links.txt` にも書かれる。
++   シークレットウィンドウ・スマホ・別のブラウザからは新しい参加者になる。リンクは `%LOCALAPPDATA%\a1-decision-study_v0.6\__demo_links.txt` にも書かれる。
+    スマホ表示を見るにはブラウザの開発者ツール（F12）→ デバイスツールバーで幅 375 にする。英語版は `run_dev.bat 8000 a1_en`。
+ 4. 止めるときは黒い窓で Ctrl+C。
+ 
+-`run_dev.bat` は、このフォルダー（OneDrive 配下）の中身を `%LOCALAPPDATA%\a1-decision-study_v0.5` にコピーしてから
++`run_dev.bat` は、このフォルダー（OneDrive 配下）の中身を `%LOCALAPPDATA%\a1-decision-study_v0.6` にコピーしてから
+ 起動する（v0.4 の `%LOCALAPPDATA%\a1-decision-study` とは別なので両方を見比べられる）。OneDrive の同期と `db.sqlite3` の書き込みが
+ ぶつかるのを避けるため。**コードの編集はこのフォルダーで行い、編集後に `run_dev.bat` をもう一度実行する**（コピー先を直接編集すると
+ 次回上書きされる）。ポートが使用中なら `run_dev.bat 8001` のように引数で変えられる。
+ 
+-ボットテストと CSV 出力は `run_tests.bat`（引数で人数、既定 24 = 6 ケース × 4 通りの順序）。結果は `%LOCALAPPDATA%\a1-decision-study_v0.5\__temp_bots\`。
++ボットテストと CSV 出力は `run_tests.bat`（引数で人数、既定 24 = 6 ケース × 4 通りの順序）。結果は `%LOCALAPPDATA%\a1-decision-study_v0.6\__temp_bots\`。
+ 
+ ### 手動で行う場合（PowerShell / macOS / Linux）
+ 
+@@ -154,7 +164,7 @@
+ tools/run_log.py             エクスポート CSV からセッションの要約を docs/run_log.csv に追記（v0.3）
+ tools/browser_walk.py        Playwright で 4 人分を通し、全種類の画面を撮って PDF にまとめる
+ tools/compare_screens.py     v0.4 と v0.5 のスクリーンショットを左右に並べた比較 PDF を作る（v0.5）
+-run_dev.bat / run_tests.bat  Windows 用の起動・テスト（OneDrive 外 %LOCALAPPDATA%\a1-decision-study_v0.5 にコピーして実行）
++run_dev.bat / run_tests.bat  Windows 用の起動・テスト（OneDrive 外 %LOCALAPPDATA%\a1-decision-study_v0.6 にコピーして実行）
+ run_analysis.bat / .sh       解析パイプライン 01 → 02 → 04 を順に実行（synthetic / original モードあり）（v0.3）
+ docs/osf_sources.md          OSF T5MF2 から取得した原資料の抜粋（教示文・注意チェック・除外基準・変数名）
+ docs/screens_v0.5_ja.pdf     v0.5 の全画面のスクリーンショット（英語版は screens_v0.5_en.pdf）
+@@ -235,6 +245,8 @@
+   `python tools/run_log.py raw/main/altruism_study_<date>.csv --purpose main` で run ログを更新する
+ - 起動前に環境変数 `A1_GIT_COMMIT` にコードのコミットを入れる（`run_dev.bat` は `git rev-parse` で自動設定。Git 管理していなければ
+   `unknown` になるので、`app_version` を版ごとに必ず変える）
+-- 締切後: `python tools/pairing.py --data raw/final/altruism_study_<date>.csv --contacts raw/contacts_<date>.csv --seed <整数>`
+-  → `payout/pairs_<date>.csv` の `payout_yen` を支払う（元手・参加謝礼は CSV の記録値から読む。支払いの方法・送付手順は未決、計画書に記載予定）。
+-  `--contacts` の CSV は v0.5 では実験の外で集める（参加者が申告した参加者コード + 連絡先）
++- 締切後（v0.6）: まず `python tools/match_cw_ids.py --cw <CW の承認待ち一覧 CSV/HTML> --data raw/final/altruism_study_<date>.csv` で実験 ID を照合し、
++  `payout/match_<date>.csv` の approve / check / reject に沿って CW で承認・非承認（募集終了後 14 日以内。微妙なら承認）。
++  次に `python tools/pairing.py --data raw/final/altruism_study_<date>.csv --contacts payout/contacts_<date>.csv --seed <整数> [--realize-pairs 10]`
++  → `payout/pairs_<date>.csv` の `payout_yen`（参加謝礼はタスク報酬で支払い済みなので、DG 分 = payout_yen − fee）を CW の個別発注で支払う。
++  案 A（全ペア）か案 B（`--realize-pairs`）かは計画書「倫理・謝礼」で決める
+diff -ruN '--exclude=__pycache__' '--exclude=docs' '--exclude=*.pyc' a1-decision-study_v0.5/altruism_study/__init__.py a1-decision-study_v0.6/altruism_study/__init__.py
+--- a1-decision-study_v0.5/altruism_study/__init__.py	2026-10-29 01:22:55.939411800 +0000
++++ a1-decision-study_v0.6/altruism_study/__init__.py	2026-11-09 03:44:38.248168500 +0000
+@@ -1,4 +1,4 @@
+-"""A-1 追試: FAB 質問紙 × HEXACO × 独裁者ゲーム（一回完結・順序ランダム化・役割不確定法）v0.5
++"""A-1 追試: FAB 質問紙 × HEXACO × 独裁者ゲーム（一回完結・順序ランダム化・役割不確定法）v0.6
+ 
+ 設計書: https://claude.ai/code/artifact/5f9cc974-cbb4-4fd0-840b-7836e6283d47
+ 原資料: https://osf.io/t5mf2/（Binder et al., 2026 の補足資料。CHANGELOG.md に対応表）
+@@ -6,6 +6,9 @@
+ - WaitPage・グループは使わない。各参加者は自分のペースで最後まで進む（FR-25）
+ - 文言は texts/ から引く。テンプレートに文言を書かない（§8）
+ - 変数名は原研究の整形済みデータ（Studies/XX/XX_data.csv）に合わせる: hg_1 … mc_23, cq1, cq2, dg_give
++- v0.6: CrowdWorks 募集に合わせた（研究室マニュアル）。参加資格を「18 歳以上・日本語が母語」に、終了画面に 10 桁の実験 ID
++  （player.exp_id、セッション作成時に secrets で発行、セッション内で一意）を表示。参加者はそれを CW のフォームに入力し、
++  tools/match_cw_ids.py で CW の承認待ち一覧と照合する。participant.code は内部用に残す
+ - v0.5: 画面を実験に必要な最低限にした（同意 → 質問紙 2 段階 → DG 説明・理解確認・決定 → 事後評価 → 終了。順序群で前後が入れ替わる）。
+   謝礼・連絡先の案内、参加者コードの前置きページ、属性、自己予測、入力確認を外した（案内はリンク配布時に伝える）。
+   質問紙を FAB（+注意チェック、6 件法、2 ページ）と HEXACO（5 件法、1 ページ）の 2 段階にし、段階の順序 scale_order も
+@@ -17,6 +20,7 @@
+ import hashlib
+ import os
+ import random
++import secrets
+ import subprocess
+ from datetime import datetime, timezone
+ 
+@@ -52,7 +56,7 @@
+ GIT_COMMIT = _git_commit()
+ 
+ doc = """
+-Binder et al. (2026) の Help Giving → 独裁者ゲームの関連を日本の大学生で再現する一回完結のオンライン実験。
++Binder et al. (2026) の Help Giving → 独裁者ゲームの関連を日本の CrowdWorks ワーカーで再現する一回完結のオンライン実験。
+ 質問紙（FAB 15 項目 + 注意チェック 2、HEXACO 正直さ-謙虚さ 10 項目）と意思決定課題（DG, 元手は session config）の
+ 順序、および 2 つの質問紙の順序を参加者ごとにランダム化する。
+ """
+@@ -249,7 +253,16 @@
+         block = [(1, 1), (1, 2), (2, 1), (2, 2)]
+         rng.shuffle(block)
+         combos.extend(block)
++    # 実験 ID（v0.6）: 10 桁の数字、セッション内で一意。乱数シードとは独立（secrets）なので割り当てからは推測できない。
++    # 終了画面に表示し、参加者が CrowdWorks の作業ページに入力する（研究室マニュアル: 10 桁程度、重複を認めない）
++    used_ids = set()
+     for p, (to, so) in zip(players, combos):
++        while True:
++            eid = str(secrets.randbelow(9_000_000_000) + 1_000_000_000)
++            if eid not in used_ids:
++                used_ids.add(eid)
++                break
++        p.exp_id = eid
+         p.task_order = to
+         p.scale_order = so if hexaco else 0
+         p.lang = cfg['lang']
+@@ -304,9 +317,11 @@
+     cfg_use_hexaco = models.BooleanField(blank=True)
+     user_agent = models.LongStringField(blank=True)
+     screen_width = models.IntegerField(blank=True)
+-    # 同意（v0.5: 同意 + 参加資格の 2 項目）
++    # 実験 ID（v0.6）: 終了画面に表示し CrowdWorks に入力してもらう 10 桁の数字。creating_session で発行
++    exp_id = models.StringField(blank=True)
++    # 同意（v0.5: 同意 + 参加資格の 2 項目。v0.6: 参加資格 = 18 歳以上・日本語が母語）
+     consent = models.BooleanField(widget=widgets.CheckboxInput, blank=True)
+-    eligible_confirm = models.BooleanField(widget=widgets.CheckboxInput, blank=True)  # 18 歳以上かつ対象大学の学生
++    eligible_confirm = models.BooleanField(widget=widgets.CheckboxInput, blank=True)  # 18 歳以上かつ日本語が母語（v0.6）
+     # FAB（原研究の変数名。1〜6、逆転項目なし）
+     hg_1 = likert_field()
+     hg_3 = likert_field()
+@@ -538,7 +553,8 @@
+             player.excluded_in_app = bool(reasons)
+             player.exclude_reason_in_app = ','.join(reasons)
+             player.finished = True
+-        return ctx(player, code=player.participant.code)
++        # v0.6: 終了画面には実験 ID（exp_id）を出す。participant.code は管理画面・エクスポートに残る
++        return ctx(player, code=player.field_maybe_none('exp_id') or player.participant.code)
+ 
+ 
+ # ---------------------------------------------------------------------------
+diff -ruN '--exclude=__pycache__' '--exclude=docs' '--exclude=*.pyc' a1-decision-study_v0.5/altruism_study/tests.py a1-decision-study_v0.6/altruism_study/tests.py
+--- a1-decision-study_v0.5/altruism_study/tests.py	2026-10-29 01:22:55.999006500 +0000
++++ a1-decision-study_v0.6/altruism_study/tests.py	2026-11-09 03:45:17.520649600 +0000
+@@ -1,4 +1,4 @@
+-"""ボットテスト（設計書 §10.1）v0.5。
++"""ボットテスト（設計書 §10.1）v0.6。
+ 
+ 実行: otree test a1_ja 24   （24 名 × 6 ケース。4 名ごとに task_order × scale_order の 4 通りが揃う）
+ ケース:
+@@ -9,6 +9,7 @@
+   zero_give       0 円を分ける → dg_share = False
+   bad_amount      範囲外・刻み違いの額は受け付けない（元手超過、負の値、dg_step の倍数でない値）
+ v0.5 で外したもの: revise（入力確認）、属性、自己予測、参加者コードページ。
++v0.6: 実験 ID（exp_id）が 10 桁の数字で、セッション内で重複しないことを検査。
+ """
+ from otree.api import Bot, Submission, SubmissionMustFail, expect
+ 
+@@ -57,6 +58,10 @@
+         expect(p.dg_share, p.dg_give > 0)
+         expect(p.eval_distract, 1)
+         expect(len(p.fab_item_order.split(',')), 17)  # FAB 15 + 注意チェック 2
++        # v0.6: 実験 ID は 10 桁の数字で、同じセッションの他の参加者と重ならない
++        expect(len(p.exp_id), 10)
++        expect(p.exp_id.isdigit(), True)
++        expect(sum(1 for q in p.subsession.get_players() if q.field_maybe_none('exp_id') == p.exp_id), 1)
+         if cfg['use_hexaco']:
+             expect(p.scale_order in (1, 2), True)
+             expect(len(p.hex_item_order.split(',')), 10)
+diff -ruN '--exclude=__pycache__' '--exclude=docs' '--exclude=*.pyc' a1-decision-study_v0.5/altruism_study/texts/en.py a1-decision-study_v0.6/altruism_study/texts/en.py
+--- a1-decision-study_v0.5/altruism_study/texts/en.py	2026-10-29 01:22:55.982843600 +0000
++++ a1-decision-study_v0.6/altruism_study/texts/en.py	2026-11-09 03:44:38.237492700 +0000
+@@ -23,11 +23,11 @@
+         'and two questionnaires and takes about 10 minutes. You can do it on your own smartphone or computer.',
+         'Participation is voluntary. Once you start, please complete the study in one sitting without interruption. '
+         'If you want to stop, close this page; incomplete responses are not kept.',
+-        'Your answers are stored under a random participant code; no names or email addresses are stored with them. '
++        'Your answers are stored under a random experiment ID; no names or email addresses are stored with them. '
+         'Anonymized data may be shared publicly for research.',
+     ],
+     consent_check='I have read the above and agree to take part.',
+-    eligible_check='I am 18 years or older and a student at [university].',
++    eligible_check='I am 18 years or older and a native speaker of Japanese.',
+     consent_error='To take part, please tick both boxes.',
+ 
+     survey_title='Questionnaire',
+@@ -140,8 +140,9 @@
+     end_title='Thank you',
+     end_body=[
+         'The study is now complete.',
+-        'Your participant code is shown below. Please write it down or take a screenshot.',
++        'Your experiment ID is shown below. Go back to the CrowdWorks task page, enter this ID in the form and click "Complete".',
++        'Please write the ID down or take a screenshot. Without it we cannot pay the reward.',
+     ],
+-    end_code_label='Participant code',
++    end_code_label='Experiment ID',
+     end_close='You may now close this page.',
+ )
+diff -ruN '--exclude=__pycache__' '--exclude=docs' '--exclude=*.pyc' a1-decision-study_v0.5/altruism_study/texts/ja.py a1-decision-study_v0.6/altruism_study/texts/ja.py
+--- a1-decision-study_v0.5/altruism_study/texts/ja.py	2026-10-29 01:22:55.989903600 +0000
++++ a1-decision-study_v0.6/altruism_study/texts/ja.py	2026-11-09 03:44:38.226724300 +0000
+@@ -1,5 +1,6 @@
+ # -*- coding: utf-8 -*-
+-"""日本語版の文言（v0.5: 画面を必要最低限にし、質問紙を FAB / HEXACO の 2 段階にした）。
++"""日本語版の文言（v0.6: CrowdWorks 募集に合わせ、参加資格を「日本語が母語」に、終了画面を 10 桁の実験 ID に。
++v0.5: 画面を必要最低限にし、質問紙を FAB / HEXACO の 2 段階にした）。
+ 
+ 出典（すべて https://osf.io/t5mf2/）
+ - FAB 15 項目: Supplement.pdf S1（英語・ドイツ語の確定文言）。キーは原研究の変数名（hg_1 … mc_23）
+@@ -10,8 +11,10 @@
+ - 事後評価項目: Studies/11 の codebook（AG11_01〜06）
+ - HEXACO-60 の教示と 5 件法: hexaco.org の HEXACO-60 原版（日本語版は若林, 2014）
+ 
+-v0.5 で外した文言（案内はリンク配布時に伝える）: 謝礼・連絡先・Google フォーム、参加者コードの前置きページ、
++v0.5 で外した文言（案内は CrowdWorks の募集ページに書く）: 謝礼・連絡先・Google フォーム、参加者コードの前置きページ、
+ 属性、自己予測、入力の確認。
++v0.6: 参加者コード（oTree の participant.code）の代わりに 10 桁の実験 ID（player.exp_id）を終了画面に出し、
++参加者はそれを CrowdWorks の作業ページのフォームに入力する（研究室マニュアルの運用。照合は tools/match_cw_ids.py）。
+ 
+ 注意
+ - FAB の和訳はすべて「案」。バックトランスレーションを経た確定版に置き換える（研究室で実施）。
+@@ -32,11 +35,11 @@
+         '所要時間は約 10 分です。お手持ちのスマートフォンやパソコンから回答できます。',
+         '参加は任意です。ただし、いったん始めたら中断せずに最後まで一度にお答えください。'
+         '途中でやめる場合はこのページを閉じてください。その場合、入力途中の回答は保存されません。',
+-        '回答は参加者コード（ランダムな文字列）のもとに保存され、氏名やメールアドレスと一緒に保存されることはありません。'
++        '回答は実験 ID（ランダムな数字）のもとに保存され、氏名やメールアドレスと一緒に保存されることはありません。'
+         '個人が特定できない形にしたデータは、研究目的で公開することがあります。',
+     ],
+     consent_check='上記の説明を読み、調査への参加に同意します。',
+-    eligible_check='私は 18 歳以上で、[大学名] に在籍する学生です。',
++    eligible_check='私は 18 歳以上で、日本語を母語としています。',
+     consent_error='参加するには 2 つの項目にチェックを入れてください。',
+ 
+     # ---- 質問紙（共通）----
+@@ -156,8 +159,9 @@
+     end_title='ご協力ありがとうございました',
+     end_body=[
+         'これで調査は終了です。',
+-        'あなたの参加者コードは下の通りです。メモや画面の保存などで控えてください。',
++        'あなたの実験 ID は下の通りです。CrowdWorks の作業ページに戻り、フォームにこの実験 ID を入力して「作業を完了する」を押してください。',
++        '実験 ID はメモや画面の保存などで控えてください。入力がないと報酬をお支払いできません。',
+     ],
+-    end_code_label='参加者コード',
++    end_code_label='実験 ID',
+     end_close='このページは閉じていただいて構いません。',
+ )
+diff -ruN '--exclude=__pycache__' '--exclude=docs' '--exclude=*.pyc' a1-decision-study_v0.5/analysis/99_synthetic.R a1-decision-study_v0.6/analysis/99_synthetic.R
+--- a1-decision-study_v0.5/analysis/99_synthetic.R	2026-10-29 01:22:56.247351200 +0000
++++ a1-decision-study_v0.6/analysis/99_synthetic.R	2026-11-09 03:51:26.675274900 +0000
+@@ -42,9 +42,11 @@
+   `participant._current_page_name` = "End", `participant.time_started_utc` = format(t0, "%Y-%m-%d %H:%M:%S"), `participant.visited` = 1,
+   `participant.mturk_worker_id` = "", `participant.mturk_assignment_id` = "", `participant.payoff` = 0,
+   `player.id_in_group` = 1, `player.role` = "", `player.payoff` = 0,
+-  `player.task_order` = task_order, `player.scale_order` = scale_order, `player.lang` = "ja", `player.app_version` = "v0.5-synthetic", `player.git_commit` = "synthetic",
++  `player.task_order` = task_order, `player.scale_order` = scale_order, `player.lang` = "ja", `player.app_version` = "v0.6-synthetic", `player.git_commit` = "synthetic",
+   `player.otree_version` = "5.11.5", `player.rand_seed` = 12345, `player.cfg_endowment` = endow, `player.cfg_dg_step` = 1, `player.cfg_fee` = 300, `player.cfg_use_hexaco` = 0,
+   `player.user_agent` = "synthetic", `player.screen_width` = sample(c(375, 390, 1280), N, TRUE),
++  # v0.6: 実験 ID（10 桁の数字、一意）
++  `player.exp_id` = paste0(sample(1:9, N, TRUE), sapply(seq_len(N), function(i) paste(sample(0:9, 9, TRUE), collapse = ""))),
+   `player.consent` = 1, `player.eligible_confirm` = 1
+ ) %>%
+   bind_cols(setNames(items, paste0("player.", names(items)))) %>%
+diff -ruN '--exclude=__pycache__' '--exclude=docs' '--exclude=*.pyc' a1-decision-study_v0.5/analysis/codebook.csv a1-decision-study_v0.6/analysis/codebook.csv
+--- a1-decision-study_v0.5/analysis/codebook.csv	2026-10-29 01:22:56.215971700 +0000
++++ a1-decision-study_v0.6/analysis/codebook.csv	2026-11-09 03:44:38.269005300 +0000
+@@ -13,7 +13,8 @@
+ user_agent,str,,,,,ブラウザの User-Agent（先頭 300 文字、未取得なら空）,browser user agent,,Consent,1,provenance,
+ screen_width,int,,0,20000,,画面幅（px、未取得なら空）,screen width (px),,Consent,1,provenance,
+ consent,bool,0|1,,,,同意,consent,,Consent,1,inclusion,cons
+-eligible_confirm,bool,0|1,,,,参加資格（18 歳以上かつ対象大学の学生）,eligible (18+ and student),,Consent,1,inclusion,
++exp_id,str,,,,,実験 ID（10 桁の数字、セッション内で一意。終了画面に表示し CrowdWorks の作業ページに入力してもらう。tools/match_cw_ids.py で照合）,experiment ID (10 digits; shown at the end and entered on CrowdWorks),,creating_session,1,provenance/matching,
++eligible_confirm,bool,0|1,,,,参加資格（18 歳以上かつ日本語が母語。v0.5 は対象大学の学生）,eligible (18+ and native Japanese speaker),,Consent,1,inclusion,
+ hg_1,int,,1,6,,FAB Help Giving（S1 hg_1）,FAB HG item hg_1,0,FabPage,1,predictor,hg_1
+ hg_3,int,,1,6,,FAB Help Giving（S1 hg_3）,FAB HG item hg_3,0,FabPage,1,predictor,hg_3
+ hg_7,int,,1,6,,FAB Help Giving（S1 hg_7）,FAB HG item hg_7,0,FabPage,1,predictor,hg_7
+diff -ruN '--exclude=__pycache__' '--exclude=docs' '--exclude=*.pyc' a1-decision-study_v0.5/run_dev.bat a1-decision-study_v0.6/run_dev.bat
+--- a1-decision-study_v0.5/run_dev.bat	2026-10-29 01:22:56.091869300 +0000
++++ a1-decision-study_v0.6/run_dev.bat	2026-11-09 03:44:38.258636600 +0000
+@@ -1,114 +1,114 @@
+-@echo off
+-rem ============================================================
+-rem  A-1 decision study v0.5 : start the oTree dev server (Windows)
+-rem  Double-click this file. See README.md section "動かし方".
+-rem
+-rem  1. copies the project to %LOCALAPPDATA%\a1-decision-study_v0.5
+-rem     (runtime copy outside OneDrive; .venv and db.sqlite3 stay there; v0.4 uses a different folder)
+-rem  2. finds Python 3.10-3.12 (A1_PYTHON / py launcher / conda env "a1" / python on PATH), creates a venv, installs requirements
+-rem  3. starts otree devserver; tools\ensure_room.py then creates a session in room "demo" and opens the REUSABLE link
+-rem     http://localhost:8000/join/<code>  (a new participant every time you open it; up to 100 times per server start)
+-rem     The fixed link http://localhost:8000/room/demo also works (same browser resumes the same run).
+-rem  Options:  run_dev.bat [port] [a1_ja|a1_en]      e.g.  run_dev.bat 8001 a1_en
+-rem ============================================================
+-setlocal
+-set "SRC=%~dp0"
+-set "DST=%LOCALAPPDATA%\a1-decision-study_v0.5"
+-set "PORT=8000"
+-if not "%~1"=="" set "PORT=%~1"
+-set "CONFIG=a1_ja"
+-if not "%~2"=="" set "CONFIG=%~2"
+-
+-rem  ---- find a Python interpreter: 3.11 preferred, 3.12 or 3.10 also work; 3.13 does not (v0.4) ----
+-rem   order: A1_PYTHON (full path to python.exe)  >  py -3.11 / -3.12 / -3.10 (py launcher)
+-rem          >  conda env "a1" (conda create -n a1 python=3.11 -y)  >  "python" on PATH if it is 3.10-3.12
+-set "PYEXE="
+-if defined A1_PYTHON if exist "%A1_PYTHON%" set "PYEXE=%A1_PYTHON%"
+-if not defined PYEXE call :try_py 3.11
+-if not defined PYEXE call :try_py 3.12
+-if not defined PYEXE call :try_py 3.10
+-if not defined PYEXE if exist "%USERPROFILE%\miniconda3\envs\a1\python.exe" set "PYEXE=%USERPROFILE%\miniconda3\envs\a1\python.exe"
+-if not defined PYEXE if exist "%USERPROFILE%\anaconda3\envs\a1\python.exe" set "PYEXE=%USERPROFILE%\anaconda3\envs\a1\python.exe"
+-if not defined PYEXE call :try_path_python
+-if not defined PYEXE (
+-  echo [ERROR] No usable Python was found. oTree 5 needs Python 3.10, 3.11 or 3.12 ^(3.13 does not work^).
+-  echo.
+-  echo   Option A: install Python 3.11 from https://www.python.org/downloads/windows/
+-  echo             and tick "Add python.exe to PATH" and "py launcher" in the installer. Then run this file again.
+-  echo   Option B: if you use Miniconda/Anaconda, open "Anaconda Prompt" and run
+-  echo             conda create -n a1 python=3.11 -y
+-  echo             then run this file again ^(the env "a1" is found automatically^).
+-  echo   Option C: set A1_PYTHON to the full path of a python.exe ^(3.10-3.12^) before running this file.
+-  echo.
+-  pause
+-  exit /b 1
+-)
+-echo Using Python: %PYEXE%
+-goto :found_python
+-
+-:try_py
+-py -%1 --version >nul 2>&1
+-if not errorlevel 1 set "PYEXE=py -%1"
+-goto :eof
+-
+-:try_path_python
+-set "PYVER="
+-for /f "tokens=2" %%v in ('python --version 2^>^&1') do set "PYVER=%%v"
+-if not defined PYVER goto :eof
+-if "%PYVER:~0,4%"=="3.10" set "PYEXE=python"
+-if "%PYVER:~0,4%"=="3.11" set "PYEXE=python"
+-if "%PYVER:~0,4%"=="3.12" set "PYEXE=python"
+-if defined PYEXE echo Found python %PYVER% on PATH
+-goto :eof
+-
+-:found_python
+-rem  v0.3: record the git commit of the source folder (unknown when not under git)
+-set "A1_GIT_COMMIT="
+-for /f "delims=" %%i in ('git -C "%SRC%." rev-parse --short=12 HEAD 2^>nul') do set "A1_GIT_COMMIT=%%i"
+-
+-echo [1/3] Syncing project to %DST% ...
+-robocopy "%SRC%." "%DST%" /MIR /NFL /NDL /NJH /NJS /XD .venv __pycache__ __temp_bots _static_root .git shots docs /XF db.sqlite3 .env __demo_links.txt >nul
+-if errorlevel 8 (
+-  echo [ERROR] robocopy failed.
+-  pause
+-  exit /b 1
+-)
+-cd /d "%DST%"
+-
+-echo [2/3] Preparing Python environment (first time: 2-3 minutes, please wait) ...
+-if not exist ".venv\Scripts\python.exe" (
+-  if "%PYEXE:~0,3%"=="py " ( %PYEXE% -m venv .venv ) else if "%PYEXE%"=="python" ( python -m venv .venv ) else ( "%PYEXE%" -m venv .venv )
+-)
+-if not exist ".venv\Scripts\python.exe" (
+-  echo [ERROR] Could not create the virtual environment with %PYEXE%
+-  pause
+-  exit /b 1
+-)
+-".venv\Scripts\python.exe" -m pip install --quiet --upgrade pip
+-".venv\Scripts\python.exe" -m pip install --quiet -r requirements.txt
+-if errorlevel 1 (
+-  echo [ERROR] pip install failed. Check your network / proxy settings.
+-  pause
+-  exit /b 1
+-)
+-
+-echo [3/3] Starting oTree dev server on port %PORT% ...
+-set "OTREE_ADMIN_PASSWORD=admin"
+-rem  devserver re-launches itself as "otree devserver_inner" by name, so the venv must be on PATH (WinError 2 otherwise)
+-set "PATH=%DST%\.venv\Scripts;%PATH%"
+-rem  v0.5: once the server answers (up to 5 minutes), create a session in room "demo" and open the reusable link.
+-rem        The links are also written to %DST%\__demo_links.txt
+-start "" /min ".venv\Scripts\python.exe" tools\ensure_room.py --port %PORT% --config %CONFIG% --open --wait 300 --log __demo_links.txt
+-echo.
+-echo   When the server is ready, the browser opens the REUSABLE demo link (config %CONFIG%):
+-echo     every time you open that link you start again as a new participant (no need to go back to /demo).
+-echo   Fixed link (same form as the real study):  http://localhost:%PORT%/room/demo
+-echo     same browser = continue the same run; private window / phone / other browser = new participant.
+-echo   All links:  %DST%\__demo_links.txt      Demo page: http://localhost:%PORT%/demo
+-echo   Admin: http://localhost:%PORT%/   user admin / password admin  (local only)
+-echo   Press Ctrl+C in this window to stop the server.
+-echo.
+-".venv\Scripts\otree.exe" devserver %PORT%
+-echo.
+-echo [server stopped] If it stopped right away, read the error above.
+-pause
++@echo off
++rem ============================================================
++rem  A-1 decision study v0.6 : start the oTree dev server (Windows)
++rem  Double-click this file. See README.md section "動かし方".
++rem
++rem  1. copies the project to %LOCALAPPDATA%\a1-decision-study_v0.6
++rem     (runtime copy outside OneDrive; .venv and db.sqlite3 stay there; v0.4 uses a different folder)
++rem  2. finds Python 3.10-3.12 (A1_PYTHON / py launcher / conda env "a1" / python on PATH), creates a venv, installs requirements
++rem  3. starts otree devserver; tools\ensure_room.py then creates a session in room "demo" and opens the REUSABLE link
++rem     http://localhost:8000/join/<code>  (a new participant every time you open it; up to 100 times per server start)
++rem     The fixed link http://localhost:8000/room/demo also works (same browser resumes the same run).
++rem  Options:  run_dev.bat [port] [a1_ja|a1_en]      e.g.  run_dev.bat 8001 a1_en
++rem ============================================================
++setlocal
++set "SRC=%~dp0"
++set "DST=%LOCALAPPDATA%\a1-decision-study_v0.6"
++set "PORT=8000"
++if not "%~1"=="" set "PORT=%~1"
++set "CONFIG=a1_ja"
++if not "%~2"=="" set "CONFIG=%~2"
++
++rem  ---- find a Python interpreter: 3.11 preferred, 3.12 or 3.10 also work; 3.13 does not (v0.4) ----
++rem   order: A1_PYTHON (full path to python.exe)  >  py -3.11 / -3.12 / -3.10 (py launcher)
++rem          >  conda env "a1" (conda create -n a1 python=3.11 -y)  >  "python" on PATH if it is 3.10-3.12
++set "PYEXE="
++if defined A1_PYTHON if exist "%A1_PYTHON%" set "PYEXE=%A1_PYTHON%"
++if not defined PYEXE call :try_py 3.11
++if not defined PYEXE call :try_py 3.12
++if not defined PYEXE call :try_py 3.10
++if not defined PYEXE if exist "%USERPROFILE%\miniconda3\envs\a1\python.exe" set "PYEXE=%USERPROFILE%\miniconda3\envs\a1\python.exe"
++if not defined PYEXE if exist "%USERPROFILE%\anaconda3\envs\a1\python.exe" set "PYEXE=%USERPROFILE%\anaconda3\envs\a1\python.exe"
++if not defined PYEXE call :try_path_python
++if not defined PYEXE (
++  echo [ERROR] No usable Python was found. oTree 5 needs Python 3.10, 3.11 or 3.12 ^(3.13 does not work^).
++  echo.
++  echo   Option A: install Python 3.11 from https://www.python.org/downloads/windows/
++  echo             and tick "Add python.exe to PATH" and "py launcher" in the installer. Then run this file again.
++  echo   Option B: if you use Miniconda/Anaconda, open "Anaconda Prompt" and run
++  echo             conda create -n a1 python=3.11 -y
++  echo             then run this file again ^(the env "a1" is found automatically^).
++  echo   Option C: set A1_PYTHON to the full path of a python.exe ^(3.10-3.12^) before running this file.
++  echo.
++  pause
++  exit /b 1
++)
++echo Using Python: %PYEXE%
++goto :found_python
++
++:try_py
++py -%1 --version >nul 2>&1
++if not errorlevel 1 set "PYEXE=py -%1"
++goto :eof
++
++:try_path_python
++set "PYVER="
++for /f "tokens=2" %%v in ('python --version 2^>^&1') do set "PYVER=%%v"
++if not defined PYVER goto :eof
++if "%PYVER:~0,4%"=="3.10" set "PYEXE=python"
++if "%PYVER:~0,4%"=="3.11" set "PYEXE=python"
++if "%PYVER:~0,4%"=="3.12" set "PYEXE=python"
++if defined PYEXE echo Found python %PYVER% on PATH
++goto :eof
++
++:found_python
++rem  v0.3: record the git commit of the source folder (unknown when not under git)
++set "A1_GIT_COMMIT="
++for /f "delims=" %%i in ('git -C "%SRC%." rev-parse --short=12 HEAD 2^>nul') do set "A1_GIT_COMMIT=%%i"
++
++echo [1/3] Syncing project to %DST% ...
++robocopy "%SRC%." "%DST%" /MIR /NFL /NDL /NJH /NJS /XD .venv __pycache__ __temp_bots _static_root .git shots docs /XF db.sqlite3 .env __demo_links.txt >nul
++if errorlevel 8 (
++  echo [ERROR] robocopy failed.
++  pause
++  exit /b 1
++)
++cd /d "%DST%"
++
++echo [2/3] Preparing Python environment (first time: 2-3 minutes, please wait) ...
++if not exist ".venv\Scripts\python.exe" (
++  if "%PYEXE:~0,3%"=="py " ( %PYEXE% -m venv .venv ) else if "%PYEXE%"=="python" ( python -m venv .venv ) else ( "%PYEXE%" -m venv .venv )
++)
++if not exist ".venv\Scripts\python.exe" (
++  echo [ERROR] Could not create the virtual environment with %PYEXE%
++  pause
++  exit /b 1
++)
++".venv\Scripts\python.exe" -m pip install --quiet --upgrade pip
++".venv\Scripts\python.exe" -m pip install --quiet -r requirements.txt
++if errorlevel 1 (
++  echo [ERROR] pip install failed. Check your network / proxy settings.
++  pause
++  exit /b 1
++)
++
++echo [3/3] Starting oTree dev server on port %PORT% ...
++set "OTREE_ADMIN_PASSWORD=admin"
++rem  devserver re-launches itself as "otree devserver_inner" by name, so the venv must be on PATH (WinError 2 otherwise)
++set "PATH=%DST%\.venv\Scripts;%PATH%"
++rem  v0.5: once the server answers (up to 5 minutes), create a session in room "demo" and open the reusable link.
++rem        The links are also written to %DST%\__demo_links.txt
++start "" /min ".venv\Scripts\python.exe" tools\ensure_room.py --port %PORT% --config %CONFIG% --open --wait 300 --log __demo_links.txt
++echo.
++echo   When the server is ready, the browser opens the REUSABLE demo link (config %CONFIG%):
++echo     every time you open that link you start again as a new participant (no need to go back to /demo).
++echo   Fixed link (same form as the real study):  http://localhost:%PORT%/room/demo
++echo     same browser = continue the same run; private window / phone / other browser = new participant.
++echo   All links:  %DST%\__demo_links.txt      Demo page: http://localhost:%PORT%/demo
++echo   Admin: http://localhost:%PORT%/   user admin / password admin  (local only)
++echo   Press Ctrl+C in this window to stop the server.
++echo.
++".venv\Scripts\otree.exe" devserver %PORT%
++echo.
++echo [server stopped] If it stopped right away, read the error above.
++pause
+diff -ruN '--exclude=__pycache__' '--exclude=docs' '--exclude=*.pyc' a1-decision-study_v0.5/run_tests.bat a1-decision-study_v0.6/run_tests.bat
+--- a1-decision-study_v0.5/run_tests.bat	2026-10-29 01:22:55.907118400 +0000
++++ a1-decision-study_v0.6/run_tests.bat	2026-11-09 03:44:38.263744100 +0000
+@@ -1,36 +1,36 @@
+-@echo off
+-rem  A-1 decision study v0.5 : run the bot tests (6 cases x N participants) and export CSVs
+-rem  Usage: run_tests.bat [N]   (default N=24 = 6 cases x 4 order cells). Run run_dev.bat once first so the venv exists.
+-setlocal
+-set "DST=%LOCALAPPDATA%\a1-decision-study_v0.5"
+-set "N=24"
+-if not "%~1"=="" set "N=%~1"
+-if not exist "%DST%\.venv\Scripts\otree.exe" (
+-  echo [ERROR] Run run_dev.bat first to create the environment.
+-  pause
+-  exit /b 1
+-)
+-set "A1_GIT_COMMIT="
+-for /f "delims=" %%i in ('git -C "%~dp0." rev-parse --short=12 HEAD 2^>nul') do set "A1_GIT_COMMIT=%%i"
+-robocopy "%~dp0." "%DST%" /MIR /NFL /NDL /NJH /NJS /XD .venv __pycache__ __temp_bots _static_root .git shots docs /XF db.sqlite3 .env __demo_links.txt >nul
+-cd /d "%DST%"
+-set "OTREE_ADMIN_PASSWORD=admin"
+-set "PATH=%DST%\.venv\Scripts;%PATH%"
+-if exist __temp_bots rmdir /s /q __temp_bots
+-".venv\Scripts\otree.exe" test a1_ja %N% --export __temp_bots
+-if errorlevel 1 (
+-  echo [FAIL] bot test failed - read the message above.
+-  pause
+-  exit /b 1
+-)
+-".venv\Scripts\otree.exe" test a1_en %N%
+-if errorlevel 1 (
+-  echo [FAIL] bot test ^(a1_en^) failed - read the message above.
+-  pause
+-  exit /b 1
+-)
+-".venv\Scripts\python.exe" tools\export_check.py __temp_bots\altruism_study.csv
+-".venv\Scripts\python.exe" tools\run_log.py __temp_bots\altruism_study.csv --purpose bot-test --log __temp_bots\run_log_bots.csv
+-echo.
+-echo   Exported CSV: %DST%\__temp_bots\altruism_study.csv
+-pause
++@echo off
++rem  A-1 decision study v0.6 : run the bot tests (6 cases x N participants) and export CSVs
++rem  Usage: run_tests.bat [N]   (default N=24 = 6 cases x 4 order cells). Run run_dev.bat once first so the venv exists.
++setlocal
++set "DST=%LOCALAPPDATA%\a1-decision-study_v0.6"
++set "N=24"
++if not "%~1"=="" set "N=%~1"
++if not exist "%DST%\.venv\Scripts\otree.exe" (
++  echo [ERROR] Run run_dev.bat first to create the environment.
++  pause
++  exit /b 1
++)
++set "A1_GIT_COMMIT="
++for /f "delims=" %%i in ('git -C "%~dp0." rev-parse --short=12 HEAD 2^>nul') do set "A1_GIT_COMMIT=%%i"
++robocopy "%~dp0." "%DST%" /MIR /NFL /NDL /NJH /NJS /XD .venv __pycache__ __temp_bots _static_root .git shots docs /XF db.sqlite3 .env __demo_links.txt >nul
++cd /d "%DST%"
++set "OTREE_ADMIN_PASSWORD=admin"
++set "PATH=%DST%\.venv\Scripts;%PATH%"
++if exist __temp_bots rmdir /s /q __temp_bots
++".venv\Scripts\otree.exe" test a1_ja %N% --export __temp_bots
++if errorlevel 1 (
++  echo [FAIL] bot test failed - read the message above.
++  pause
++  exit /b 1
++)
++".venv\Scripts\otree.exe" test a1_en %N%
++if errorlevel 1 (
++  echo [FAIL] bot test ^(a1_en^) failed - read the message above.
++  pause
++  exit /b 1
++)
++".venv\Scripts\python.exe" tools\export_check.py __temp_bots\altruism_study.csv
++".venv\Scripts\python.exe" tools\run_log.py __temp_bots\altruism_study.csv --purpose bot-test --log __temp_bots\run_log_bots.csv
++echo.
++echo   Exported CSV: %DST%\__temp_bots\altruism_study.csv
++pause
+diff -ruN '--exclude=__pycache__' '--exclude=docs' '--exclude=*.pyc' a1-decision-study_v0.5/settings.py a1-decision-study_v0.6/settings.py
+--- a1-decision-study_v0.5/settings.py	2026-10-29 01:22:56.021131200 +0000
++++ a1-decision-study_v0.6/settings.py	2026-11-09 03:44:38.253455200 +0000
+@@ -12,12 +12,12 @@
+     endowment=1000,              # DG の元手（円）
+     dg_step=1,                   # DG の入力の刻み（円）。原研究は 0〜10.70 の任意の額を数値で入力（刻みなし）なので既定 1。
+                                  # 100 にすると 100 円単位に制限される（入力欄の step と検証に反映）
+-    participation_fee_yen=300,   # 参加謝礼（円）。v0.5 から画面には出さない（リンク配布時に案内）。データに cfg_fee として記録し、pairing.py が使う
++    participation_fee_yen=300,   # 参加謝礼（円）= CrowdWorks のタスク単価（v0.6）。画面には出さない（募集ページに書く）。データに cfg_fee として記録し、pairing.py が使う
+     use_hexaco=True,             # HEXACO-60 正直さ-謙虚さ 10 項目を 2 つ目の質問紙として入れる（v0.5: 原版と同じ 5 件法、FAB とは別の段階）
+     # 順序割り当てと項目順の乱数シード。0 = セッションコードから決定的に導く（既定）。
+     # 整数を入れるとその値を使う。どちらでも各回答の rand_seed 列に記録される（v0.3）
+     rand_seed=0,
+-    app_version='v0.5-pilot',
++    app_version='v0.6-pilot',
+     doc='A-1 追試: FAB・HEXACO 質問紙と独裁者ゲーム（一回完結・順序ランダム化・役割不確定法）',
+ )
+ 
+@@ -53,7 +53,7 @@
+ ADMIN_PASSWORD = environ.get('OTREE_ADMIN_PASSWORD')
+ 
+ DEMO_PAGE_INTRO_HTML = """
+-A-1 追試（FAB・HEXACO 質問紙 × 独裁者ゲーム）の試作版 v0.5（画面を最低限に、質問紙を 2 段階に、進捗表示、使い回せるデモ URL）。
++A-1 追試（FAB・HEXACO 質問紙 × 独裁者ゲーム）の試作版 v0.6（CrowdWorks 募集向け: 参加資格「日本語が母語」、終了画面に 10 桁の実験 ID）。
+ """
+ 
+ SECRET_KEY = environ.get('OTREE_SECRET_KEY', 'dev-only-change-me')
+diff -ruN '--exclude=__pycache__' '--exclude=docs' '--exclude=*.pyc' a1-decision-study_v0.5/tools/match_cw_ids.py a1-decision-study_v0.6/tools/match_cw_ids.py
+--- a1-decision-study_v0.5/tools/match_cw_ids.py	1970-01-01 00:00:00.000000000 +0000
++++ a1-decision-study_v0.6/tools/match_cw_ids.py	2026-11-09 03:47:28.025576200 +0000
+@@ -0,0 +1,313 @@
++#!/usr/bin/env python3
++# -*- coding: utf-8 -*-
++"""CrowdWorks の承認待ち一覧と調査データの実験 ID を照合し、承認・非承認・要確認の表を作る（v0.6、計画書「募集と実施の運用」）。
++
++研究室の 2025 年 6 月の事例（存在しない実験 ID が 37 件、同じ ID が 23 回入力）への対策。手作業の照合（「青木方式」）を置き換える。
++
++使い方:
++  python tools/match_cw_ids.py --cw <CW の承認待ち一覧（CSV / TSV / HTML）> --data <調査データ CSV> [--out payout] [--id-len 10]
++      [--id-col 列名] [--user-col 列名] [--url-col 列名] [--work-col 列名] [--date YYYY-MM-DD]
++
++  --cw    CrowdWorks の作業一覧。承認前なら「承認待ち作業一覧」のページを HTML で保存したもの、承認後は CSV（作業ID・作業者・作業者ページURL・
++          承認日時・フォームの入力値）。列は自動判定（実験 ID = 値の多くが数字だけで作業ID でない列、作業者 = 見出しに「作業者」を含み URL でない列）。
++          判定が外れたら --id-col などで指定する。文字コードは UTF-8 → CP932 の順に試す
++  --data  Qualtrics のエクスポート CSV（先頭 3 行がヘッダー、exp_id・Finished・Status 列）か、oTree 形式の CSV（player.exp_id・player.finished）
++
++判定（decision / reason）:
++  approve  実験 ID が調査の完了回答に 1 対 1 で存在する（ok）
++  check    調査に回答はあるが未完了（unfinished）、同じ ID の最初の入力（duplicate_first: ファイルの並びが入力順と仮定）、
++           桁違い・1 文字違いで未申告の完了回答に近い（near: 入力ミスの可能性。手で確認）
++  reject   調査に存在しない ID（not_found）、形式が違い近い ID もない（bad_format）、同じ ID の 2 件目以降（duplicate）
++  承認の方針（計画書）: 微妙なときは承認する。注意チェック等の不合格は解析で除外するが承認はする。
++  CW の規約では非承認にできる件数に上限がある（3 件か総数の 30% の大きいほう）→ 超えそうなら警告を出す
++
++出力（--out 以下、日付付き）:
++  match_<date>.csv       work_id, cw_user, cw_profile_url, entered_id, normalized_id, decision, reason, data_finished, response_id
++  unclaimed_<date>.csv   調査には完了回答があるが CW に入力されていない実験 ID（時間切れ・申告漏れの候補。連絡があれば個別に発注）
++  contacts_<date>.csv    承認した参加者の code（= 実験 ID）, cw_user, cw_profile_url, work_id → tools/pairing.py の --contacts に渡す
++  summary_match_<date>.txt
++"""
++import argparse
++import csv
++import html as html_mod
++import io
++import os
++import re
++import sys
++import unicodedata
++from datetime import date
++
++
++# ---------------------------------------------------------------------------
++def read_text(path):
++    raw = open(path, 'rb').read()
++    for enc in ('utf-8-sig', 'cp932', 'utf-8'):
++        try:
++            return raw.decode(enc), enc
++        except UnicodeDecodeError:
++            continue
++    return raw.decode('utf-8', errors='replace'), 'utf-8(replace)'
++
++
++def read_table(path):
++    """CSV / TSV / HTML → (header, rows[list[str]])."""
++    text, enc = read_text(path)
++    if path.lower().endswith(('.html', '.htm')) or re.search(r'<table', text, re.I):
++        return parse_html_table(text), enc
++    delim = '\t' if path.lower().endswith('.tsv') or (text.count('\t') > text.count(',')) else ','
++    rows = list(csv.reader(io.StringIO(text), delimiter=delim))
++    rows = [r for r in rows if any(c.strip() for c in r)]
++    if not rows:
++        raise SystemExit(f'{path}: 空です')
++    return (rows[0], rows[1:]), enc
++
++
++def parse_html_table(text):
++    """最初の <table> を読む（承認待ち一覧のページ）。<th> を見出し、<tr> の <td> を行にする。"""
++    tables = re.findall(r'<table.*?</table>', text, re.S | re.I)
++    if not tables:
++        raise SystemExit('HTML に <table> がありません')
++    best = max(tables, key=lambda t: len(re.findall(r'<tr', t, re.I)))
++    header, rows = [], []
++    for tr in re.findall(r'<tr.*?</tr>', best, re.S | re.I):
++        ths = re.findall(r'<th.*?>(.*?)</th>', tr, re.S | re.I)
++        tds = re.findall(r'<td.*?>(.*?)</td>', tr, re.S | re.I)
++        if ths and not header:
++            header = [clean_cell(c) for c in ths]
++        elif tds:
++            cells = []
++            for c in tds:
++                m = re.search(r'href="([^"]+employees/\d+[^"]*)"', c)
++                cells.append(m.group(1) if m and not clean_cell(c) else clean_cell(c))
++            rows.append(cells)
++    if not header and rows:
++        header = [f'col{i + 1}' for i in range(len(rows[0]))]
++    return header, rows
++
++
++def clean_cell(c):
++    c = re.sub(r'<[^>]+>', '', c)
++    return html_mod.unescape(c).strip()
++
++
++def normalize_id(s):
++    s = unicodedata.normalize('NFKC', s or '')
++    s = re.sub(r'[\s\-‐−–—_.:：、,，]', '', s)
++    return s
++
++
++def pick_col(header, rows, override, kind, id_len):
++    """kind: 'id' | 'user' | 'url' | 'work'。見出しと値から列を推定する。"""
++    if override:
++        if override in header:
++            return header.index(override)
++        raise SystemExit(f'--{kind}-col {override!r} が見出しにありません: {header}')
++    idx = None
++    if kind == 'work':
++        for i, h in enumerate(header):
++            if re.search(r'作業\s*ID|work.?id', h, re.I):
++                idx = i
++                break
++    elif kind == 'url':
++        for i, h in enumerate(header):
++            if re.search(r'URL|url', h) or any('employees/' in (r[i] if i < len(r) else '') for r in rows[:20]):
++                idx = i
++                break
++    elif kind == 'user':
++        for i, h in enumerate(header):
++            if re.search(r'作業者|ユーザー|user|worker', h, re.I) and not re.search(r'URL|url|ID', h):
++                idx = i
++                break
++    elif kind == 'id':
++        # 作業ID 以外で、値の多くが数字だけ（長さが id_len に近い）の列
++        best, best_score = None, 0
++        for i, h in enumerate(header):
++            if re.search(r'作業\s*ID|work.?id|URL|url|日時|date', h, re.I):
++                continue
++            vals = [normalize_id(r[i]) for r in rows if i < len(r) and (r[i] or '').strip()]
++            if not vals:
++                continue
++            score = sum(1 for v in vals if v.isdigit() and abs(len(v) - id_len) <= 2) / len(vals)
++            if re.search(r'ID|コード|code', h, re.I):
++                score += 0.1
++            if score > best_score:
++                best, best_score = i, score
++        idx = best if best_score >= 0.5 else None
++    return idx
++
++
++# ---------------------------------------------------------------------------
++def read_data(path):
++    """調査データ → dict exp_id → dict(finished=bool, response_id=str, status=str)。Qualtrics の生 CSV と oTree 形式の両方。"""
++    text, enc = read_text(path)
++    rows = list(csv.reader(io.StringIO(text)))
++    if not rows:
++        raise SystemExit(f'{path}: 空です')
++    header = rows[0]
++    is_qualtrics = len(rows) > 2 and any('ImportId' in c for c in rows[2])
++    body = rows[3:] if is_qualtrics else rows[1:]
++    col = {h: i for i, h in enumerate(header)}
++
++    def find(suffixes):
++        for s in suffixes:
++            for h, i in col.items():
++                if h == s or h.endswith(s):
++                    return i
++        return None
++
++    c_id = find(['exp_id', 'player.exp_id'])
++    c_fin = find(['Finished', 'player.finished'])
++    c_rid = find(['ResponseId', 'participant.code'])
++    c_status = find(['Status']) if is_qualtrics else None
++    if c_id is None:
++        raise SystemExit(f'{path}: exp_id / player.exp_id 列がありません（v0.6 の調査データが必要）: {header[:10]}...')
++    data = {}
++    dup_in_data = []
++    for r in body:
++        if c_id >= len(r):
++            continue
++        eid = normalize_id(r[c_id])
++        if not eid:
++            continue
++        if c_status is not None and c_status < len(r) and (r[c_status] or '0').strip() not in ('0', 'IP Address', ''):
++            continue  # プレビュー・テスト・スパムの行は除く
++        fin = (r[c_fin] or '').strip().lower() in ('1', 'true') if c_fin is not None and c_fin < len(r) else True
++        rid = r[c_rid].strip() if c_rid is not None and c_rid < len(r) else ''
++        if eid in data:
++            dup_in_data.append(eid)
++            data[eid]['finished'] = data[eid]['finished'] or fin
++            continue
++        data[eid] = dict(finished=fin, response_id=rid)
++    return data, dup_in_data, enc, 'qualtrics' if is_qualtrics else 'otree'
++
++
++def near(a, b):
++    """1 文字の置換・挿入・削除の範囲か。"""
++    if a == b:
++        return True
++    if abs(len(a) - len(b)) > 1:
++        return False
++    if len(a) == len(b):
++        return sum(x != y for x, y in zip(a, b)) == 1
++    s, l = (a, b) if len(a) < len(b) else (b, a)
++    for i in range(len(l)):
++        if l[:i] + l[i + 1:] == s:
++            return True
++    return False
++
++
++# ---------------------------------------------------------------------------
++def main():
++    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
++    ap.add_argument('--cw', required=True, help='CrowdWorks の作業一覧（CSV / TSV / HTML）')
++    ap.add_argument('--data', required=True, help='Qualtrics のエクスポート CSV か oTree 形式の CSV')
++    ap.add_argument('--out', default='payout')
++    ap.add_argument('--id-len', type=int, default=10, help='実験 ID の桁数（既定 10）')
++    ap.add_argument('--id-col', default=None)
++    ap.add_argument('--user-col', default=None)
++    ap.add_argument('--url-col', default=None)
++    ap.add_argument('--work-col', default=None)
++    ap.add_argument('--date', default=date.today().isoformat())
++    ap.add_argument('--dry-run', action='store_true', help='ファイルを書かずに summary だけ表示')
++    args = ap.parse_args()
++
++    (header, rows), enc_cw = read_table(args.cw)
++    c_id = pick_col(header, rows, args.id_col, 'id', args.id_len)
++    if c_id is None:
++        raise SystemExit(f'実験 ID の列を判定できません。--id-col で指定してください: {header}')
++    c_user = pick_col(header, rows, args.user_col, 'user', args.id_len)
++    c_url = pick_col(header, rows, args.url_col, 'url', args.id_len)
++    c_work = pick_col(header, rows, args.work_col, 'work', args.id_len)
++    data, dup_in_data, enc_data, kind = read_data(args.data)
++
++    def cell(r, i):
++        return (r[i] if i is not None and i < len(r) else '').strip()
++
++    entries = []
++    for r in rows:
++        entries.append(dict(work_id=cell(r, c_work), cw_user=cell(r, c_user), cw_profile_url=cell(r, c_url),
++                            entered_id=cell(r, c_id), normalized_id=normalize_id(cell(r, c_id))))
++
++    counts = {}
++    for e in entries:
++        counts[e['normalized_id']] = counts.get(e['normalized_id'], 0) + 1
++    seen = set()
++    claimed = set()
++    for e in entries:
++        nid = e['normalized_id']
++        e['data_finished'] = ''
++        e['response_id'] = ''
++        if nid in data:
++            e['data_finished'] = int(data[nid]['finished'])
++            e['response_id'] = data[nid]['response_id']
++        if counts[nid] > 1:
++            if nid in data:
++                claimed.add(nid)   # 誰かが申告した ID は未申告には数えない
++            if nid in seen:
++                e['decision'], e['reason'] = 'reject', f'duplicate ({counts[nid]} entries of the same ID)'
++            else:
++                e['decision'], e['reason'] = 'check', f'duplicate_first ({counts[nid]} entries; file order assumed = submission order)'
++            seen.add(nid)
++            continue
++        if nid in data:
++            claimed.add(nid)
++            if data[nid]['finished']:
++                e['decision'], e['reason'] = 'approve', 'ok'
++            else:
++                e['decision'], e['reason'] = 'check', 'unfinished (response exists but not finished; time-out?)'
++            continue
++        e['decision'], e['reason'] = 'reject', ('not_found' if nid.isdigit() and len(nid) == args.id_len else 'bad_format')
++
++    # 近い ID（入力ミスの可能性）: 未申告の完了回答と 1 文字違いなら要確認にする
++    unclaimed = [eid for eid, d in data.items() if eid not in claimed and d['finished']]
++    for e in entries:
++        if e['decision'] == 'reject' and e['reason'] in ('not_found', 'bad_format'):
++            cands = [u for u in unclaimed if near(e['normalized_id'], u)]
++            if len(cands) == 1:
++                e['decision'], e['reason'] = 'check', f'near: {cands[0]} (1 character off; confirm by hand)'
++
++    n = len(entries)
++    n_app = sum(1 for e in entries if e['decision'] == 'approve')
++    n_chk = sum(1 for e in entries if e['decision'] == 'check')
++    n_rej = sum(1 for e in entries if e['decision'] == 'reject')
++    cap = max(3, int(n * 0.3))
++    summary = [
++        f'date: {args.date}',
++        f'cw file: {args.cw} ({enc_cw}; id column = {header[c_id]!r}, user = {header[c_user] if c_user is not None else "-"!r}, '
++        f'url = {header[c_url] if c_url is not None else "-"!r}, work id = {header[c_work] if c_work is not None else "-"!r})',
++        f'data file: {args.data} ({enc_data}, {kind}; responses with exp_id: {len(data)}, finished: {sum(1 for d in data.values() if d["finished"])})',
++        f'CW entries: {n}  approve: {n_app}  check: {n_chk}  reject: {n_rej}',
++        f'unclaimed finished responses (no CW entry): {len(unclaimed)}',
++        f'duplicate exp_id inside the data file: {len(dup_in_data)}' + (f' {sorted(set(dup_in_data))}' if dup_in_data else ''),
++        f'non-approval cap by CW terms (max(3, 30% of {n}) = {cap}): ' + ('OK' if n_rej <= cap else f'WARNING reject {n_rej} > {cap}'),
++    ]
++    print('\n'.join(summary))
++    if args.dry_run:
++        return 0
++
++    os.makedirs(args.out, exist_ok=True)
++    tag = args.date
++    fields = ['work_id', 'cw_user', 'cw_profile_url', 'entered_id', 'normalized_id', 'decision', 'reason', 'data_finished', 'response_id']
++    with open(os.path.join(args.out, f'match_{tag}.csv'), 'w', newline='', encoding='utf-8') as f:
++        w = csv.DictWriter(f, fieldnames=fields)
++        w.writeheader()
++        w.writerows([{k: e.get(k, '') for k in fields} for e in entries])
++    with open(os.path.join(args.out, f'unclaimed_{tag}.csv'), 'w', newline='', encoding='utf-8') as f:
++        w = csv.writer(f)
++        w.writerow(['exp_id', 'response_id'])
++        for u in sorted(unclaimed):
++            w.writerow([u, data[u]['response_id']])
++    with open(os.path.join(args.out, f'contacts_{tag}.csv'), 'w', newline='', encoding='utf-8') as f:
++        w = csv.writer(f)
++        w.writerow(['code', 'cw_user', 'cw_profile_url', 'work_id'])
++        for e in entries:
++            if e['decision'] == 'approve':
++                w.writerow([e['normalized_id'], e['cw_user'], e['cw_profile_url'], e['work_id']])
++    with open(os.path.join(args.out, f'summary_match_{tag}.txt'), 'w', encoding='utf-8') as f:
++        f.write('\n'.join(summary) + '\n')
++    print(f'written to {args.out}/ (match_{tag}.csv, unclaimed_{tag}.csv, contacts_{tag}.csv, summary_match_{tag}.txt)')
++    return 0
++
++
++if __name__ == '__main__':
++    sys.exit(main())
+diff -ruN '--exclude=__pycache__' '--exclude=docs' '--exclude=*.pyc' a1-decision-study_v0.5/tools/pairing.py a1-decision-study_v0.6/tools/pairing.py
+--- a1-decision-study_v0.5/tools/pairing.py	2026-10-29 01:22:56.121185000 +0000
++++ a1-decision-study_v0.6/tools/pairing.py	2026-11-09 03:50:45.812329900 +0000
+@@ -1,6 +1,6 @@
+ #!/usr/bin/env python3
+ # -*- coding: utf-8 -*-
+-"""ペアリング・役割抽選・支払額の計算（設計書 §12.3、FR-19）。
++"""ペアリング・役割抽選・支払額の計算（設計書 §12.3、FR-19）。v0.6: CrowdWorks 運用に対応。
+ 
+ 使い方:
+   python tools/pairing.py --data raw/altruism_study_2026-11-01.csv \
+@@ -13,14 +13,18 @@
+ 
+ 入力:
+   --data      oTree 管理画面からエクスポートした CSV（altruism_study.csv または all_apps_wide.csv）
+-  --contacts  参加者コード + メールアドレスの CSV（v0.5 からは実験の外で集める: 参加者が終了画面のコードを申告する）。列名は自動判定
+-              （「コード」/ "code" を含む列、「メール」/ "mail" を含む列）。--code-col/--email-col で指定も可
++  --contacts  参加者コード + 連絡先の CSV。v0.6 では tools/match_cw_ids.py が出す contacts_<date>.csv
++              （code = 実験 ID、cw_user = CrowdWorks のユーザー名、cw_profile_url、work_id）。列名は自動判定
++              （「コード」/ "code" を含む列、"mail" / 「メール」/ "cw_user" / 「作業者」を含む列）。--code-col/--email-col で指定も可
++  --realize-pairs N  抽選で N ペアだけ決定どおりに支払う（計画書「倫理・謝礼」の案 B）。省略時は全ペアを実現（案 A）。
++              実現しないペアの 2 人は参加謝礼だけ（payout = fee、realized = 0）
+   --seed      乱数シード（必須。summary.txt に記録される）
+   --already-paid  支払い済みの参加者コードを含む CSV（週次バッチ運用のとき。code 列を読む）
+   --session   対象とするセッションコード（予備実験と本実験のデータが同じ CSV に混ざるのを防ぐ。省略時は全セッション）
+ 
+ 手順:
+-  1. finished == 1 の参加者を支払い対象にする（注意チェック等の除外フラグは支払いでは無視）
++  1. finished == 1 の参加者を支払い対象にする（注意チェック等の除外フラグは支払いでは無視）。
++     code は player.exp_id（v0.6 の実験 ID）があればそれ、なければ participant.code
+   2. 連絡先と code で結合。同じメールアドレスが複数の code に紐づく場合は t_end が最も早い code だけを残し、
+      他は dup_list.csv に出す（支払い対象外）
+   3. random.Random(seed) でシャッフルし、先頭から 2 人ずつペアにする。各ペアでコイン投げ（random）で sender を決める
+@@ -29,7 +33,7 @@
+   6. 連絡先のない完了者もペアには入れるが unreachable.csv に分けて出す（後日連絡）
+ 
+ 出力（payout/ 以下、日付付き）:
+-  pairs_<date>.csv       pair_id, code, role, dg_give_applied, payout_yen, email, reachable
++  pairs_<date>.csv       pair_id, code, role, dg_give_applied, payout_yen, cw_extra_yen（= payout − fee。CW で個別発注する額）, email（= 連絡先。CW ならユーザー名）, reachable, realized
+   dup_list_<date>.csv    重複と判定した code
+   unreachable_<date>.csv 連絡先のない完了者
+   summary_<date>.txt     人数・合計額・seed
+@@ -97,6 +101,7 @@
+     ap.add_argument('--code-col', default=None)
+     ap.add_argument('--email-col', default=None)
+     ap.add_argument('--out', default='payout')
++    ap.add_argument('--realize-pairs', type=int, default=None, help='抽選で実現するペア数（案 B）。省略時は全ペアを実現（案 A）')
+     ap.add_argument('--dry-run', action='store_true', help='ファイルを書かずに summary だけ表示')
+     args = ap.parse_args()
+ 
+@@ -104,7 +109,9 @@
+     if not rows:
+         raise SystemExit('データが空です')
+     cols = list(rows[0].keys())
+-    c_code = find_col(cols, 'participant.code')
++    # v0.6: 実験 ID（player.exp_id）があればそれを code にする（CrowdWorks の照合・支払いは実験 ID で行う）
++    c_exp = next((c for c in cols if c.endswith('player.exp_id')), None)
++    c_code = c_exp if c_exp and any(r.get(c_exp) for r in rows) else find_col(cols, 'participant.code')
+     c_fin = find_col(cols, 'player.finished')
+     c_give = find_col(cols, 'player.dg_give')
+     c_tend = find_col(cols, 'player.t_end')
+@@ -130,7 +137,7 @@
+         crows = read_csv(args.contacts)
+         ccols = list(crows[0].keys()) if crows else []
+         cc = guess_col(ccols, ['code', 'コード'], args.code_col)
+-        ce = guess_col(ccols, ['mail', 'メール'], args.email_col)
++        ce = guess_col(ccols, ['mail', 'メール', 'cw_user', '作業者', 'user'], args.email_col)
+         for r in crows:
+             code = r[cc].strip()
+             email = r[ce].strip().lower()
+@@ -179,10 +186,20 @@
+             note = 'odd: no sender available, fee only'
+         out.append(dict(pair_id=len(pairs) + 1, code=leftover['code'], role='receiver',
+                         dg_give_applied=give, payout_yen=args.fee + give, note=note))
++    # 案 B（--realize-pairs）: 抽選で選んだペアだけ決定どおりに支払い、残りは参加謝礼のみ
++    realized_pairs = None
++    if args.realize_pairs is not None:
++        all_pids = sorted({o['pair_id'] for o in out})
++        realized_pairs = set(rng.sample(all_pids, min(args.realize_pairs, len(all_pids))))
+     for o in out:
+         o['email'] = email_by_code.get(o['code'], '')
+         o['reachable'] = bool(o['email'])
+         o.setdefault('note', '')
++        o['realized'] = 1 if realized_pairs is None or o['pair_id'] in realized_pairs else 0
++        if not o['realized']:
++            o['payout_yen'] = args.fee
++        # CrowdWorks 運用（v0.6）: 参加謝礼はタスク報酬で支払い済みなので、個別発注する追加分は payout − fee
++        o['cw_extra_yen'] = o['payout_yen'] - args.fee
+ 
+     total = sum(o['payout_yen'] for o in out)
+     summary = [
+@@ -194,6 +211,7 @@
+         f'senders: {sum(1 for o in out if o["role"] == "sender")}  receivers: {sum(1 for o in out if o["role"] == "receiver")}',
+         f'unreachable (no email): {sum(1 for o in out if not o["reachable"])}',
+         f'total payout (yen): {total}',
++        (f'realized pairs (plan B): {len(realized_pairs)} of {len({o["pair_id"] for o in out})}' if realized_pairs is not None else 'realized pairs: all (plan A)'),
+     ]
+     print('\n'.join(summary))
+     if args.dry_run:
+@@ -202,7 +220,7 @@
+     os.makedirs(args.out, exist_ok=True)
+     tag = date.today().isoformat()
+     with open(os.path.join(args.out, f'pairs_{tag}.csv'), 'w', newline='', encoding='utf-8') as f:
+-        w = csv.DictWriter(f, fieldnames=['pair_id', 'code', 'role', 'dg_give_applied', 'payout_yen', 'email', 'reachable', 'note'])
++        w = csv.DictWriter(f, fieldnames=['pair_id', 'code', 'role', 'dg_give_applied', 'payout_yen', 'cw_extra_yen', 'email', 'reachable', 'realized', 'note'])
+         w.writeheader()
+         w.writerows(out)
+     with open(os.path.join(args.out, f'dup_list_{tag}.csv'), 'w', newline='', encoding='utf-8') as f:

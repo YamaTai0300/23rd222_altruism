@@ -1,4 +1,4 @@
-"""ボットテスト（設計書 §10.1）v0.5。
+"""ボットテスト（設計書 §10.1）v0.6。
 
 実行: otree test a1_ja 24   （24 名 × 6 ケース。4 名ごとに task_order × scale_order の 4 通りが揃う）
 ケース:
@@ -9,6 +9,7 @@
   zero_give       0 円を分ける → dg_share = False
   bad_amount      範囲外・刻み違いの額は受け付けない（元手超過、負の値、dg_step の倍数でない値）
 v0.5 で外したもの: revise（入力確認）、属性、自己予測、参加者コードページ。
+v0.6: 実験 ID（exp_id）が 10 桁の数字で、セッション内で重複しないことを検査。
 """
 from otree.api import Bot, Submission, SubmissionMustFail, expect
 
@@ -57,6 +58,10 @@ class PlayerBot(Bot):
         expect(p.dg_share, p.dg_give > 0)
         expect(p.eval_distract, 1)
         expect(len(p.fab_item_order.split(',')), 17)  # FAB 15 + 注意チェック 2
+        # v0.6: 実験 ID は 10 桁の数字で、同じセッションの他の参加者と重ならない
+        expect(len(p.exp_id), 10)
+        expect(p.exp_id.isdigit(), True)
+        expect(sum(1 for q in p.subsession.get_players() if q.field_maybe_none('exp_id') == p.exp_id), 1)
         if cfg['use_hexaco']:
             expect(p.scale_order in (1, 2), True)
             expect(len(p.hex_item_order.split(',')), 10)

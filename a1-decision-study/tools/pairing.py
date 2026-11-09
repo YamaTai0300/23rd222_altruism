@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""ペアリング・役割抽選・支払額の計算（設計書 §12.3、FR-19）。
+"""ペアリング・役割抽選・支払額の計算（設計書 §12.3、FR-19）。v0.6: CrowdWorks 運用に対応。
 
 使い方:
   python tools/pairing.py --data raw/altruism_study_2026-11-01.csv \
@@ -13,14 +13,18 @@
 
 入力:
   --data      oTree 管理画面からエクスポートした CSV（altruism_study.csv または all_apps_wide.csv）
-  --contacts  参加者コード + メールアドレスの CSV（v0.5 からは実験の外で集める: 参加者が終了画面のコードを申告する）。列名は自動判定
-              （「コード」/ "code" を含む列、「メール」/ "mail" を含む列）。--code-col/--email-col で指定も可
+  --contacts  参加者コード + 連絡先の CSV。v0.6 では tools/match_cw_ids.py が出す contacts_<date>.csv
+              （code = 実験 ID、cw_user = CrowdWorks のユーザー名、cw_profile_url、work_id）。列名は自動判定
+              （「コード」/ "code" を含む列、"mail" / 「メール」/ "cw_user" / 「作業者」を含む列）。--code-col/--email-col で指定も可
+  --realize-pairs N  抽選で N ペアだけ決定どおりに支払う（計画書「倫理・謝礼」の案 B）。省略時は全ペアを実現（案 A）。
+              実現しないペアの 2 人は参加謝礼だけ（payout = fee、realized = 0）
   --seed      乱数シード（必須。summary.txt に記録される）
   --already-paid  支払い済みの参加者コードを含む CSV（週次バッチ運用のとき。code 列を読む）
   --session   対象とするセッションコード（予備実験と本実験のデータが同じ CSV に混ざるのを防ぐ。省略時は全セッション）
 
 手順:
-  1. finished == 1 の参加者を支払い対象にする（注意チェック等の除外フラグは支払いでは無視）
+  1. finished == 1 の参加者を支払い対象にする（注意チェック等の除外フラグは支払いでは無視）。
+     code は player.exp_id（v0.6 の実験 ID）があればそれ、なければ participant.code
   2. 連絡先と code で結合。同じメールアドレスが複数の code に紐づく場合は t_end が最も早い code だけを残し、
      他は dup_list.csv に出す（支払い対象外）
   3. random.Random(seed) でシャッフルし、先頭から 2 人ずつペアにする。各ペアでコイン投げ（random）で sender を決める
@@ -29,7 +33,7 @@
   6. 連絡先のない完了者もペアには入れるが unreachable.csv に分けて出す（後日連絡）
 
 出力（payout/ 以下、日付付き）:
-  pairs_<date>.csv       pair_id, code, role, dg_give_applied, payout_yen, email, reachable
+  pairs_<date>.csv       pair_id, code, role, dg_give_applied, payout_yen, cw_extra_yen（= payout − fee。CW で個別発注する額）, email（= 連絡先。CW ならユーザー名）, reachable, realized
   dup_list_<date>.csv    重複と判定した code
   unreachable_<date>.csv 連絡先のない完了者
   summary_<date>.txt     人数・合計額・seed
@@ -97,6 +101,7 @@ def main():
     ap.add_argument('--code-col', default=None)
     ap.add_argument('--email-col', default=None)
     ap.add_argument('--out', default='payout')
+    ap.add_argument('--realize-pairs', type=int, default=None, help='抽選で実現するペア数（案 B）。省略時は全ペアを実現（案 A）')
     ap.add_argument('--dry-run', action='store_true', help='ファイルを書かずに summary だけ表示')
     args = ap.parse_args()
 
@@ -104,7 +109,9 @@ def main():
     if not rows:
         raise SystemExit('データが空です')
     cols = list(rows[0].keys())
-    c_code = find_col(cols, 'participant.code')
+    # v0.6: 実験 ID（player.exp_id）があればそれを code にする（CrowdWorks の照合・支払いは実験 ID で行う）
+    c_exp = next((c for c in cols if c.endswith('player.exp_id')), None)
+    c_code = c_exp if c_exp and any(r.get(c_exp) for r in rows) else find_col(cols, 'participant.code')
     c_fin = find_col(cols, 'player.finished')
     c_give = find_col(cols, 'player.dg_give')
     c_tend = find_col(cols, 'player.t_end')
@@ -130,7 +137,7 @@ def main():
         crows = read_csv(args.contacts)
         ccols = list(crows[0].keys()) if crows else []
         cc = guess_col(ccols, ['code', 'コード'], args.code_col)
-        ce = guess_col(ccols, ['mail', 'メール'], args.email_col)
+        ce = guess_col(ccols, ['mail', 'メール', 'cw_user', '作業者', 'user'], args.email_col)
         for r in crows:
             code = r[cc].strip()
             email = r[ce].strip().lower()
@@ -179,10 +186,20 @@ def main():
             note = 'odd: no sender available, fee only'
         out.append(dict(pair_id=len(pairs) + 1, code=leftover['code'], role='receiver',
                         dg_give_applied=give, payout_yen=args.fee + give, note=note))
+    # 案 B（--realize-pairs）: 抽選で選んだペアだけ決定どおりに支払い、残りは参加謝礼のみ
+    realized_pairs = None
+    if args.realize_pairs is not None:
+        all_pids = sorted({o['pair_id'] for o in out})
+        realized_pairs = set(rng.sample(all_pids, min(args.realize_pairs, len(all_pids))))
     for o in out:
         o['email'] = email_by_code.get(o['code'], '')
         o['reachable'] = bool(o['email'])
         o.setdefault('note', '')
+        o['realized'] = 1 if realized_pairs is None or o['pair_id'] in realized_pairs else 0
+        if not o['realized']:
+            o['payout_yen'] = args.fee
+        # CrowdWorks 運用（v0.6）: 参加謝礼はタスク報酬で支払い済みなので、個別発注する追加分は payout − fee
+        o['cw_extra_yen'] = o['payout_yen'] - args.fee
 
     total = sum(o['payout_yen'] for o in out)
     summary = [
@@ -194,6 +211,7 @@ def main():
         f'senders: {sum(1 for o in out if o["role"] == "sender")}  receivers: {sum(1 for o in out if o["role"] == "receiver")}',
         f'unreachable (no email): {sum(1 for o in out if not o["reachable"])}',
         f'total payout (yen): {total}',
+        (f'realized pairs (plan B): {len(realized_pairs)} of {len({o["pair_id"] for o in out})}' if realized_pairs is not None else 'realized pairs: all (plan A)'),
     ]
     print('\n'.join(summary))
     if args.dry_run:
@@ -202,7 +220,7 @@ def main():
     os.makedirs(args.out, exist_ok=True)
     tag = date.today().isoformat()
     with open(os.path.join(args.out, f'pairs_{tag}.csv'), 'w', newline='', encoding='utf-8') as f:
-        w = csv.DictWriter(f, fieldnames=['pair_id', 'code', 'role', 'dg_give_applied', 'payout_yen', 'email', 'reachable', 'note'])
+        w = csv.DictWriter(f, fieldnames=['pair_id', 'code', 'role', 'dg_give_applied', 'payout_yen', 'cw_extra_yen', 'email', 'reachable', 'realized', 'note'])
         w.writeheader()
         w.writerows(out)
     with open(os.path.join(args.out, f'dup_list_{tag}.csv'), 'w', newline='', encoding='utf-8') as f:

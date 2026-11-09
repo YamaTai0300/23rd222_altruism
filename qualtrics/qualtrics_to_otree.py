@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Qualtrics 版（make_qsf.py r2 で作った調査）のエクスポート CSV を、oTree 版のエクスポート形式に変換する。
+"""Qualtrics 版（make_qsf.py r3 で作った調査。r2 も可）のエクスポート CSV を、oTree 版のエクスポート形式に変換する。
 
 目的: analysis/01_clean.R（と tools/pairing.py、tools/archive_export.py）を oTree 版・Qualtrics 版で共通に使う。
       変換後の列は analysis/codebook.csv と 99_synthetic.R の列（participant.*, player.*, session.*）と同じ。
@@ -16,7 +16,8 @@ Qualtrics 側のエクスポート設定: Data & Analysis → Export → CSV、�
   先頭 3 行がヘッダー（列名・質問文・ImportId）。
 
 oTree 版との対応（変換で吸収する差）
-- participant.code ← ResponseId。session.code ← --session（既定: QSF の SurveyID、なければ 'qualtrics'）
+- participant.code ← 埋め込みデータ exp_id（r3 の実験 ID。列がない r2 のデータでは ResponseId）、participant.label ← ResponseId、
+  player.exp_id ← exp_id。session.code ← --session（既定: QSF の SurveyID、なければ 'qualtrics'）
 - consent / eligible_confirm ← consent_1 / consent_2（複数選択の 2 項目）
 - dg_check（最終回答）← dg_check_answer2 があればそれ、なければ dg_check_answer1。dg_check_attempts / dg_check_pass もここで作る
 - cq1_pass / cq2_pass / dg_share / excluded_in_app / exclude_reason_in_app は oTree 版の __init__.py と同じ定義で作る
@@ -160,7 +161,9 @@ def convert(args):
         if not finished and not args.keep_unfinished:
             dropped['unfinished'] += 1
             continue
-        code = r['ResponseId'].strip()
+        response_id = r['ResponseId'].strip()
+        exp_id = (r.get('exp_id') or '').strip()
+        code = exp_id or response_id   # r3: 実験 ID を participant.code にする（CW の照合・pairing.py と同じ ID）
         task_order, scale_order = to_int(r.get('task_order')), to_int(r.get('scale_order'))
         endow = to_int(r.get('cfg_endowment')) or args.endowment
         cq = {c: to_int(r.get(c)) for c in CQ}
@@ -189,7 +192,7 @@ def convert(args):
         rec = OrderedDict()
         rec['participant.id_in_session'] = len(out) + 1
         rec['participant.code'] = code
-        rec['participant.label'] = ''
+        rec['participant.label'] = response_id
         rec['participant._is_bot'] = 0
         rec['participant._index_in_pages'] = len(PAGE_SEQUENCE) if finished else ''
         rec['participant._max_page_index'] = len(PAGE_SEQUENCE)
@@ -216,6 +219,7 @@ def convert(args):
         rec['player.cfg_use_hexaco'] = to_int(r.get('cfg_use_hexaco')) if to_int(r.get('cfg_use_hexaco')) is not None else 1
         rec['player.user_agent'] = ua
         rec['player.screen_width'] = sw
+        rec['player.exp_id'] = exp_id
         rec['player.consent'] = to_bool01(r.get('consent_1'))
         rec['player.eligible_confirm'] = to_bool01(r.get('consent_2'))
         for f in FAB:
