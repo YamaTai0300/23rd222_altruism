@@ -6,7 +6,7 @@
       変換後の列は analysis/codebook.csv と 99_synthetic.R の列（participant.*, player.*, session.*）と同じ。
 
 使い方:
-  python qualtrics_to_otree.py <Qualtrics の CSV> --out-dir ../a1-decision-study_v0.5/raw/main [--qsf A-1_v0.5r2_ja.qsf]
+  python qualtrics_to_otree.py <Qualtrics の CSV> --out-dir ../a1-decision-study/raw/main [--qsf A-1_v0.6r3_ja.qsf]
       [--date YYYY-MM-DD] [--tz +09:00] [--include-preview] [--keep-unfinished] [--session SV_xxx]
   → <out-dir>/altruism_study_<date>.csv（完了者だけ）、Timing 質問（--full の QSF）があれば <out-dir>/PageTimes_<date>.csv、
     <out-dir>/convert_<date>.txt（行数・除いた行・列の対応）

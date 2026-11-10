@@ -1,7 +1,7 @@
 # 原研究の独裁者ゲーム vs 本追試 — 対応表
 
 「元の研究ではこうだった（このフォルダーで再現）」と「自分の追試はこうである（`../a1-decision-study`）」を並べて説明するための資料。
-画面は `docs/screens_original_*.pdf`（原研究の再現）と `../a1-decision-study/docs/screens_v0.2_ja.pdf`（本追試）。
+画面は `docs/screens_original_*.pdf`（原研究の再現）と `../a1-decision-study/docs/screens_v0.2_ja.pdf`（本追試。タグ `v0.4` の時点のファイル）。
 
 出典: Binder, Schultze, Chen & Windmann (2026) *Sci Rep* 16:11600 の Methods と、OSF T5MF2 の Studies/03（卒論付録 p.43–44 の教示原文）、
 Studies/09・11（codebook, preprocessing.R）、Study_overview.xlsx。出典の詳細は `docs/sources_ja.md`。

@@ -1,0 +1,19 @@
+# 改行コードの指定。どの OS・Git の設定で clone しても同じになるようにする。
+* text=auto
+
+# Windows のバッチファイルは CRLF（LF だと cmd が誤動作することがある）
+*.bat text eol=crlf
+*.cmd text eol=crlf
+# シェルスクリプトは LF
+*.sh  text eol=lf
+
+# 差分パッチは中の改行（CRLF / LF の混在）をそのまま保つ
+*.patch -text
+
+# バイナリ
+*.xlsx binary
+*.docx binary
+*.doc  binary
+*.pdf  binary
+*.png  binary
+*.otreezip binary

@@ -1,4 +1,4 @@
-# a1-decision-study_v0.6 — A-1 追試（FAB・HEXACO 質問紙 × 独裁者ゲーム）の oTree 実装（v0.6・日本語版）
+# a1-decision-study — A-1 追試（FAB・HEXACO 質問紙 × 独裁者ゲーム）の oTree 実装（v0.6・日本語版）
 
 Binder, Schultze, Chen & Windmann (2026, *Sci Rep* 16:11600) の「Help Giving → 独裁者ゲーム」を
 日本の CrowdWorks ワーカーで再現する一回完結のオンライン実験（v0.6 で学内募集から変更）。設計はこの文書に従う:
@@ -7,7 +7,7 @@ Binder, Schultze, Chen & Windmann (2026, *Sci Rep* 16:11600) の「Help Giving �
 - 実験計画書 A-1: https://claude.ai/code/artifact/7d6d3bf2-110f-4096-87f7-f1ae9ec69219
 - 再現要素一覧（Excel）: `../A-1_再現要素一覧.xlsx`
 - 原研究の公開資料（OSF T5MF2）からの抜粋と対応表: `docs/osf_sources.md`、変更履歴: `CHANGELOG.md`
-- 修正前の v0.5 は `../a1-decision-study_v0.5/`、v0.4 は `../a1-decision-study/` にそのまま残してある。v0.5 → v0.6 の比較: `docs/compare_v0.5_v0.6.md`、
+- 以前の版は Git のタグで見られる（GitHub の Tags / Releases、または `git checkout v0.5` など）。v0.5 はタグ `v0.5`、v0.4 はタグ `v0.4`。v0.5 → v0.6 の比較: `docs/compare_v0.5_v0.6.md`、
   ソースの差分 `docs/diff_v0.5_to_v0.6.patch`。v0.4 → v0.5: `docs/compare_v0.4_v0.5.md`、`docs/compare_screens_v0.4_v0.5_ja.pdf`、`docs/diff_v0.4_to_v0.5.patch`
 - 募集・実施・承認の運用（CrowdWorks × Qualtrics、研究室マニュアル）は計画書 v0.6 の「募集と実施の運用」。Qualtrics 版は `../qualtrics/`（r3）
 
@@ -134,7 +134,7 @@ python tools/browser_walk.py shots a1_ja --base http://localhost:8000 --pdf docs
 ### 画面だけ先に見たいとき
 
 `docs/screens_v0.5_ja.pdf` に v0.5 のスマホ幅の全画面（エラー表示・再回答・4 通りの順序を含む）、`docs/screens_v0.5_en.pdf` に英語版、
-`docs/compare_screens_v0.4_v0.5_ja.pdf` に v0.4 との並列比較が入っている。v0.1〜v0.2 の画面は `../a1-decision-study/docs/`。
+`docs/compare_screens_v0.4_v0.5_ja.pdf` に v0.4 との並列比較が入っている。v0.1〜v0.2 の画面はタグ `v0.4` の `docs/`。
 
 ### つまずきやすい点
 

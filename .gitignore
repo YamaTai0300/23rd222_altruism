@@ -1,0 +1,47 @@
+# ============================================================
+# 23rd222_altruism — A-1 追試リポジトリ用 .gitignore
+# 各版フォルダー（a1-decision-study*/、original-dg-replica/）にも
+# 個別の .gitignore があり、そちらも有効。ここはリポジトリ全体の共通設定。
+# ============================================================
+
+# ---- Python / oTree ----
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+db.sqlite3
+*.sqlite3
+_static_root/
+__temp*
+_bots*
+*.otreezip
+__demo_links.txt
+
+# ---- R ----
+.Rhistory
+.RData
+.Rproj.user/
+
+# ---- 本番データ・個人に結びつく情報（絶対にコミットしない） ----
+# oTree の管理画面エクスポートの保存先（tools/archive_export.py）と支払い用
+raw/
+payout/
+data/
+output/
+# CrowdWorks の承認待ち一覧との照合結果・ペアリング用（tools/match_cw_ids.py）
+contacts_*.csv
+# Qualtrics の回答エクスポート・CW の一覧などは private/ に置く
+private/
+
+# ---- OS・エディター・Office ----
+.DS_Store
+Thumbs.db
+desktop.ini
+~$*
+*.tmp
+.vscode/
+.idea/
+
+# ---- 手元だけに残す旧版フォルダー（GitHub には出さない。旧版は Git のタグで見る） ----
+_archive/

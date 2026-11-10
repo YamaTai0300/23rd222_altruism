@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """A-1 追試 v0.6 の実験を Qualtrics で再現する QSF（調査定義ファイル）を生成する（r3, 2026-11-09）。
 
-使い方: python make_qsf.py --texts <a1-decision-study_v0.6>/altruism_study/texts/ja.py --out A-1_v0.6r3_ja.qsf
+使い方: python make_qsf.py --texts <a1-decision-study>/altruism_study/texts/ja.py --out A-1_v0.6r3_ja.qsf
 
 r3（2026-11-09、計画書 v0.6 = CrowdWorks 募集）での変更
 - ★ 実験 ID: Survey Flow の先頭で埋め込みデータ exp_id に 10 桁の乱数（${rand://int/1000000000:9999999999}）を入れ、終了ページ／終了メッセージには
@@ -477,7 +477,7 @@ def build(T, Q, full=False, meta=False, eos_message=None, allow_multiple=False, 
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--texts', required=True, help='a1-decision-study_v0.6/altruism_study/texts/ja.py')
+    ap.add_argument('--texts', required=True, help='a1-decision-study/altruism_study/texts/ja.py')
     ap.add_argument('--out', default='A-1_v0.6r3_ja.qsf')
     ap.add_argument('--full', action='store_true', help='Timing 質問と JavaScript を入れる（有料ライセンス向け）')
     ap.add_argument('--meta', action='store_true', help='同意ページに Meta Info 質問（ブラウザ・OS・画面解像度）を入れる。無料アカウントで通るか未確認')
