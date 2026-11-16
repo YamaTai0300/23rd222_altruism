@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Qualtrics 版（make_qsf.py r3 で作った調査。r2 も可）のエクスポート CSV を、oTree 版のエクスポート形式に変換する。
+"""Qualtrics 版（make_qsf.py r3・r4 で作った調査。r2 も可）のエクスポート CSV を、oTree 版のエクスポート形式に変換する。
 
 目的: analysis/01_clean.R（と tools/pairing.py、tools/archive_export.py）を oTree 版・Qualtrics 版で共通に使う。
       変換後の列は analysis/codebook.csv と 99_synthetic.R の列（participant.*, player.*, session.*）と同じ。
 
 使い方:
-  python qualtrics_to_otree.py <Qualtrics の CSV> --out-dir ../a1-decision-study/raw/main [--qsf A-1_v0.6r3_ja.qsf]
+  python qualtrics_to_otree.py <Qualtrics の CSV> --out-dir ../a1-decision-study/raw/main [--qsf A-1_v0.6r4_ja.qsf]
       [--date YYYY-MM-DD] [--tz +09:00] [--include-preview] [--keep-unfinished] [--session SV_xxx]
   → <out-dir>/altruism_study_<date>.csv（完了者だけ）、Timing 質問（--full の QSF）があれば <out-dir>/PageTimes_<date>.csv、
     <out-dir>/convert_<date>.txt（行数・除いた行・列の対応）

@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""A-1 追試 v0.6 の実験を Qualtrics で再現する QSF（調査定義ファイル）を生成する（r3, 2026-11-09）。
+"""A-1 追試 v0.6 の実験を Qualtrics で再現する QSF（調査定義ファイル）を生成する（r4, 2026-11-16）。
 
-使い方: python make_qsf.py --texts <a1-decision-study>/altruism_study/texts/ja.py --out A-1_v0.6r3_ja.qsf
+使い方: python make_qsf.py --texts <a1-decision-study>/altruism_study/texts/ja.py --out A-1_v0.6r4_ja.qsf
+
+r4（2026-11-16）での変更
+- スクリプトの処理は r3 と同じ。texts/ja.py の 2026-11-10 の変更（HEXACO 正直さ-謙虚さ 10 項目・5 件法の選択肢・教示を若林（2014）日本語版に、
+  同意文の言い回し、終了文の「入力がないと報酬をお支払いできません。」の削除）を反映するために作り直し、版の表記（APP_VERSION・調査名・既定の出力名）を r4 にした。
+  質問 ID・変数名・ブロック・Survey Flow は r3 と同じ
 
 r3（2026-11-09、計画書 v0.6 = CrowdWorks 募集）での変更
 - ★ 実験 ID: Survey Flow の先頭で埋め込みデータ exp_id に 10 桁の乱数（${rand://int/1000000000:9999999999}）を入れ、終了ページ／終了メッセージには
@@ -52,12 +57,12 @@ FEE = 300
 DG_STEP = 1
 CURRENCY = '円'
 LANG = 'ja'
-APP_VERSION = 'v0.6r3-qualtrics'
+APP_VERSION = 'v0.6r4-qualtrics'
 TOTAL_PAGES = 9
-SURVEY_ID = 'SV_egt7X9VgLDhmk8C'   # 取り込み時には新しい ID が振られる（r1: SV_6PfFg1rhsV2G2uG「study_v5」、r2: SV_cSIPHEGOiULgN82「study_v6」2026-11-06、r3: 未取り込み）
+SURVEY_ID = 'SV_egt7X9VgLDhmk8C'   # 取り込み時には新しい ID が振られる（r1: SV_6PfFg1rhsV2G2uG「study_v5」、r2: SV_cSIPHEGOiULgN82「study_v6」2026-11-06、r3: 未取り込み、r4: SV_0CxzAfZwzqsceeG「study_v7」2026-11-16）
 BRAND_ID = 'qualtricsxmw5hysnkpn'   # 空だと ESDEF10 で拒否される
 OWNER_ID = 'UR_1QAwVwSMYMfW9nn'
-SURVEY_NAME = 'A-1 意思決定と日常行動に関する調査（v0.6r3 Qualtrics）'
+SURVEY_NAME = 'A-1 意思決定と日常行動に関する調査（v0.6r4 Qualtrics）'
 
 HG = ['hg_1', 'hg_3', 'hg_7', 'hg_10', 'hg_13']
 PP = ['pp_1', 'pp_8', 'pp_12', 'pp_14', 'pp_15']
@@ -478,7 +483,7 @@ def build(T, Q, full=False, meta=False, eos_message=None, allow_multiple=False, 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--texts', required=True, help='a1-decision-study/altruism_study/texts/ja.py')
-    ap.add_argument('--out', default='A-1_v0.6r3_ja.qsf')
+    ap.add_argument('--out', default='A-1_v0.6r4_ja.qsf')
     ap.add_argument('--full', action='store_true', help='Timing 質問と JavaScript を入れる（有料ライセンス向け）')
     ap.add_argument('--meta', action='store_true', help='同意ページに Meta Info 質問（ブラウザ・OS・画面解像度）を入れる。無料アカウントで通るか未確認')
     ap.add_argument('--eos-message', default=None, help='終了メッセージの Library ID（MS_xxx）。渡すと終了ブロックの代わりに End of Survey メッセージで参加者コードを出す')

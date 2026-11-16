@@ -9,7 +9,7 @@ Binder, Schultze, Chen & Windmann (2026, *Sci Rep* 16:11600) の「Help Giving �
 - 原研究の公開資料（OSF T5MF2）からの抜粋と対応表: `docs/osf_sources.md`、変更履歴: `CHANGELOG.md`
 - 以前の版は Git のタグで見られる（GitHub の Tags / Releases、または `git checkout v0.5` など）。v0.5 はタグ `v0.5`、v0.4 はタグ `v0.4`。v0.5 → v0.6 の比較: `docs/compare_v0.5_v0.6.md`、
   ソースの差分 `docs/diff_v0.5_to_v0.6.patch`。v0.4 → v0.5: `docs/compare_v0.4_v0.5.md`、`docs/compare_screens_v0.4_v0.5_ja.pdf`、`docs/diff_v0.4_to_v0.5.patch`
-- 募集・実施・承認の運用（CrowdWorks × Qualtrics、研究室マニュアル）は計画書 v0.6 の「募集と実施の運用」。Qualtrics 版は `../qualtrics/`（r3）
+- 募集・実施・承認の運用（CrowdWorks × Qualtrics、研究室マニュアル）は計画書 v0.6 の「募集と実施の運用」。Qualtrics 版は `../qualtrics/`（r4）
 
 参加者は各自のスマホ・PC から募集期間中の好きな時刻に 1 人で参加する（完全非同期、約 10 分）。
 WaitPage やグループは使わない。DG の相手とのペアは締切後に `tools/pairing.py` でオフラインに組む。

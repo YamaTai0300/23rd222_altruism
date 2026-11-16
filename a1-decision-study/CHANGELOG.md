@@ -5,7 +5,7 @@
 
 ## 未リリース（2026-11-10）— HEXACO 正直さ-謙虚さの日本語版と文言の修正
 
-v0.6 のあとの変更。Qualtrics 版の QSF（r3）にはまだ反映していない（次の r4 で反映する）。変更後のボットテストは未実行。
+v0.6 のあとの変更。Qualtrics 版は r4（2026-11-16、`../qualtrics/A-1_v0.6r4_ja.qsf`）で反映した。oTree 版の変更後のボットテストは未実行。
 
 - texts/ja.py: HEXACO 10 項目（`hex_1`〜`hex_10`）、選択肢 `likert5`、教示 `hex_intro` / `hex_intro_short` を若林（2014）日本語版
   （hexaco.org 配布 `Japanese_self60.doc`）に差し替え。項目・選択肢は改変しない（句読点「，」も原文のまま）。

@@ -1,6 +1,6 @@
-# Qualtrics 版（A-1 v0.6 の再現）r3
+# Qualtrics 版（A-1 v0.6 の再現）r4
 
-作成: 2026-11-05（r1）／ 改訂: 2026-11-06（r2: oTree 版 v0.5 との齟齬を解消）／ 2026-11-09（r3: 計画書 v0.6 = CrowdWorks 募集に対応。実験 ID、参加資格、未完了回答 4 時間）。oTree 版 `../a1-decision-study/` と同じ 9 ページ構成を Qualtrics で再現したもの。r1・r2 のファイルは Git のタグ `qualtrics-r1`・`qualtrics-r2` で見られる。r2 → r3 の差分は `diff_r2_r3_make_qsf.patch`（`qualtrics_to_otree.py` の差分も含む）。**r3 の QSF はまだ Qualtrics に取り込んでいない**（取り込み先は研究室アカウントか自分のアカウントかを計画書の決定に合わせて決める）。Qualtrics のプロジェクトは、r2 が **study_v6**（調査 ID `SV_cSIPHEGOiULgN82`、2026-11-06 に `A-1_v0.5r2_ja.qsf` を取り込み）、r1 が **study_v5**（`SV_6PfFg1rhsV2G2uG`）。ブランドは `qualtricsxmw5hysnkpn.hnd1`。r1 → r2 の差分は `diff_r1_r2_make_qsf.patch`。齟齬の一覧はプロジェクト doc「A-1 Qualtrics 版と oTree 版の齟齬一覧（2026-11-05）」。
+作成: 2026-11-05（r1）／ 改訂: 2026-11-06（r2: oTree 版 v0.5 との齟齬を解消）／ 2026-11-09（r3: 計画書 v0.6 = CrowdWorks 募集に対応。実験 ID、参加資格、未完了回答 4 時間）／ 2026-11-16（r4: `texts/ja.py` の 2026-11-10 の変更 = HEXACO 若林（2014）日本語版・同意文・終了文を反映）。oTree 版 `../a1-decision-study/` と同じ 9 ページ構成を Qualtrics で再現したもの。r1〜r3 のファイルは Git のタグ `qualtrics-r1`〜`qualtrics-r3` で見られる（r3 → r4 の差分は `git diff qualtrics-r3 -- qualtrics/`）。r2 → r3 の差分は `diff_r2_r3_make_qsf.patch`（`qualtrics_to_otree.py` の差分も含む）。**r3 の QSF はまだ Qualtrics に取り込んでいない**（取り込み先は研究室アカウントか自分のアカウントかを計画書の決定に合わせて決める）。Qualtrics のプロジェクトは、r2 が **study_v6**（調査 ID `SV_cSIPHEGOiULgN82`、2026-11-06 に `A-1_v0.5r2_ja.qsf` を取り込み）、r1 が **study_v5**（`SV_6PfFg1rhsV2G2uG`）。ブランドは `qualtricsxmw5hysnkpn.hnd1`。r1 → r2 の差分は `diff_r1_r2_make_qsf.patch`。齟齬の一覧はプロジェクト doc「A-1 Qualtrics 版と oTree 版の齟齬一覧（2026-11-05）」。
 
 ## 正本と直し方
 
@@ -12,15 +12,50 @@
 
 | ファイル | 内容 |
 | --- | --- |
-| `make_qsf.py` | 生成スクリプト（r3）。`python make_qsf.py --texts ../a1-decision-study/altruism_study/texts/ja.py --out A-1_v0.6r3_ja.qsf` |
-| `A-1_v0.6r3_ja.qsf` | 無料アカウント向け（Timing・JavaScript・Meta Info なし、43 質問、qsf_hash `6971821f2cc9`） |
-| `A-1_v0.6r3_ja_full.qsf` | 有料ライセンス向け（`--full --meta`: 各ページの Timing 質問 `t_*`、決定画面の取り分の即時表示 JavaScript、同意ページの Meta Info 質問。53 質問、qsf_hash `ed33a08222b3`） |
-| `A-1_v0.6r3_ja_eos_message.html`（`_full_` も同じ） | 終了メッセージ（End of Survey）の本文（実験 ID を表示）。Library に 1 回だけ手で作る（下の「終了ページ」） |
+| `make_qsf.py` | 生成スクリプト（r4。処理は r3 と同じで版の表記だけ変更）。`python make_qsf.py --texts ../a1-decision-study/altruism_study/texts/ja.py --out A-1_v0.6r4_ja.qsf` |
+| `A-1_v0.6r4_ja.qsf` | 無料アカウント向け（Timing・JavaScript・Meta Info なし、43 質問、qsf_hash `eec600c9fc6c`）。2026-11-16 に自分の無料アカウントへ **study_v7**（`SV_0CxzAfZwzqsceeG`）として取り込み済み |
+| `A-1_v0.6r4_ja_full.qsf` | 有料ライセンス向け（`--full --meta`: 各ページの Timing 質問 `t_*`、決定画面の取り分の即時表示 JavaScript、同意ページの Meta Info 質問。53 質問、qsf_hash `78b968a5e3dc`） |
+| `A-1_v0.6r4_ja_eos_message.html`（`_full_` も同じ） | 終了メッセージ（End of Survey）の本文（実験 ID を表示）。Library に 1 回だけ手で作る（下の「終了ページ」） |
 | `qualtrics_to_otree.py` | Qualtrics のエクスポート CSV → oTree 版のエクスポート形式（`altruism_study_<date>.csv`、Timing があれば `PageTimes_<date>.csv`）。r3: `participant.code` ← `exp_id`、`participant.label` ← `ResponseId`、`player.exp_id` を追加。`analysis/01_clean.R`・`tools/pairing.py`・`tools/match_cw_ids.py` をそのまま使うため |
+| タグ `qualtrics-r3` | 2026-11-09 の版（取り込んでいない。HEXACO が仮文のまま） |
 | タグ `qualtrics-r2` | 2026-11-06 の版（study_v6 に取り込んだもの） |
 | タグ `qualtrics-r1` | 2026-11-05 の版（study_v5 に取り込んだもの） |
 
 `make_qsf.py` のオプション: `--full`（Timing + JS）、`--meta`（Meta Info 質問。無料アカウントで取り込めるかは未確認。403 なら外す）、`--eos-message MS_xxx`（終了メッセージ。下記）、`--allow-multiple`（多重回答防止を切る。デモ用）、`--keep-ip`（匿名化を切る）、`--partial '+4 hours'`（未完了回答を記録するまでの期間。r3 の既定）、`--brand`（SurveyBrandID）。
+
+## Qualtrics に反映する手順（ja.py を直したとき）
+
+GitHub に push しても Qualtrics には反映されない。Qualtrics の調査は QSF ファイルを **新規プロジェクトとして取り込んで** 作る（既存プロジェクトの上書きはできない）。
+
+1. `texts/ja.py` を直す（Qualtrics のビルダーでは直さない）
+2. `make_qsf.py` の版の表記（`APP_VERSION`・`SURVEY_NAME`・`--out` の既定）を次の r に上げ、QSF を作り直す:
+   `cd qualtrics` → `python make_qsf.py --texts ../a1-decision-study/altruism_study/texts/ja.py --out A-1_v0.6rN_ja.qsf`
+   （有料ライセンス向けは `--full --meta --out A-1_v0.6rN_ja_full.qsf`。研究室アカウントに入れるときは `--brand <そのアカウントのブランド ID>`）
+3. Qualtrics: プロジェクト → 「プロジェクトを作成する」→「アンケート」→「開始する」→ 名前（`study_vN`）、「アンケートの開始方法」=「QSFファイルをインポート」→「ファイルを選択」で上の QSF →「プロジェクトを作成する」
+4. プレビューで変えた文言を確認し、このファイルの「ファイル」表と「版の記録」に調査 ID を書く
+5. 古い QSF を `git rm` し、新しい QSF と README・CHANGELOG をコミットしてタグ `qualtrics-rN` を付けて push（`git push origin main --tags`）
+
+## 版の記録（Qualtrics のプロジェクト）
+
+| 版 | QSF | 取り込み先 | 調査 ID | 確認 |
+| --- | --- | --- | --- | --- |
+| r4 | `A-1_v0.6r4_ja.qsf` | 自分の無料アカウント、study_v7（2026-11-16） | `SV_0CxzAfZwzqsceeG` | プレビュー（順序群: DG が先・HEXACO が 1/2）で、同意文の新しい言い回し、HEXACO 10 項目（若林版・1 ページ・5 件法の新しい選択肢、「3 をできるだけ選ばない」は出ない）、終了ページの 10 桁の実験 ID と「入力がないと…」の削除、「ページ k / 9」が 1〜9 で進むことを確認。Survey Options: 未完了回答 = 記録・4 時間（最後の編集から）、複数回答の防止 ON、回答の匿名化 ON。未公開（ドラフト） |
+| r3 | `A-1_v0.6r3_ja.qsf`（タグ `qualtrics-r3`） | 取り込んでいない | — | HEXACO が仮文のため使わない |
+| r2 | `A-1_v0.5r2_ja.qsf`（タグ `qualtrics-r2`） | 自分の無料アカウント、study_v6（2026-11-06） | `SV_cSIPHEGOiULgN82` | 下の「取り込み・公開前・エクスポート」 |
+| r1 | タグ `qualtrics-r1` | 自分の無料アカウント、study_v5（2026-11-05） | `SV_6PfFg1rhsV2G2uG` | |
+
+## r4 で変えた点（2026-11-16）
+
+`make_qsf.py` の処理は r3 と同じ。`texts/ja.py` の 2026-11-10 の変更（`../a1-decision-study/CHANGELOG.md`「未リリース（2026-11-10）」）を反映するために作り直した。質問 ID・変数名・ブロック・Survey Flow（`app_version` と `qsf_hash` の値以外）は r3 と同じなので、`qualtrics_to_otree.py` と解析はそのまま使える。
+
+| 項目 | r3 | r4 |
+| --- | --- | --- |
+| HEXACO 10 項目（`hex_1`〜`hex_10`） | 仮文「【HEXACO 正直さ-謙虚さ 項目 k（未転記）】」 | 若林（2014）日本語版の項目（原文どおり、句読点「，」も原文のまま） |
+| HEXACO の選択肢（5 件法、値 1〜5 は同じ） | 全くそう思わない … 強くそう思う | あてはまらない（そうではない）／どちらかといえば，あてはまらない／どちらともいえない／どちらかといえば，あてはまる／あてはまる（そうである） |
+| HEXACO の教示（`hex_intro`） | 仮の教示 | 若林版「回答の仕方」を画面用に整えた文（「3 をできるだけ選ばない」注意書きは入れていない。未決） |
+| 同意文 | いったん始めたら中断せずに最後まで一度にお答えください | 一度始めたら中断せずに最後までお答えください |
+| 終了文・終了メッセージ | 「入力がないと報酬をお支払いできません。」あり | 削除 |
+| 来歴 | `app_version` = `v0.6r3-qualtrics` | `v0.6r4-qualtrics`（調査名も「v0.6r4 Qualtrics」） |
 
 ## r3 で変えた点（計画書 v0.6 = CrowdWorks 募集、研究室マニュアルの運用）
 
@@ -55,20 +90,20 @@
 
 ## 終了ページ（End of Survey メッセージ）の作り方
 
-1. Qualtrics の Library → Messages → New Message → Type「End of Survey Messages」。本文は `A-1_v0.6r3_ja_eos_message.html` の中身（HTML ソースとして貼る）。`${e://Field/exp_id}` が実験 ID になる
-2. メッセージ ID（`MS_` で始まる）を控え、`python make_qsf.py --texts ... --eos-message MS_xxx --out A-1_v0.6r3_ja.qsf` で作り直して取り込む
+1. Qualtrics の Library → Messages → New Message → Type「End of Survey Messages」。本文は `A-1_v0.6r4_ja_eos_message.html` の中身（HTML ソースとして貼る）。`${e://Field/exp_id}` が実験 ID になる
+2. メッセージ ID（`MS_` で始まる）を控え、`python make_qsf.py --texts ... --eos-message MS_xxx --out A-1_v0.6r4_ja.qsf` で作り直して取り込む
 3. プレビューの最後に 10 桁の実験 ID が出ることを確認する
 
 メッセージを作らない場合（`--eos-message` なし）は終了ブロックが残り、参加者が「次へ」を押して初めて Finished = 1 になる。コードを控えて閉じた人は未完了として記録される（`Finished = 0`、ただし回答はすべて入っている）。その場合は `qualtrics_to_otree.py --keep-unfinished` で残し、`eval_*` がすべて入っている行を完了扱いにするか決める。
 
 ## 取り込み・公開前・エクスポート
 
-- 取り込み: Projects → Create project → Survey → Import a QSF file（新規プロジェクトになる。Claude のアプリ内ブラウザから行うときはファイル入力に JavaScript でファイルを注入する）。Qualtrics の API はクラウドからも PC の VM からも到達できない
+- 取り込み: Projects → Create project → Survey → Import a QSF file（新規プロジェクトになる。手順は上の「Qualtrics に反映する手順」。Claude のアプリ内ブラウザから行うときも、ファイルの選択は本人が行うのが確実）。Qualtrics の API はクラウドからも PC の VM からも到達できない
 - 取り込みで拒否される点（r1 で確認）: `SurveyBrandID` は空不可（ESDEF10）、`ProtectSelectionIds` は boolean、`SurveyHistory` / `SurveyTitleText` / `NewScaling` / `PartialDataCloseSurvey` は不可。無料アカウントでは Timing 質問と質問の JavaScript が 403（`--full` なしで省く）。`<ol>` の番号やインライン style は落ちる（番号は本文に入れてある）
 - 2026-11-06（r2 の取り込み）で追加で分かった点: Survey Options の値が null の項目（`EOSMessageLibrary` など）と `AutoConfirmTarget` は「Additional property … is not allowed」(ESDEF10) で拒否される（r1 を取り込んだ前日は通っていた）。`make_qsf.py` はこれらを出さない。取り込みのエラー内容はブラウザの開発者ツールで `POST /survey-projects/v1/projects/import` の応答（JSON の `ValidationErrors`）を見ると分かる
 - プレビューで確認済み（2026-11-06、study_v6、順序群 1・2 の両方）: (1) FAB の 2 ページが 9 項目・8 項目に分かれ、cq1 が 1 ページ目の 5 番目、cq2 が 2 ページ目の 4 番目に出る（15 項目は 2 ページにまたがってシャッフル）。(2) 見出しが scale_order 2 で「質問紙 1/2（HEXACO）→ 2/2（FAB）」。(3) 各ページの「ページ k / 9」が 1 から 9 まで順に進む（再回答ページは同じ番号）。(4) 終了ページに ResponseID が出て、「次へ」で完了になる。未確認: 終了メッセージ（Library を作ってから）、`--meta` を入れた QSF が無料アカウントで取り込めるか
-- 公開前: Survey Options の未完了回答の扱い（r3 の既定は 4 時間後に記録）、多重回答防止（ON）、匿名化（ON）、終了メッセージを確認。回答数の上限（無料アカウントは公開情報で 100 件程度）と CW の定員 150 の問題を研究室アカウントのライセンスで確認（計画書 v0.6「材料と尺度」）。テスト回答を 1 件入れてエクスポート → 変換 → `01_clean.R` を実際に通し、テスト回答は本番前に消す
-- エクスポート: Data & Analysis → Export → CSV、「Use numeric values」、「Export viewing order data for randomized surveys」を ON。変換: `python qualtrics_to_otree.py <csv> --qsf A-1_v0.6r3_ja.qsf --out-dir ../a1-decision-study/raw/main` → `raw/main/altruism_study_<date>.csv`（完了者だけ、プレビュー行は除く）。CW の承認前に `python ../a1-decision-study/tools/match_cw_ids.py --cw <CW の承認待ち一覧 CSV/HTML> --data <Qualtrics の CSV か変換後の CSV>` で実験 ID を照合（approve / check / reject と未申告の一覧）。そのあとは oTree 版と同じく `run_analysis.bat` / `tools/pairing.py --contacts payout/contacts_<date>.csv`（`--realize-pairs N` で案 B）
+- 公開前: Survey Options の未完了回答の扱い（r3 以降の既定は 4 時間後に記録）、多重回答防止（ON）、匿名化（ON）、終了メッセージを確認。回答数の上限（無料アカウントは公開情報で 100 件程度）と CW の定員 150 の問題を研究室アカウントのライセンスで確認（計画書 v0.6「材料と尺度」）。テスト回答を 1 件入れてエクスポート → 変換 → `01_clean.R` を実際に通し、テスト回答は本番前に消す
+- エクスポート: Data & Analysis → Export → CSV、「Use numeric values」、「Export viewing order data for randomized surveys」を ON。変換: `python qualtrics_to_otree.py <csv> --qsf A-1_v0.6r4_ja.qsf --out-dir ../a1-decision-study/raw/main` → `raw/main/altruism_study_<date>.csv`（完了者だけ、プレビュー行は除く）。CW の承認前に `python ../a1-decision-study/tools/match_cw_ids.py --cw <CW の承認待ち一覧 CSV/HTML> --data <Qualtrics の CSV か変換後の CSV>` で実験 ID を照合（approve / check / reject と未申告の一覧）。そのあとは oTree 版と同じく `run_analysis.bat` / `tools/pairing.py --contacts payout/contacts_<date>.csv`（`--realize-pairs N` で案 B）
 
 ## oTree 版と残る差（Qualtrics では直せない。計画書「変更点」と事前登録に書く）
 
@@ -79,7 +114,7 @@
 
 ## 残り
 
-- r3 の QSF を取り込み（study_v7。研究室アカウントなら `--brand` をそのアカウントのブランド ID に）、プレビューで (1) 同意の「日本語が母語」、(2) 終了ページの実験 ID が 10 桁の数字で出ること（パイプテキスト `${rand://int/…}` が埋め込みデータの値として評価されること）、(3) Survey Options の未完了回答 = 4 時間、を確認する
-- HEXACO 10 項目と 5 件法の語の転記（若林 2014）→ `texts/ja.py` を直して QSF を作り直す
+- r4 は自分の無料アカウントに study_v7 として取り込み、プレビューで確認した（2026-11-16。上の「版の記録」）。終了メッセージ（Library）・テスト回答のエクスポート → 変換 → `01_clean.R` は未。研究室アカウントには、ライセンスを確認してから `--brand` をそのアカウントのブランド ID にして作り直して取り込む
+- HEXACO 教示の「3 をできるだけ選ばない」注意書きを入れるか決める（入れるなら ja.py → r5）
 - CrowdWorks の募集ページ（計画書「募集と実施の運用」の文案）。終了メッセージを Library に作り、`--eos-message` で作り直して取り込む
 - 本実験のプラットフォーム（研究室 Qualtrics のライセンス・回答数上限）を確認する。有料なら `_full.qsf`
