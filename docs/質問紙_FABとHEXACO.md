@@ -103,7 +103,7 @@ A-1 追試（Binder et al., 2026 の追試）の質問紙 2 段階、FAB 15 項�
 | mc_1 | Moral Courage | 私は、権威のある人や上司の決定に、公然と疑問を投げかける。 | I openly question the decisions of authorities or superiors. |
 | mc_3 | Moral Courage | 私は、自分の道徳的な信念のために、人の気分を害したことがある。 | It has happened that I have affronted others due to my moral convictions. |
 | mc_18 | Moral Courage | 私は、世間が反対していても、みんなにとって重要な方針を貫こうとする。 | I try to carry through with policies that are important for everyone, even if the general public disagrees with them. |
-| mc_20 | Moral Courage | 私は、たとえ得るものより失うものが大きくても、「上」からの不当な指示には抵抗する。 | I fight against unjust instructions from authorities, even if it costs me more than it benefits me. |
+| mc_20 | Moral Courage | 私は、たとえ得るものより失うものが大きくても、権力者からの不当な指示には抵抗する。 | I fight against unjust instructions from authorities, even if it costs me more than it benefits me. |
 | mc_23 | Moral Courage | 争いが起きたら、私は加害者に立ち向かう。 | In a conflict, I confront the attacker. |
 
 ### 4.3 注意チェック（FAB 項目に混ぜて提示。原研究の control question）
